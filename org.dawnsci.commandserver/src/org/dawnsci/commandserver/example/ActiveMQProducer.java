@@ -8,12 +8,19 @@
  */
 package org.dawnsci.commandserver.example;
 
+import java.util.Enumeration;
+
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
+import javax.jms.ObjectMessage;
 import javax.jms.Queue;
+import javax.jms.QueueBrowser;
+import javax.jms.QueueConnection;
+import javax.jms.QueueSession;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
@@ -45,9 +52,9 @@ public class ActiveMQProducer {
 		Connection send = connectionFactory.createConnection();
 		
 		Session session = send.createSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue destination = session.createQueue("testQ");
+		Queue queue = session.createQueue("testQ");
 		
-		final MessageProducer producer = session.createProducer(destination);
+		final MessageProducer producer = session.createProducer(queue);
 		producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 		
 		Message message = session.createTextMessage("Hello World");
@@ -59,8 +66,36 @@ public class ActiveMQProducer {
 		message = session.createObjectMessage(new TestObjectBean("this could be", "anything"));
 	    producer.send(message);
 		
+		producer.close();
 		session.close();
 		send.close();
+		
+		// Now we peak at the queue
+	    // If the consumer is not going, the messages should still be there
+		QueueConnection qCon  = connectionFactory.createQueueConnection();
+		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+		queue   = qSes.createQueue("testQ");
+		qCon.start();
+		
+	    QueueBrowser qb = qSes.createBrowser(queue);
+	    Enumeration  e  = qb.getEnumeration();
+    	if (e.hasMoreElements()) System.out.println("Peak at queue:");
+	    while(e.hasMoreElements()) {
+	    	Message m = (Message)e.nextElement();
+	    	if (m==null) continue;
+        	if (m instanceof TextMessage) {
+            	TextMessage t = (TextMessage)m;
+            	System.out.println(t.getText());
+        	} else if (m instanceof ObjectMessage){
+        		ObjectMessage o = (ObjectMessage)m;
+        		System.out.println(o.getObject());
+        	}
+	    }
+	    
+		qb.close();
+		qSes.close();
+		qCon.close();
+		
 	}
 
 

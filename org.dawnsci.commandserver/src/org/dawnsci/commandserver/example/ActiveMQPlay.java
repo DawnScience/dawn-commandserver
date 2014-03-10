@@ -6,9 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver;
-
-import java.io.Serializable;
+package org.dawnsci.commandserver.example;
 
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
@@ -30,6 +28,13 @@ import org.apache.activemq.ActiveMQConnectionFactory;
    C:\ActiveMQ\apache-activemq-5.9.0\bin>activemq
    
    2. Run this main method which sends 
+   
+   For command servers using activemq, current idea might be to have:
+   1. One eclipse product for each consumer, mx multi-xstall, tomo, ncd saxs/waxs.
+   2. They may be started and stopped independently using separate code to start the consumers by product.
+   3. They use DRMAA code to run things on the cluster and share this code and any other analysis code.
+   4. As producer runs it sends message events back to provide progress.
+   
  * 
  * @author fcp94556
  *
@@ -109,63 +114,5 @@ public class ActiveMQPlay {
 		
 	}
 	
-	public static class TestObjectBean implements Serializable {
-        @Override
-		public String toString() {
-			return "TestObjectBean [m1=" + m1 + ", m2=" + m2 + "]";
-		}
-		/**
-		 * 
-		 */
-		private static final long serialVersionUID = -4989930922999152348L;
-		private String m1;
-        private String m2;
-		public TestObjectBean(String m1, String m2) {
-			super();
-			this.m1 = m1;
-			this.m2 = m2;
-		}
-		@Override
-		public int hashCode() {
-			final int prime = 31;
-			int result = 1;
-			result = prime * result + ((m1 == null) ? 0 : m1.hashCode());
-			result = prime * result + ((m2 == null) ? 0 : m2.hashCode());
-			return result;
-		}
-		@Override
-		public boolean equals(Object obj) {
-			if (this == obj)
-				return true;
-			if (obj == null)
-				return false;
-			if (getClass() != obj.getClass())
-				return false;
-			TestObjectBean other = (TestObjectBean) obj;
-			if (m1 == null) {
-				if (other.m1 != null)
-					return false;
-			} else if (!m1.equals(other.m1))
-				return false;
-			if (m2 == null) {
-				if (other.m2 != null)
-					return false;
-			} else if (!m2.equals(other.m2))
-				return false;
-			return true;
-		}
-		public String getM1() {
-			return m1;
-		}
-		public void setM1(String m1) {
-			this.m1 = m1;
-		}
-		public String getM2() {
-			return m2;
-		}
-		public void setM2(String m2) {
-			this.m2 = m2;
-		}
-	}
 
 }

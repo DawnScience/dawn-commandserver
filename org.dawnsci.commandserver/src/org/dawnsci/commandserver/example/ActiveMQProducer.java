@@ -48,7 +48,7 @@ public class ActiveMQProducer {
 
 	public static void main(String[] args) throws Exception {
 		
-		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://DIAMRL5294:61616");
+		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://WS097.DIAMOND.AC.UK:61616");
 		Connection send = connectionFactory.createConnection();
 		
 		Session session = send.createSession(false, Session.AUTO_ACKNOWLEDGE);

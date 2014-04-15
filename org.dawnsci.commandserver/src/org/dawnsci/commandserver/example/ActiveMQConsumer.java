@@ -42,7 +42,7 @@ public class ActiveMQConsumer {
 
 	public static void main(String[] args) throws Exception {
 		
-		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://DIAMRL5294:61616");
+		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://ws097.diamond.ac.uk:61616");
 		Connection    connection = connectionFactory.createConnection();
 		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue = session.createQueue("testQ");
@@ -51,7 +51,7 @@ public class ActiveMQConsumer {
 		connection.start();
 		
         while (true) { // You have to kill it to stop it!
-            Message m = consumer.receive(1);
+            Message m = consumer.receive(1000);
             if (m!=null) {
             	if (m instanceof TextMessage) {
                 	TextMessage t = (TextMessage)m;

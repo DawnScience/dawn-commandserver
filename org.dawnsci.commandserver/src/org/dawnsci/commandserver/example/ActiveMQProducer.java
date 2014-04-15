@@ -45,6 +45,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
  */
 public class ActiveMQProducer {
 
+	private static boolean REQUIRE_PEAK = false;
 
 	public static void main(String[] args) throws Exception {
 		
@@ -72,30 +73,32 @@ public class ActiveMQProducer {
 		
 		// Now we peak at the queue
 	    // If the consumer is not going, the messages should still be there
-		QueueConnection qCon  = connectionFactory.createQueueConnection();
-		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-		queue   = qSes.createQueue("testQ");
-		qCon.start();
-		
-	    QueueBrowser qb = qSes.createBrowser(queue);
-	    Enumeration  e  = qb.getEnumeration();
-    	if (e.hasMoreElements()) System.out.println("Peak at queue:");
-	    while(e.hasMoreElements()) {
-	    	Message m = (Message)e.nextElement();
-	    	if (m==null) continue;
-        	if (m instanceof TextMessage) {
-            	TextMessage t = (TextMessage)m;
-            	System.out.println(t.getText());
-        	} else if (m instanceof ObjectMessage){
-        		ObjectMessage o = (ObjectMessage)m;
-        		System.out.println(o.getObject());
-        	}
-	    }
-	    
-		qb.close();
-		qSes.close();
-		qCon.close();
-		
+		if (REQUIRE_PEAK) {
+			QueueConnection qCon  = connectionFactory.createQueueConnection();
+			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+			queue   = qSes.createQueue("testQ");
+			qCon.start();
+			
+		    QueueBrowser qb = qSes.createBrowser(queue);
+		    Enumeration  e  = qb.getEnumeration();
+	    	if (e.hasMoreElements()) System.out.println("Peak at queue:");
+		    while(e.hasMoreElements()) {
+		    	Message m = (Message)e.nextElement();
+		    	if (m==null) continue;
+	        	if (m instanceof TextMessage) {
+	            	TextMessage t = (TextMessage)m;
+	            	System.out.println(t.getText());
+	        	} else if (m instanceof ObjectMessage){
+	        		ObjectMessage o = (ObjectMessage)m;
+	        		System.out.println(o.getObject());
+	        	}
+		    }
+		    
+			qb.close();
+			qSes.close();
+			qCon.close();
+		}
+			
 	}
 
 

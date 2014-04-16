@@ -18,6 +18,10 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Running this playing around example:
  * 
@@ -56,6 +60,14 @@ public class ActiveMQConsumer {
             	if (m instanceof TextMessage) {
                 	TextMessage t = (TextMessage)m;
                 	System.out.println(t.getText());
+                	try {
+                		ObjectMapper mapper = new ObjectMapper();
+                		final Datacollection colBack = mapper.readValue(t.getText(), Datacollection.class);
+                        System.out.println("Data collection found: "+colBack.getDatacollectionid());
+                        
+                	} catch (Exception ne) {
+                		System.out.println(m+" is not a data collection.");
+                	}
             	} else if (m instanceof ObjectMessage){
             		ObjectMessage o = (ObjectMessage)m;
             		System.out.println(o.getObject());

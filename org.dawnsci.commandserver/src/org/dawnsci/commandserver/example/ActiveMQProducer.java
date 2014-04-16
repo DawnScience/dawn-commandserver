@@ -24,6 +24,10 @@ import javax.jms.TextMessage;
 
 import org.apache.activemq.ActiveMQConnectionFactory;
 
+import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 /**
  * Running this playing around example:
  * 
@@ -66,6 +70,16 @@ public class ActiveMQProducer {
 		
 		message = session.createObjectMessage(new TestObjectBean("this could be", "anything"));
 	    producer.send(message);
+	    
+	    // Test JSON
+		Datacollection col = new Datacollection("fred", "/dls/image1.png", "/dls/image2.png", "/dls/image3.png", "/dls/image4.png", "1", "0.1", "300", "120", "1", "35000", "0.1", "-1", "x", "1 s", "0", "0", "12", "0.004", "Hello World", "MyXstal_", "d0000000001", "bl0000000001", "s0000000001", "last week", "last week (but later)", "10000", "/dls/some_images/");
+		
+		ObjectMapper mapper = new ObjectMapper();
+		String jsonString = mapper.writeValueAsString(col);
+		
+		message = session.createTextMessage(jsonString);
+		producer.send(message);
+       
 		
 		producer.close();
 		session.close();

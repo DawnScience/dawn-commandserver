@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver.example;
+package org.dawnsci.commandserver.mx.example;
 
 import java.util.Enumeration;
 
@@ -18,11 +18,12 @@ import javax.jms.ObjectMessage;
 import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 
 import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
 
@@ -53,7 +54,7 @@ public class ActiveMQProducer {
 
 	public static void main(String[] args) throws Exception {
 		
-		ActiveMQConnectionFactory connectionFactory = new ActiveMQConnectionFactory("tcp://WS097.DIAMOND.AC.UK:61616");
+		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory("tcp://ws097.diamond.ac.uk:61616");
 		Connection send = connectionFactory.createConnection();
 		
 		Session session = send.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -88,7 +89,7 @@ public class ActiveMQProducer {
 		// Now we peak at the queue
 	    // If the consumer is not going, the messages should still be there
 		if (REQUIRE_PEAK) {
-			QueueConnection qCon  = connectionFactory.createQueueConnection();
+			QueueConnection qCon  = connectionFactory.createQueueConnection(); 
 			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 			queue   = qSes.createQueue("testQ");
 			qCon.start();

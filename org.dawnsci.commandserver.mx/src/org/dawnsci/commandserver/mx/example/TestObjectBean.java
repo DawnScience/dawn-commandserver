@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver.example;
+package org.dawnsci.commandserver.mx.example;
 
 import java.io.Serializable;
 

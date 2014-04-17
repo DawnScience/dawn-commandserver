@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.example;
+package org.dawnsci.commandserver.mx.example;
 
 import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
 

@@ -1,5 +1,9 @@
 import pyactivemq
 
+'''
+Please install activemq into your python before using this script
+'''
+
 from pyactivemq import ActiveMQConnectionFactory
 from pyactivemq import AcknowledgeMode
 
@@ -12,7 +16,7 @@ consumer = session.createConsumer(queue);
 connection.start();
 
 print ("Python consumer listening")
-while (True):
+while (True): # Yes I know, you have to kill it, it is a test
     m = consumer.receive(1000);
     if (m is None):
         continue;

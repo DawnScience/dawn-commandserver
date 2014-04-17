@@ -19,6 +19,8 @@ public class SubmissionBean extends StatusBean {
 
 	private List<DataCollectionBean> collections;
 	private String                   queueName;
+	private String                   statusQueueName;
+	private long                     submissionTime;
 	
 	public SubmissionBean(){
 		this(false);
@@ -51,6 +53,10 @@ public class SubmissionBean extends StatusBean {
 				+ ((collections == null) ? 0 : collections.hashCode());
 		result = prime * result
 				+ ((queueName == null) ? 0 : queueName.hashCode());
+		result = prime * result
+				+ ((statusQueueName == null) ? 0 : statusQueueName.hashCode());
+		result = prime * result
+				+ (int) (submissionTime ^ (submissionTime >>> 32));
 		return result;
 	}
 
@@ -72,6 +78,13 @@ public class SubmissionBean extends StatusBean {
 			if (other.queueName != null)
 				return false;
 		} else if (!queueName.equals(other.queueName))
+			return false;
+		if (statusQueueName == null) {
+			if (other.statusQueueName != null)
+				return false;
+		} else if (!statusQueueName.equals(other.statusQueueName))
+			return false;
+		if (submissionTime != other.submissionTime)
 			return false;
 		return true;
 	}
@@ -95,5 +108,17 @@ public class SubmissionBean extends StatusBean {
 		DataCollectionBean start = collections.get(0);
 		DataCollectionBean end   = collections.get(collections.size()-1);
 		name = start.getName()+" - "+end.getName();
+	}
+	public String getStatusQueueName() {
+		return statusQueueName;
+	}
+	public void setStatusQueueName(String statusQueueName) {
+		this.statusQueueName = statusQueueName;
+	}
+	public long getSubmissionTime() {
+		return submissionTime;
+	}
+	public void setSubmissionTime(long submissionTime) {
+		this.submissionTime = submissionTime;
 	}	
 }

@@ -20,7 +20,7 @@ public class SubmissionFactory {
 	 * @param uri
 	 * @param bean
 	 */
-	public static void submit(String uri, SubmissionBean bean) throws Exception {
+	public static synchronized void submit(String uri, SubmissionBean bean) throws Exception {
 		
 		if (bean.getQueueName()==null || "".equals(bean.getQueueName())) throw new Exception("Please specify a queue name!");
 		
@@ -39,6 +39,7 @@ public class SubmissionFactory {
 			producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
 			ObjectMapper mapper = new ObjectMapper();
+			bean.setSubmissionTime(System.currentTimeMillis());
 			String   jsonString = mapper.writeValueAsString(bean);
 			
 			Message message = session.createTextMessage(jsonString);

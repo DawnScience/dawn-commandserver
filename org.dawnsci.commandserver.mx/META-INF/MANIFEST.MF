@@ -8,5 +8,6 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.dawnsci.commandserver;bundle-version="1.0.0",
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.2.0",
  com.fasterxml.jackson.core.jackson-core;bundle-version="2.2.0",
- com.fasterxml.jackson.core.jackson-databind;bundle-version="2.2.0",
- uk.ac.diamond.scisoft.ispyb.client;bundle-version="1.0.0"
+ com.fasterxml.jackson.core.jackson-databind;bundle-version="2.2.0"
+Export-Package: org.dawnsci.commandserver.mx.beans,
+ org.dawnsci.commandserver.mx.producer

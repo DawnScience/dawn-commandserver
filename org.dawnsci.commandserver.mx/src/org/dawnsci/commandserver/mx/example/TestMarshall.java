@@ -1,6 +1,9 @@
 package org.dawnsci.commandserver.mx.example;
 
-import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
+import java.util.Arrays;
+
+import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
+import org.dawnsci.commandserver.mx.beans.SubmissionBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -9,14 +12,16 @@ public class TestMarshall {
 	public static void main(String[] args) throws Exception {
 		
 		// We want to get the JSON string for this:
-		Datacollection col = new Datacollection("fred", "/dls/image1.png", "/dls/image2.png", "/dls/image3.png", "/dls/image4.png", "1", "0.1", "300", "120", "1", "35000", "0.1", "-1", "x", "1 s", "0", "0", "12", "0.004", "Hello World", "MyXstal_", "d0000000001", "bl0000000001", "s0000000001", "last week", "last week (but later)", "10000", "/dls/some_images/");
+		DataCollectionBean col = new DataCollectionBean("fred", "d0000000001", Arrays.asList("all"));
+		SubmissionBean bean = new SubmissionBean(true);
+		bean.addCollection(col);
 		
 		ObjectMapper mapper = new ObjectMapper();
-		String jsonString = mapper.writeValueAsString(col);
+		String jsonString = mapper.writeValueAsString(bean);
 		
 		System.out.println(jsonString);
 		
-		final Datacollection colBack = mapper.readValue(jsonString, Datacollection.class);
-		System.out.println("Read in equals written out = "+colBack.equals(col));
+		final SubmissionBean beanBack = mapper.readValue(jsonString, SubmissionBean.class);
+		System.out.println("Read in equals written out = "+beanBack.equals(bean));
 	}
 }

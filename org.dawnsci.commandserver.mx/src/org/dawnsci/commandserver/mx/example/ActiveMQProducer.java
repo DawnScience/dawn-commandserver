@@ -8,6 +8,7 @@
  */
 package org.dawnsci.commandserver.mx.example;
 
+import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.jms.Connection;
@@ -24,8 +25,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-
-import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
+import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -73,7 +73,7 @@ public class ActiveMQProducer {
 	    producer.send(message);
 	    
 	    // Test JSON
-		Datacollection col = new Datacollection("fred", "/dls/image1.png", "/dls/image2.png", "/dls/image3.png", "/dls/image4.png", "1", "0.1", "300", "120", "1", "35000", "0.1", "-1", "x", "1 s", "0", "0", "12", "0.004", "Hello World", "MyXstal_", "d0000000001", "bl0000000001", "s0000000001", "last week", "last week (but later)", "10000", "/dls/some_images/");
+		DataCollectionBean col = new DataCollectionBean("fred", "d0000000001", Arrays.asList("all"));
 		
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonString = mapper.writeValueAsString(col);

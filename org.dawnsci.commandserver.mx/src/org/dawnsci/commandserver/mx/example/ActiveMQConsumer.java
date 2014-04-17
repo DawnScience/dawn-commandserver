@@ -18,8 +18,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-
-import uk.ac.diamond.scisoft.ispyb.client.Datacollection;
+import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -63,8 +62,8 @@ public class ActiveMQConsumer {
                 	System.out.println(t.getText());
                 	try {
                 		ObjectMapper mapper = new ObjectMapper();
-                		final Datacollection colBack = mapper.readValue(t.getText(), Datacollection.class);
-                        System.out.println("Data collection found: "+colBack.getDatacollectionid());
+                		final DataCollectionBean colBack = mapper.readValue(t.getText(), DataCollectionBean.class);
+                        System.out.println("Data collection found: "+colBack.getDataCollectionId());
                         
                 	} catch (Exception ne) {
                 		System.out.println(m+" is not a data collection.");

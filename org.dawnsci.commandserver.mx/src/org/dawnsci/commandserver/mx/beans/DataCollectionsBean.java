@@ -2,7 +2,6 @@ package org.dawnsci.commandserver.mx.beans;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 import org.dawnsci.commandserver.core.StatusBean;
 
@@ -15,21 +14,13 @@ import org.dawnsci.commandserver.core.StatusBean;
  * @author fcp94556
  *
  */
-public class SubmissionBean extends StatusBean {
+public class DataCollectionsBean extends StatusBean {
 
 	private List<DataCollectionBean> collections;
-	private String                   queueName;
 	private String                   statusQueueName;
-	private long                     submissionTime;
+	private String                   userName;
 	
-	public SubmissionBean(){
-		this(false);
-	}
-	public SubmissionBean(boolean generateNewId) {
-		super();
-		if (generateNewId) {
-		    this.uid = System.currentTimeMillis()+"_"+UUID.randomUUID();
-		}
+	public DataCollectionsBean(){
 	}
 
 	public List<DataCollectionBean> getCollections() {
@@ -52,11 +43,9 @@ public class SubmissionBean extends StatusBean {
 		result = prime * result
 				+ ((collections == null) ? 0 : collections.hashCode());
 		result = prime * result
-				+ ((queueName == null) ? 0 : queueName.hashCode());
-		result = prime * result
 				+ ((statusQueueName == null) ? 0 : statusQueueName.hashCode());
 		result = prime * result
-				+ (int) (submissionTime ^ (submissionTime >>> 32));
+				+ ((userName == null) ? 0 : userName.hashCode());
 		return result;
 	}
 
@@ -68,39 +57,24 @@ public class SubmissionBean extends StatusBean {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		SubmissionBean other = (SubmissionBean) obj;
+		DataCollectionsBean other = (DataCollectionsBean) obj;
 		if (collections == null) {
 			if (other.collections != null)
 				return false;
 		} else if (!collections.equals(other.collections))
-			return false;
-		if (queueName == null) {
-			if (other.queueName != null)
-				return false;
-		} else if (!queueName.equals(other.queueName))
 			return false;
 		if (statusQueueName == null) {
 			if (other.statusQueueName != null)
 				return false;
 		} else if (!statusQueueName.equals(other.statusQueueName))
 			return false;
-		if (submissionTime != other.submissionTime)
+		if (userName == null) {
+			if (other.userName != null)
+				return false;
+		} else if (!userName.equals(other.userName))
 			return false;
 		return true;
 	}
-	public String getQueueName() {
-		return queueName;
-	}
-	public void setQueueName(String queueName) {
-		this.queueName = queueName;
-	}
-	public String getUid() {
-		return uid;
-	}
-	public void setUid(String uid) {
-		this.uid = uid;
-	}
-	
 	/**
 	 *  Creates name based on all the data collections.
 	 */
@@ -115,10 +89,10 @@ public class SubmissionBean extends StatusBean {
 	public void setStatusQueueName(String statusQueueName) {
 		this.statusQueueName = statusQueueName;
 	}
-	public long getSubmissionTime() {
-		return submissionTime;
+	public String getUserName() {
+		return userName;
 	}
-	public void setSubmissionTime(long submissionTime) {
-		this.submissionTime = submissionTime;
-	}	
+	public void setUserName(String userName) {
+		this.userName = userName;
+	}
 }

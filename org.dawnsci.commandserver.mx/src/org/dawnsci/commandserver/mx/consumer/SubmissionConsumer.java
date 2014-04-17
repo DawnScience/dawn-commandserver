@@ -9,7 +9,9 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.mx.beans.SubmissionBean;
+import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
+import org.dawnsci.commandserver.mx.dummy.DummyProcess;
+import org.dawnsci.commandserver.mx.producer.RemoteSubmission;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -30,7 +32,10 @@ public class SubmissionConsumer {
 		
 		if (!checkArguments(args)) return;
 		
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(args[0]);
+		
+		final String uri = args[0];
+		
+		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 		Connection    connection = connectionFactory.createConnection();
 		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue = session.createQueue(args[1]);
@@ -42,17 +47,33 @@ public class SubmissionConsumer {
         while (true) { // You have to kill it to stop it!
             
         	try {
+        		
+        		// Consumes messages from the queue.
 	        	Message m = consumer.receive(1000);
 	            if (m!=null) {
 	            	TextMessage t = (TextMessage)m;
-	            	try {
-	            		ObjectMapper mapper = new ObjectMapper();
-	            		final SubmissionBean bean = mapper.readValue(t.getText(), SubmissionBean.class);
-	            		System.out.println("Submission found: "+bean.getName());
-	
-	            	} catch (Exception ne) {
-	            		System.out.println(m+" is not a submission.");
-	            	}
+	            	ObjectMapper mapper = new ObjectMapper();
+	            	
+	            	final DataCollectionsBean bean = mapper.readValue(t.getText(), DataCollectionsBean.class);
+	            	
+                    if (bean.getStatusQueueName()!=null) { // We add this to the status list so that it can be rendered in the UI
+                    	
+                    	// Now we put the bean in the status queue and we 
+                    	// start the process
+                    	RemoteSubmission factory = new RemoteSubmission(uri);
+                    	factory.setLifeTime(t.getJMSExpiration());
+                    	factory.setPriority(t.getJMSPriority());
+                    	factory.setTimestamp(t.getJMSTimestamp());
+                    	factory.setMessageId(t.getJMSMessageID());
+                    	
+                    	factory.setQueueName(bean.getStatusQueueName());
+                    	factory.submit(bean);
+                    	
+                    	final DummyProcess process = new DummyProcess(bean); // TODO Xia2 anyone?
+                    	process.start();
+                    	
+                    	System.out.println("Started job "+bean.getName()+" uuid("+t.getJMSMessageID()+")");
+                    }
 	            }
         	} catch (Throwable ne) {
         		// Really basic error reporting, they have to pipe to file.

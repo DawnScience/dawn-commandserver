@@ -1,6 +1,5 @@
 package org.dawnsci.commandserver.core;
 
-import java.util.UUID;
 
 /**
  * A bean whose JSON value can sit in a queue on the JMS server and 
@@ -16,7 +15,6 @@ public class StatusBean {
 	 * then returned back from the server to know
 	 * which run we are talking about.
 	 */
-	protected String uid;
 	protected Status status;
 	protected String name;
 	protected double percentComplete;
@@ -29,13 +27,6 @@ public class StatusBean {
 	public StatusBean(String name) {
 		this();
 		this.name = name;
-	}
-
-	public String getUid() {
-		return uid;
-	}
-	public void setUid(String uid) {
-		this.uid = uid;
 	}
 	public Status getStatus() {
 		return status;
@@ -58,7 +49,6 @@ public class StatusBean {
 		temp = Double.doubleToLongBits(percentComplete);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result + ((status == null) ? 0 : status.hashCode());
-		result = prime * result + ((uid == null) ? 0 : uid.hashCode());
 		return result;
 	}
 	@Override
@@ -79,11 +69,6 @@ public class StatusBean {
 				.doubleToLongBits(other.percentComplete))
 			return false;
 		if (status != other.status)
-			return false;
-		if (uid == null) {
-			if (other.uid != null)
-				return false;
-		} else if (!uid.equals(other.uid))
 			return false;
 		return true;
 	}

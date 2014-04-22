@@ -72,7 +72,7 @@ public class SubmissionConsumer {
                     	final DummyProcess process = new DummyProcess(bean); // TODO Xia2 anyone?
                     	process.start();
                     	
-                    	System.out.println("Started job "+bean.getName()+" uuid("+t.getJMSMessageID()+")");
+                    	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     }
 	            }
         	} catch (Throwable ne) {

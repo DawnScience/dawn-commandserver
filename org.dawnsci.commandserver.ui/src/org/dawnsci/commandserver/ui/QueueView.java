@@ -2,10 +2,17 @@ package org.dawnsci.commandserver.ui;
 
 import java.util.ArrayList;
 import java.util.Enumeration;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.QueueConnection;
@@ -13,6 +20,7 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.jms.Topic;
 
 import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
@@ -21,7 +29,6 @@ import org.dawnsci.commandserver.core.StatusBean;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
-import org.eclipse.jface.action.IToolBarManager;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -34,6 +41,8 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -42,7 +51,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * and optionally the queue view name if a custom one is required. Syntax of
  * these parameters in the secondary id are key1=value1;key2=value2...
  * 
- * The essential keys are: uri, queueName, beanBundleName, beanClassName
+ * The essential keys are: uri, queueName, beanBundleName, beanClassName, topicName
  * The optional keys are: partName
  * 
  * Example id for this view would be:
@@ -57,8 +66,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class QueueView extends ViewPart {
 	
-	private TableViewer viewer;
-	private Properties idProperties;
+	private static final Logger logger = LoggerFactory.getLogger(QueueView.class);
+	
+	// UI
+	private TableViewer                       viewer;
+	
+	// Data
+	private Properties                        idProperties;
+	private Map<String, QueueObject>          queue;
 
 	@Override
 	public void createPartControl(Composite content) {
@@ -80,20 +95,85 @@ public class QueueView extends ViewPart {
         if (name!=null) setPartName(name);
 		
         createActions();
+        try {
+			createTopicListener(getUri());
+		} catch (Exception e) {
+			logger.error("Cannot listen to topic of command server!", e);
+		}
 	}
 	
+	/**
+	 * Listens to a topic
+	 */
+	private void createTopicListener(final String uri) throws Exception {
+		
+		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+        Connection connection = connectionFactory.createConnection();
+        connection.start();
+
+        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+        final Topic           topic    = session.createTopic(getTopicName());
+        final MessageConsumer consumer = session.createConsumer(topic);
+
+        final Class        clazz  = getBeanClass();
+        final ObjectMapper mapper = new ObjectMapper();
+        
+        MessageListener listener = new MessageListener() {
+            public void onMessage(Message message) {
+            	
+            	if (viewer.getTable().isDisposed()) {
+            		try {
+						consumer.setMessageListener(null);
+					} catch (JMSException e) {
+						logger.warn("Cannot reset message listener (not a fatal message).", e);
+					}
+            		return;
+            	}
+                try {
+                    if (message instanceof TextMessage) {
+                        TextMessage t = (TextMessage) message;
+        				final StatusBean bean = mapper.readValue(t.getText(), clazz);
+                        mergeBean(t, bean);
+                    }
+                } catch (Exception e) {
+                    logger.error("Updating changed bean from topic", e);
+                }
+            }
+        };
+        // TODO FIXME Is this listener a memory leak? Should it be removed on dispose?
+        consumer.setMessageListener(listener);
+        connection.close();		
+	}
+
+	/**
+	 * Updates the bean if it is found in the list, otherwise
+	 * refreshes the whole list because a bean we are not reporting
+	 * has been(bean?) encountered.
+	 * 
+	 * @param bean
+	 */
+	protected void mergeBean(TextMessage textMessage, StatusBean bean) throws Exception {
+		if (queue.containsKey(textMessage.getJMSMessageID())) {
+			queue.get(textMessage.getJMSMessageID()).merge(textMessage, bean);
+			viewer.refresh();
+		} else {
+			reconnect();
+		}
+	}
+
 	private void createActions() {
 		final IContributionManager man = getViewSite().getActionBars().getToolBarManager();
 	
-		final Action refresh = new Action("Refresh") {
+		final Action refresh = new Action("Refresh", Activator.getDefault().getImageDescriptor("icons/arrow-circle-double-135.png")) {
 			public void run() {
-				refresh();
+				reconnect();
 			}
 		};
 		
 		man.add(refresh);
 
-		final Action configure = new Action("Configure...") {
+		final Action configure = new Action("Configure...", Activator.getDefault().getImageDescriptor("icons/document--pencil.png")) {
 			public void run() {
 				PropertiesDialog dialog = new PropertiesDialog(getSite().getShell(), idProperties);
 				
@@ -102,14 +182,14 @@ public class QueueView extends ViewPart {
 					idProperties.clear();
 					idProperties.putAll(dialog.getProps());
 				}
-				refresh();
+				reconnect();
 			}
 		};
 		
 		man.add(configure);
 	}
 
-	protected void refresh() {
+	protected void reconnect() {
 		viewer.setInput(getUri());
 		viewer.refresh();
 	}
@@ -117,14 +197,13 @@ public class QueueView extends ViewPart {
 	private IContentProvider createContentProvider() {
 		return new IStructuredContentProvider() {
 			
-			private List<? extends StatusBean> queue;
 			@Override
 			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
 				final String uri   = (String)newInput;
 				try {
 					queue = readQueue(uri);
 				} catch (Exception e) {
-					e.printStackTrace();
+                    logger.error("Updating changed bean from topic", e);
 				}
 			}
 			
@@ -135,12 +214,12 @@ public class QueueView extends ViewPart {
 			
 			@Override
 			public Object[] getElements(Object inputElement) {
-				return queue.toArray(new StatusBean[queue.size()]);
+				return queue.values().toArray(new QueueObject[queue.size()]);
 			}
 		};
 	}
 
-	protected List<StatusBean> readQueue(final String uri) throws Exception {
+	protected Map<String, QueueObject> readQueue(final String uri) throws Exception {
 		
 		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 		QueueConnection qCon  = connectionFactory.createQueueConnection(); 
@@ -148,19 +227,13 @@ public class QueueView extends ViewPart {
 		Queue queue   = qSes.createQueue(getQueueName());
 		qCon.start();
 		
-		final List<StatusBean> ret = new ArrayList<StatusBean>(7);
+		final Map<String,QueueObject> ascending = new LinkedHashMap<String,QueueObject>();
 	    QueueBrowser qb = qSes.createBrowser(queue);
 	    
 	    @SuppressWarnings("rawtypes")
 		Enumeration  e  = qb.getEnumeration();
 	    
-	    String beanBundleName = getSecondaryIdAttribute("beanBundleName");
-	    String beanClassName  = getSecondaryIdAttribute("beanClassName");
-	    
-	    @SuppressWarnings("rawtypes")
-	    Bundle bundle = Platform.getBundle(beanBundleName);
-		Class clazz = bundle.loadClass(beanClassName);
-
+        Class        clazz  = getBeanClass();
 		ObjectMapper mapper = new ObjectMapper();
         while(e.hasMoreElements()) {
 	    	Message m = (Message)e.nextElement();
@@ -169,10 +242,28 @@ public class QueueView extends ViewPart {
             	TextMessage t = (TextMessage)m;
               	@SuppressWarnings("unchecked")
 				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-            	ret.add(bean);
+            	ascending.put(t.getJMSMessageID(), new QueueObject(t, bean));
         	}
 	    }
-        return ret;
+        
+        // We reverse the queue because it comes out date ascending and we
+        // want newest submissions first.
+		final Map<String,QueueObject> decending = new LinkedHashMap<String,QueueObject>();
+        final List<String> keys = new ArrayList<String>(ascending.keySet());
+        for (int i = keys.size()-1; i > -1; i--) {
+        	String key = keys.get(i);
+        	decending.put(key, ascending.get(key));
+		}
+        return decending;
+	}
+
+	private Class getBeanClass() throws ClassNotFoundException {
+	    String beanBundleName = getSecondaryIdAttribute("beanBundleName");
+	    String beanClassName  = getSecondaryIdAttribute("beanClassName");
+	    
+	    @SuppressWarnings("rawtypes")
+	    Bundle bundle = Platform.getBundle(beanBundleName);
+		return bundle.loadClass(beanClassName);
 	}
 
 	protected void createColumns() {
@@ -182,7 +273,7 @@ public class QueueView extends ViewPart {
 		name.getColumn().setWidth(300);
 		name.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((StatusBean)element).getName();
+				return ((QueueObject)element).getName();
 			}
 		});
 		
@@ -191,7 +282,7 @@ public class QueueView extends ViewPart {
 		status.getColumn().setWidth(100);
 		status.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((StatusBean)element).getStatus().toString();
+				return ((QueueObject)element).getStatus().toString();
 			}
 		});
 
@@ -200,7 +291,20 @@ public class QueueView extends ViewPart {
 		pc.getColumn().setWidth(120);
 		pc.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return String.valueOf(((StatusBean)element).getPercentComplete());
+				return String.valueOf(((QueueObject)element).getPercentComplete());
+			}
+		});
+
+		final TableViewerColumn submittedDate = new TableViewerColumn(viewer, SWT.CENTER);
+		submittedDate.getColumn().setText("Date Submitted");
+		submittedDate.getColumn().setWidth(200);
+		submittedDate.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					return ((QueueObject)element).getSubmissionDate();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
 			}
 		});
 
@@ -213,7 +317,12 @@ public class QueueView extends ViewPart {
 		}
 	}
 
-	protected String getUri() {
+
+	private String getTopicName() {
+		return getSecondaryIdAttribute("topicName");
+	}
+
+    protected String getUri() {
 		final String uri = getSecondaryIdAttribute("uri");
 		if (uri == null) return null;
 		return uri.replace("%3A", ":");

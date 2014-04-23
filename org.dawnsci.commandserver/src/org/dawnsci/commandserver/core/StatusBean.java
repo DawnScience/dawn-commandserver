@@ -82,4 +82,14 @@ public class StatusBean {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
+	/**
+	 * Subclasses must override this method.
+	 * @param with
+	 */
+	public void merge(StatusBean with) {
+		this.status = with.status;
+		this.name   = with.name;
+		this.percentComplete = with.percentComplete;
+	}
 }

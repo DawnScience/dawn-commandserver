@@ -5,9 +5,11 @@
          point="org.eclipse.ui.views">
       <view
             allowMultiple="true"
+            category="org.dawnsci.commandserver.category"
             class="org.dawnsci.commandserver.ui.QueueView"
+            icon="icons/computer--arrow.png"
             id="org.dawnsci.commandserver.ui.queueView"
-            name="Remote Analysis"
+            name="Queue"
             restorable="true">
       </view>
       <category

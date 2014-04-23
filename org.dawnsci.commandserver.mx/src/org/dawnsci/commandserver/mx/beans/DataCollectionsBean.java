@@ -23,6 +23,15 @@ public class DataCollectionsBean extends StatusBean {
 	public DataCollectionsBean(){
 	}
 
+	@Override
+	public void merge(StatusBean with) {
+        super.merge(with);
+        DataCollectionsBean db = (DataCollectionsBean)with;
+        this.collections       = db.collections;
+        this.statusQueueName   = db.statusQueueName;
+        this.userName          = db.userName;
+	}
+	
 	public List<DataCollectionBean> getCollections() {
 		return collections;
 	}

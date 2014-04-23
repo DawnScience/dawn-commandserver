@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            allowMultiple="true"
+            class="org.dawnsci.commandserver.ui.QueueView"
+            id="org.dawnsci.commandserver.ui.queueView"
+            name="Remote Analysis"
+            restorable="true">
+      </view>
+      <category
+            id="org.dawnsci.commandserver.category"
+            name="Command Server"
+            parentCategory="uk.ac.diamond.scisoft.analysis.rcp">
+      </category>
+   </extension>
+
+</plugin>

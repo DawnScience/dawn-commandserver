@@ -5,7 +5,10 @@ Bundle-SymbolicName: org.dawnsci.commandserver
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.Activator
 Bundle-Vendor: DLS
-Require-Bundle: org.eclipse.core.runtime
+Require-Bundle: org.eclipse.core.runtime,
+ com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.2.0",
+ com.fasterxml.jackson.core.jackson-core;bundle-version="2.2.0",
+ com.fasterxml.jackson.core.jackson-databind;bundle-version="2.2.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Bundle-ClassPath: lib/activemq-all-5.9.0.jar,

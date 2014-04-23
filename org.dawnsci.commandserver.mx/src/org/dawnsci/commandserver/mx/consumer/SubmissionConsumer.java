@@ -33,17 +33,19 @@ public class SubmissionConsumer {
 		if (!checkArguments(args)) return;
 		
 		
-		final String uri = args[0];
+		final String uri   = args[0];
+		final String qName = args[1];
+		final String tName = args[2];
 		
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 		Connection    connection = connectionFactory.createConnection();
 		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue queue = session.createQueue(args[1]);
+		Queue queue = session.createQueue(qName);
 
 		final MessageConsumer consumer = session.createConsumer(queue);
 		connection.start();
 		
-		System.out.println("Starting consumer for submissions to queue "+args[1]);
+		System.out.println("Starting consumer for submissions to queue "+qName);
         while (true) { // You have to kill it to stop it!
             
         	try {
@@ -67,9 +69,9 @@ public class SubmissionConsumer {
                     	factory.setMessageId(t.getJMSMessageID());
                     	
                     	factory.setQueueName(bean.getStatusQueueName());
-                    	factory.submit(bean);
+                    	TextMessage message = factory.submit(bean);
                     	
-                    	final DummyProcess process = new DummyProcess(bean); // TODO Xia2 anyone?
+                    	final DummyProcess process = new DummyProcess(uri, tName, message, bean); // TODO Xia2 anyone?
                     	process.start();
                     	
                     	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
@@ -83,11 +85,11 @@ public class SubmissionConsumer {
 
 	}
 
-	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME>\n"+
-	                              "Example: java -jar ispyb.jar "+SubmissionConsumer.class.getName()+" tcp://ws097.diamond.ac.uk:61616 scisoft.xia2.SUBMISSION_QUEUE";
+	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME> <MX TOPIC NAME>\n"+
+	                              "Example: java -jar ispyb.jar "+SubmissionConsumer.class.getName()+" tcp://ws097.diamond.ac.uk:61616 scisoft.xia2.SUBMISSION_QUEUE scisoft.xia2.SUBMISSION_TOPIC";
 	private static boolean checkArguments(String[] args) {
 		
-        if (args == null || args.length!=2) {
+        if (args == null || args.length!=3) {
         	System.out.println(USAGE);
         	return false;
         }
@@ -98,6 +100,11 @@ public class SubmissionConsumer {
         }
         
         if ("".equals(args[1])) {
+        	System.out.println(USAGE);
+        	return false;
+        }
+        
+        if ("".equals(args[2])) {
         	System.out.println(USAGE);
         	return false;
         }

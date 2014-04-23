@@ -4,11 +4,11 @@ import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
-import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
@@ -36,7 +36,7 @@ public class RemoteSubmission {
 	 * @param uri
 	 * @param bean
 	 */
-	public synchronized void submit(DataCollectionsBean bean) throws Exception {
+	public synchronized TextMessage submit(DataCollectionsBean bean) throws Exception {
 
 		
 		if (getQueueName()==null || "".equals(getQueueName())) throw new Exception("Please specify a queue name!");
@@ -61,7 +61,7 @@ public class RemoteSubmission {
 			if (bean.getUserName()==null)   bean.setUserName(System.getProperty("user.name"));
 			String   jsonString = mapper.writeValueAsString(bean);
 			
-			Message message = session.createTextMessage(jsonString);
+			TextMessage message = session.createTextMessage(jsonString);
 			
 			if (getTimestamp()<1) setTimestamp(System.currentTimeMillis());
 			if (getPriority()<1)  setPriority(1);
@@ -73,6 +73,8 @@ public class RemoteSubmission {
 			message.setJMSPriority(getPriority());
 			
 			producer.send(message);
+			
+			return message;
 			
 		} finally {
 			if (send!=null)     send.close();

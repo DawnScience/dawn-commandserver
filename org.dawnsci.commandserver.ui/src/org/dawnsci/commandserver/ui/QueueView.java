@@ -1,6 +1,8 @@
 package org.dawnsci.commandserver.ui;
 
+import java.text.DateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -73,7 +75,9 @@ public class QueueView extends ViewPart {
 	
 	// Data
 	private Properties                        idProperties;
-	private Map<String, QueueObject>          queue;
+	private Map<String, StatusBean>           queue;
+
+	private Connection topicConnection;
 
 	@Override
 	public void createPartControl(Composite content) {
@@ -108,10 +112,10 @@ public class QueueView extends ViewPart {
 	private void createTopicListener(final String uri) throws Exception {
 		
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-        Connection connection = connectionFactory.createConnection();
-        connection.start();
+        topicConnection = connectionFactory.createConnection();
+        topicConnection.start();
 
-        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
         final Topic           topic    = session.createTopic(getTopicName());
         final MessageConsumer consumer = session.createConsumer(topic);
@@ -134,16 +138,23 @@ public class QueueView extends ViewPart {
                     if (message instanceof TextMessage) {
                         TextMessage t = (TextMessage) message;
         				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-                        mergeBean(t, bean);
+                        mergeBean(bean);
                     }
                 } catch (Exception e) {
                     logger.error("Updating changed bean from topic", e);
                 }
             }
         };
-        // TODO FIXME Is this listener a memory leak? Should it be removed on dispose?
         consumer.setMessageListener(listener);
-        connection.close();		
+	}
+	
+	public void dispose() {
+		super.dispose();
+		try {
+			if (topicConnection!=null) topicConnection.close();
+		} catch (Exception ne) {
+			logger.warn("Problem stopping topic listening for "+getTopicName(), ne);
+		}
 	}
 
 	/**
@@ -153,13 +164,18 @@ public class QueueView extends ViewPart {
 	 * 
 	 * @param bean
 	 */
-	protected void mergeBean(TextMessage textMessage, StatusBean bean) throws Exception {
-		if (queue.containsKey(textMessage.getJMSMessageID())) {
-			queue.get(textMessage.getJMSMessageID()).merge(textMessage, bean);
-			viewer.refresh();
-		} else {
-			reconnect();
-		}
+	protected void mergeBean(final StatusBean bean) throws Exception {
+		
+		getSite().getShell().getDisplay().asyncExec(new Runnable() {
+			public void run(){
+				if (queue.containsKey(bean.getUniqueId())) {
+					queue.get(bean.getUniqueId()).merge(bean);
+					viewer.refresh();
+				} else {
+					reconnect();
+				}
+			}
+		});
 	}
 
 	private void createActions() {
@@ -214,12 +230,12 @@ public class QueueView extends ViewPart {
 			
 			@Override
 			public Object[] getElements(Object inputElement) {
-				return queue.values().toArray(new QueueObject[queue.size()]);
+				return queue.values().toArray(new StatusBean[queue.size()]);
 			}
 		};
 	}
 
-	protected Map<String, QueueObject> readQueue(final String uri) throws Exception {
+	protected Map<String, StatusBean> readQueue(final String uri) throws Exception {
 		
 		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 		QueueConnection qCon  = connectionFactory.createQueueConnection(); 
@@ -227,7 +243,7 @@ public class QueueView extends ViewPart {
 		Queue queue   = qSes.createQueue(getQueueName());
 		qCon.start();
 		
-		final Map<String,QueueObject> ascending = new LinkedHashMap<String,QueueObject>();
+		final Map<String,StatusBean> ascending = new LinkedHashMap<String,StatusBean>();
 	    QueueBrowser qb = qSes.createBrowser(queue);
 	    
 	    @SuppressWarnings("rawtypes")
@@ -242,13 +258,13 @@ public class QueueView extends ViewPart {
             	TextMessage t = (TextMessage)m;
               	@SuppressWarnings("unchecked")
 				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-            	ascending.put(t.getJMSMessageID(), new QueueObject(t, bean));
+            	ascending.put(bean.getUniqueId(), bean);
         	}
 	    }
         
         // We reverse the queue because it comes out date ascending and we
         // want newest submissions first.
-		final Map<String,QueueObject> decending = new LinkedHashMap<String,QueueObject>();
+		final Map<String,StatusBean> decending = new LinkedHashMap<String,StatusBean>();
         final List<String> keys = new ArrayList<String>(ascending.keySet());
         for (int i = keys.size()-1; i > -1; i--) {
         	String key = keys.get(i);
@@ -273,7 +289,7 @@ public class QueueView extends ViewPart {
 		name.getColumn().setWidth(300);
 		name.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((QueueObject)element).getName();
+				return ((StatusBean)element).getName();
 			}
 		});
 		
@@ -282,7 +298,7 @@ public class QueueView extends ViewPart {
 		status.getColumn().setWidth(100);
 		status.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((QueueObject)element).getStatus().toString();
+				return ((StatusBean)element).getStatus().toString();
 			}
 		});
 
@@ -291,7 +307,7 @@ public class QueueView extends ViewPart {
 		pc.getColumn().setWidth(120);
 		pc.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return String.valueOf(((QueueObject)element).getPercentComplete());
+				return String.valueOf(((StatusBean)element).getPercentComplete());
 			}
 		});
 
@@ -301,7 +317,7 @@ public class QueueView extends ViewPart {
 		submittedDate.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-					return ((QueueObject)element).getSubmissionDate();
+					return DateFormat.getDateTimeInstance().format(new Date(((StatusBean)element).getSubmissionTime()));
 				} catch (Exception e) {
 					return e.getMessage();
 				}

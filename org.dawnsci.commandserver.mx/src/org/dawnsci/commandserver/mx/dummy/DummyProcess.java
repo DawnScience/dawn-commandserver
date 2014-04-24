@@ -1,10 +1,8 @@
 package org.dawnsci.commandserver.mx.dummy;
 
-import javax.jms.TextMessage;
-
 import org.dawnsci.commandserver.core.ProgressableProcess;
 import org.dawnsci.commandserver.core.Status;
-import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
+import org.dawnsci.commandserver.core.StatusBean;
 
 /**
  * 
@@ -26,10 +24,10 @@ public class DummyProcess extends ProgressableProcess {
 	 * @param bean
 	 */
 	public DummyProcess(final String   uri, 
-                        final String   topicName, 
-                        TextMessage    queuedMessage, 
-                        DataCollectionsBean bean) {	
-		super(uri, topicName, queuedMessage, bean);
+			            final String   statusTName, 
+			            final String   statusQName, 
+                        StatusBean     bean) {	
+		super(uri, statusTName, statusQName, bean);
 	}
 
 
@@ -42,13 +40,17 @@ public class DummyProcess extends ProgressableProcess {
 		
         for (int i = 0; i < 100; i++) {
 			try {
-				Thread.sleep(5);
+				Thread.sleep(100);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 			bean.setPercentComplete(i);
 	        broadcast(bean);
 		}
+        
+        bean.setStatus(Status.COMPLETE);
+        bean.setPercentComplete(100);
+        broadcast(bean);
 	}
 
 }

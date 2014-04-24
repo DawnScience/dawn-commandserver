@@ -1,9 +1,17 @@
 package org.dawnsci.commandserver.core;
 
+import java.util.Enumeration;
+
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
+import javax.jms.Queue;
+import javax.jms.QueueBrowser;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
@@ -20,16 +28,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public abstract class ProgressableProcess implements Runnable {
 
-	private boolean isCancelled = false;
+	private boolean            isCancelled = false;
 	protected final StatusBean bean;
-	protected final String uri;
-	protected final String topicName;
-	private TextMessage queuedMessage;
+	protected final String     uri;
+	protected final String     statusTName;
+	protected final String     statusQName;
 
-	public ProgressableProcess(final String uri, final String topicName, TextMessage queuedMessage, StatusBean bean) {
+	public ProgressableProcess(final String uri, final String statusTName, final String   statusQName, StatusBean bean) {
 		this.uri           = uri;
-		this.topicName     = topicName;
-		this.queuedMessage = queuedMessage;
+		this.statusTName     = statusTName;
+		this.statusQName   = statusQName;
 		this.bean          = bean;
 		bean.setStatus(Status.QUEUED);
 		broadcast(bean);
@@ -54,6 +62,70 @@ public abstract class ProgressableProcess implements Runnable {
 	 * @param bean
 	 */
 	protected void broadcast(StatusBean bean) {
+		try {
+			updateQueue(bean); // For clients connecting in future or after a refresh - persistence.
+			sendTopic(bean);   // For topic listeners wait for updates (more efficient than polling queue)
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+ 	}
+
+
+	/**
+	 * 
+	 * @param bean
+	 * @throws Exception 
+	 */
+	private void updateQueue(StatusBean bean) throws Exception {
+		
+		QueueConnection qCon = null;
+		
+		try {
+	 	    QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			qCon  = connectionFactory.createQueueConnection(); 
+			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+			Queue queue   = qSes.createQueue(statusQName);
+			qCon.start();
+			
+		    QueueBrowser qb = qSes.createBrowser(queue);
+		    
+		    @SuppressWarnings("rawtypes")
+			Enumeration  e  = qb.getEnumeration();
+		    
+			ObjectMapper mapper = new ObjectMapper();
+			String jMSMessageID = null;
+	        while(e.hasMoreElements()) {
+		    	Message m = (Message)e.nextElement();
+		    	if (m==null) continue;
+	        	if (m instanceof TextMessage) {
+	            	TextMessage t = (TextMessage)m;
+	              	
+	            	@SuppressWarnings("unchecked")
+					final StatusBean qbean = mapper.readValue(t.getText(), bean.getClass());
+	            	if (qbean==null)               continue;
+	            	if (qbean.getUniqueId()==null) continue; // Definitely not our bean
+	            	if (qbean.getUniqueId().equals(bean.getUniqueId())) {
+	            		jMSMessageID = t.getJMSMessageID();
+	            		break;
+	            	}
+	        	}
+		    }
+	        
+	        if (jMSMessageID!=null) {
+	        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");
+	        	Message m = consumer.receive(1000);
+	        	if (m!=null && m instanceof TextMessage) {
+	        		MessageProducer producer = qSes.createProducer(queue);
+	        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
+	        	}
+	        }
+		} finally {
+			if (qCon!=null) qCon.close();
+		}
+		
+	}
+
+	private void sendTopic(StatusBean bean) throws Exception {
 		
 		Connection connection = null;
 		try {
@@ -66,28 +138,19 @@ public abstract class ProgressableProcess implements Runnable {
 	        // to use transactions you should set the first parameter to 'true'
 	        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 	
-	        Topic topic = session.createTopic(topicName);
+	        Topic topic = session.createTopic(statusTName);
 	
 	        MessageProducer producer = session.createProducer(topic);
 	
             final ObjectMapper mapper = new ObjectMapper();
-            queuedMessage.setText(mapper.writeValueAsString(bean));
-	        
-	        // Here we are sending the message!
-	        producer.send(queuedMessage);
+ 	        
+            // Here we are sending the message out to the topic
+            producer.send(session.createTextMessage(mapper.writeValueAsString(bean)));
 
-		} catch (Exception ne) {
-			ne.printStackTrace();
-			
 		} finally {
-			try {
-				if (connection!=null) connection.close();
-			} catch (JMSException e) {
-				e.printStackTrace();
-			}	
+			if (connection!=null) connection.close();
 		}
- 	}
-
+	}
 
 	public boolean isCancelled() {
 		return isCancelled;

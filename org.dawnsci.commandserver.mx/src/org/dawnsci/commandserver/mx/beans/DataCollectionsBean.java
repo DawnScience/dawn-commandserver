@@ -17,8 +17,6 @@ import org.dawnsci.commandserver.core.StatusBean;
 public class DataCollectionsBean extends StatusBean {
 
 	private List<DataCollectionBean> collections;
-	private String                   statusQueueName;
-	private String                   userName;
 	
 	public DataCollectionsBean(){
 	}
@@ -28,8 +26,6 @@ public class DataCollectionsBean extends StatusBean {
         super.merge(with);
         DataCollectionsBean db = (DataCollectionsBean)with;
         this.collections       = db.collections;
-        this.statusQueueName   = db.statusQueueName;
-        this.userName          = db.userName;
 	}
 	
 	public List<DataCollectionBean> getCollections() {
@@ -51,10 +47,6 @@ public class DataCollectionsBean extends StatusBean {
 		int result = super.hashCode();
 		result = prime * result
 				+ ((collections == null) ? 0 : collections.hashCode());
-		result = prime * result
-				+ ((statusQueueName == null) ? 0 : statusQueueName.hashCode());
-		result = prime * result
-				+ ((userName == null) ? 0 : userName.hashCode());
 		return result;
 	}
 
@@ -72,36 +64,15 @@ public class DataCollectionsBean extends StatusBean {
 				return false;
 		} else if (!collections.equals(other.collections))
 			return false;
-		if (statusQueueName == null) {
-			if (other.statusQueueName != null)
-				return false;
-		} else if (!statusQueueName.equals(other.statusQueueName))
-			return false;
-		if (userName == null) {
-			if (other.userName != null)
-				return false;
-		} else if (!userName.equals(other.userName))
-			return false;
 		return true;
 	}
 	/**
 	 *  Creates name based on all the data collections.
 	 */
+	@Override
 	public void createName() {
 		DataCollectionBean start = collections.get(0);
 		DataCollectionBean end   = collections.get(collections.size()-1);
 		name = start.getName()+" - "+end.getName();
-	}
-	public String getStatusQueueName() {
-		return statusQueueName;
-	}
-	public void setStatusQueueName(String statusQueueName) {
-		this.statusQueueName = statusQueueName;
-	}
-	public String getUserName() {
-		return userName;
-	}
-	public void setUserName(String userName) {
-		this.userName = userName;
 	}
 }

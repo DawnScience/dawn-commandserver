@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.mx.producer;
+package org.dawnsci.commandserver.core.consumer;
 
 import java.util.UUID;
 
@@ -11,14 +11,14 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
+import org.dawnsci.commandserver.core.StatusBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RemoteSubmission {
 	
 	private String uri;
-	private String messageId;
+	private String uniqueId;
 	private String queueName;
 	private int    priority;
 	private long   lifeTime;
@@ -26,7 +26,7 @@ public class RemoteSubmission {
 	
 	public RemoteSubmission(String uri) {
 	    this.uri       = uri;
-	    this.messageId = System.currentTimeMillis()+"_"+UUID.randomUUID();
+	    this.uniqueId = System.currentTimeMillis()+"_"+UUID.randomUUID();
 	}
 
 	/**
@@ -36,12 +36,11 @@ public class RemoteSubmission {
 	 * @param uri
 	 * @param bean
 	 */
-	public synchronized TextMessage submit(DataCollectionsBean bean) throws Exception {
+	public synchronized TextMessage submit(StatusBean bean, boolean prepareBean) throws Exception {
 
 		
 		if (getQueueName()==null || "".equals(getQueueName())) throw new Exception("Please specify a queue name!");
 		
-		if (bean.getName()==null) bean.createName();
 		
 		Connection      send     = null;
 		Session         session  = null;
@@ -57,17 +56,23 @@ public class RemoteSubmission {
 			producer = session.createProducer(queue);
 			producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-			ObjectMapper mapper = new ObjectMapper();			
-			if (bean.getUserName()==null)   bean.setUserName(System.getProperty("user.name"));
-			String   jsonString = mapper.writeValueAsString(bean);
-			
-			TextMessage message = session.createTextMessage(jsonString);
-			
+			ObjectMapper mapper = new ObjectMapper();
+
 			if (getTimestamp()<1) setTimestamp(System.currentTimeMillis());
 			if (getPriority()<1)  setPriority(1);
 			if (getLifeTime()<1)  setLifeTime(7*24*60*60*1000); // 7 days in ms
 
-			message.setJMSMessageID(messageId);
+			if (prepareBean) {
+				if (bean.getUserName()==null)   bean.setUserName(System.getProperty("user.name"));
+				bean.setUniqueId(uniqueId);
+				bean.setSubmissionTime(getTimestamp());
+			}
+			String   jsonString = mapper.writeValueAsString(bean);
+			
+			TextMessage message = session.createTextMessage(jsonString);
+			
+
+			message.setJMSMessageID(uniqueId);
 			message.setJMSExpiration(getLifeTime());
 			message.setJMSTimestamp(getTimestamp());
 			message.setJMSPriority(getPriority());
@@ -114,7 +119,7 @@ public class RemoteSubmission {
 		int result = 1;
 		result = prime * result + (int) (lifeTime ^ (lifeTime >>> 32));
 		result = prime * result
-				+ ((messageId == null) ? 0 : messageId.hashCode());
+				+ ((uniqueId == null) ? 0 : uniqueId.hashCode());
 		result = prime * result + priority;
 		result = prime * result
 				+ ((queueName == null) ? 0 : queueName.hashCode());
@@ -134,10 +139,10 @@ public class RemoteSubmission {
 		RemoteSubmission other = (RemoteSubmission) obj;
 		if (lifeTime != other.lifeTime)
 			return false;
-		if (messageId == null) {
-			if (other.messageId != null)
+		if (uniqueId == null) {
+			if (other.uniqueId != null)
 				return false;
-		} else if (!messageId.equals(other.messageId))
+		} else if (!uniqueId.equals(other.uniqueId))
 			return false;
 		if (priority != other.priority)
 			return false;
@@ -172,12 +177,12 @@ public class RemoteSubmission {
 		this.uri = uri;
 	}
 
-	public String getMessageId() {
-		return messageId;
+	public String getUniqueId() {
+		return uniqueId;
 	}
 
-	public void setMessageId(String messageId) {
-		this.messageId = messageId;
+	public void setUniqueId(String uniqueId) {
+		this.uniqueId = uniqueId;
 	}
 	
 }

@@ -135,8 +135,6 @@ public abstract class SubmissionConsumer {
         	} catch (Throwable ne) {
         		// Really basic error reporting, they have to pipe to file.
         		ne.printStackTrace();
-        	} finally {
-        		connection.close();
         	}
 		}
 		
@@ -182,6 +180,7 @@ public abstract class SubmissionConsumer {
 		            		failIds.put(t.getJMSMessageID(), qbean);
 		            	}
 	            	} catch (Exception ne) {
+	            		System.out.println("Message "+t.getText()+" is not legal and will be removed.");
 	            		removeIds.add(t.getJMSMessageID());
 	            	}
 	        	}
@@ -189,11 +188,11 @@ public abstract class SubmissionConsumer {
 	        
 	        // We fail the non-started jobs now - otherwise we could
 	        // actually start them late. TODO check this
-	        if (failIds.size()>0) {
-	        	
-	        	final List<String> ids = new ArrayList<String>();
-	        	ids.addAll(failIds.keySet());
-	        	ids.addAll(removeIds);
+        	final List<String> ids = new ArrayList<String>();
+        	ids.addAll(failIds.keySet());
+        	ids.addAll(removeIds);
+        	
+	        if (ids.size()>0) {
 	        	
 	        	for (String jMSMessageID : ids) {
 		        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");

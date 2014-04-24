@@ -1,13 +1,14 @@
 package org.dawnsci.commandserver.ui;
 
 import java.text.DateFormat;
-import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Properties;
+import java.util.TreeSet;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -235,6 +236,13 @@ public class QueueView extends ViewPart {
 		};
 	}
 
+	/**
+	 * Read Queue and return in submission order.
+	 * @param uri
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("unchecked")
 	protected Map<String, StatusBean> readQueue(final String uri) throws Exception {
 		
 		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
@@ -243,7 +251,6 @@ public class QueueView extends ViewPart {
 		Queue queue   = qSes.createQueue(getQueueName());
 		qCon.start();
 		
-		final Map<String,StatusBean> ascending = new LinkedHashMap<String,StatusBean>();
 	    QueueBrowser qb = qSes.createBrowser(queue);
 	    
 	    @SuppressWarnings("rawtypes")
@@ -251,26 +258,35 @@ public class QueueView extends ViewPart {
 	    
         Class        clazz  = getBeanClass();
 		ObjectMapper mapper = new ObjectMapper();
+		
+		final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
+			@Override
+			public int compare(StatusBean o1, StatusBean o2) {
+				// Newest first!
+		        long t1 = o2.getSubmissionTime();
+		        long t2 = o1.getSubmissionTime();
+		        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
+			}
+		});
+
         while(e.hasMoreElements()) {
 	    	Message m = (Message)e.nextElement();
 	    	if (m==null) continue;
         	if (m instanceof TextMessage) {
             	TextMessage t = (TextMessage)m;
-              	@SuppressWarnings("unchecked")
 				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-            	ascending.put(bean.getUniqueId(), bean);
+              	list.add(bean);
         	}
 	    }
         
         // We reverse the queue because it comes out date ascending and we
         // want newest submissions first.
-		final Map<String,StatusBean> decending = new LinkedHashMap<String,StatusBean>();
-        final List<String> keys = new ArrayList<String>(ascending.keySet());
-        for (int i = keys.size()-1; i > -1; i--) {
-        	String key = keys.get(i);
-        	decending.put(key, ascending.get(key));
+		final Map<String,StatusBean> ret = new LinkedHashMap<String,StatusBean>();
+        for (StatusBean bean : list) {
+        	ret.put(bean.getUniqueId(), bean);
 		}
-        return decending;
+        
+        return ret;
 	}
 
 	private Class getBeanClass() throws ClassNotFoundException {

@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.core;
+package org.dawnsci.commandserver.core.beans;
 
 
 /**

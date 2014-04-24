@@ -1,7 +1,7 @@
 package org.dawnsci.commandserver.mx.consumer;
 
-import org.dawnsci.commandserver.core.ProgressableProcess;
-import org.dawnsci.commandserver.core.StatusBean;
+import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
 import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
 import org.dawnsci.commandserver.mx.dummy.DummyProcess;

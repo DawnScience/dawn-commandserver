@@ -1,8 +1,8 @@
 package org.dawnsci.commandserver.mx.dummy;
 
-import org.dawnsci.commandserver.core.ProgressableProcess;
-import org.dawnsci.commandserver.core.Status;
-import org.dawnsci.commandserver.core.StatusBean;
+import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.process.ProgressableProcess;
 
 /**
  * 

@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Commandserver
 Bundle-SymbolicName: org.dawnsci.commandserver
 Bundle-Version: 1.0.0.qualifier
-Bundle-Activator: org.dawnsci.commandserver.Activator
+Bundle-Activator: org.dawnsci.commandserver.core.Activator
 Bundle-Vendor: DLS
 Require-Bundle: org.eclipse.core.runtime,
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.2.0",
@@ -15,5 +15,7 @@ Bundle-ClassPath: lib/activemq-all-5.9.0.jar,
  .
 Export-Package: javax.jms,
  org.dawnsci.commandserver.core,
+ org.dawnsci.commandserver.core.beans,
  org.dawnsci.commandserver.core.consumer,
+ org.dawnsci.commandserver.core.process,
  org.dawnsci.commandserver.core.producer

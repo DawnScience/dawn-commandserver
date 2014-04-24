@@ -3,7 +3,7 @@ package org.dawnsci.commandserver.mx.beans;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dawnsci.commandserver.core.StatusBean;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 
 /**
  * Bean to serialise with JSON and be sent to the server.

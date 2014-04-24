@@ -2,7 +2,7 @@ package org.dawnsci.commandserver.mx.example;
 
 import java.util.Arrays;
 
-import org.dawnsci.commandserver.core.Status;
+import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
 import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
 

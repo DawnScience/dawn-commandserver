@@ -1,7 +1,9 @@
 package org.dawnsci.commandserver.core.producer;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.jms.Connection;
@@ -18,10 +20,10 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.ProgressableProcess;
-import org.dawnsci.commandserver.core.Status;
-import org.dawnsci.commandserver.core.StatusBean;
+import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.process.ProgressableProcess;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -163,32 +165,44 @@ public abstract class SubmissionConsumer {
 		    
 			ObjectMapper mapper = new ObjectMapper();
 			
-			Map<String, StatusBean> messageIds = new LinkedHashMap<String, StatusBean>(7);
+			Map<String, StatusBean> failIds = new LinkedHashMap<String, StatusBean>(7);
+			List<String>          removeIds = new ArrayList<String>(7);
 	        while(e.hasMoreElements()) {
 		    	Message m = (Message)e.nextElement();
 		    	if (m==null) continue;
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
 	              	
-	            	@SuppressWarnings("unchecked")
-					final StatusBean qbean = mapper.readValue(t.getText(), getBeanClass());
-	            	if (qbean==null)               continue;
-	            	if (qbean.getStatus()==null)   continue;
-	            	if (!qbean.getStatus().isStarted()) {
-	            		messageIds.put(t.getJMSMessageID(), qbean);
+	            	try {
+		            	@SuppressWarnings("unchecked")
+						final StatusBean qbean = mapper.readValue(t.getText(), getBeanClass());
+		            	if (qbean==null)               continue;
+		            	if (qbean.getStatus()==null)   continue;
+		            	if (!qbean.getStatus().isStarted()) {
+		            		failIds.put(t.getJMSMessageID(), qbean);
+		            	}
+	            	} catch (Exception ne) {
+	            		removeIds.add(t.getJMSMessageID());
 	            	}
 	        	}
 		    }
 	        
 	        // We fail the non-started jobs now - otherwise we could
 	        // actually start them late. TODO check this
-	        if (messageIds.size()>0) {
-	        	for (String jMSMessageID : messageIds.keySet()) {
+	        if (failIds.size()>0) {
+	        	
+	        	final List<String> ids = new ArrayList<String>();
+	        	ids.addAll(failIds.keySet());
+	        	ids.addAll(removeIds);
+	        	
+	        	for (String jMSMessageID : ids) {
 		        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");
 		        	Message m = consumer.receive(1000);
+		        	if (removeIds.contains(jMSMessageID)) continue; // We are done
+		        	
 		        	if (m!=null && m instanceof TextMessage) {
 		        		MessageProducer producer = qSes.createProducer(queue);
-		        		final StatusBean    bean = messageIds.get(jMSMessageID);
+		        		final StatusBean    bean = failIds.get(jMSMessageID);
 		        		bean.setStatus(Status.FAILED);
 		        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
 		        		

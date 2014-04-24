@@ -11,7 +11,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.StatusBean;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

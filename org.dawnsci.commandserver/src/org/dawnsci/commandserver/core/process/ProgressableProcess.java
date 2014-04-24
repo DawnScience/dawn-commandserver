@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.core;
+package org.dawnsci.commandserver.core.process;
 
 import java.util.Enumeration;
 
@@ -15,6 +15,10 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
+
+import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

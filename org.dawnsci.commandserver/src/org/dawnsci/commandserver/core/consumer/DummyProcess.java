@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.mx.dummy;
+package org.dawnsci.commandserver.core.consumer;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;

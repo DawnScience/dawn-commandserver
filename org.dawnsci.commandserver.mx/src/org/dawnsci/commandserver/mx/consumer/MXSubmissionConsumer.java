@@ -1,10 +1,10 @@
 package org.dawnsci.commandserver.mx.consumer;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.DummyProcess;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
 import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
-import org.dawnsci.commandserver.mx.dummy.DummyProcess;
 
 /**
  * This consumer monitors a queue and starts runs based

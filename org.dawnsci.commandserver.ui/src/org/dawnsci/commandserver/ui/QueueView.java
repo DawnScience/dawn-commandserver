@@ -58,7 +58,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * The optional keys are: partName
  * 
  * Example id for this view would be:
- * org.dawnsci.commandserver.ui.queueView:uri=tcp%3A//ws097.diamond.ac.uk%3A61616;queueName=scisoft.xia2.STATUS_QUEUE;partName=XIA2 Reprocessing;beanClassName=org.dawnsci.commandserver.mx.beans.DataCollectionsBean
+ * org.dawnsci.commandserver.ui.queueView:uri=tcp%3A//ws097.diamond.ac.uk%3A61616;queueName=scisoft.xia2.STATUS_QUEUE;partName=XIA2 Reprocessing;beanClassName=org.dawnsci.commandserver.mx.beans.ProjectBean
  * 
  * You can optionally extend this class to provide a table which is displayed for your
  * queue of custom objects. For instance for a queue showing xia2 reruns, the 
@@ -231,6 +231,7 @@ public class QueueView extends ViewPart {
 			
 			@Override
 			public Object[] getElements(Object inputElement) {
+				if (queue==null) return new StatusBean[]{StatusBean.EMPTY};
 				return queue.values().toArray(new StatusBean[queue.size()]);
 			}
 		};

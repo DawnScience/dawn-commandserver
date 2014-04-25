@@ -8,7 +8,6 @@
  */
 package org.dawnsci.commandserver.mx.example;
 
-import java.util.Arrays;
 import java.util.Enumeration;
 
 import javax.jms.Connection;
@@ -25,7 +24,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
+import org.dawnsci.commandserver.mx.beans.SweepBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -73,7 +72,7 @@ public class ActiveMQProducer {
 	    producer.send(message);
 	    
 	    // Test JSON
-		DataCollectionBean col = new DataCollectionBean("fred", "d0000000001", Arrays.asList("all"));
+		SweepBean col = new SweepBean("fred", "d0000000001", 0, 100);
 		
 		ObjectMapper mapper = new ObjectMapper();
 		String jsonString = mapper.writeValueAsString(col);

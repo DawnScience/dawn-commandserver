@@ -18,7 +18,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
+import org.dawnsci.commandserver.mx.beans.SweepBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -62,7 +62,7 @@ public class ActiveMQConsumer {
                 	System.out.println(t.getText());
                 	try {
                 		ObjectMapper mapper = new ObjectMapper();
-                		final DataCollectionBean colBack = mapper.readValue(t.getText(), DataCollectionBean.class);
+                		final SweepBean colBack = mapper.readValue(t.getText(), SweepBean.class);
                         System.out.println("Data collection found: "+colBack.getDataCollectionId());
                         
                 	} catch (Exception ne) {

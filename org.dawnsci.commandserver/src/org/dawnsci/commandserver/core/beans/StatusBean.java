@@ -10,6 +10,7 @@ package org.dawnsci.commandserver.core.beans;
  */
 public class StatusBean {
 
+	public static final StatusBean EMPTY = new StatusBean(Status.NONE,"", "", Double.NaN, "", "EMPTY", System.currentTimeMillis());
 	/**
 	 * The uid is generally provided by the client
 	 * then returned back from the server to know
@@ -30,6 +31,17 @@ public class StatusBean {
 	 * We intentionally ignore the JMS version of this
 	 */
 	protected long   submissionTime;
+	
+	private StatusBean( Status none,String name, String message, double percentComplete,
+			String userName, String uniqueId, long submissionTime) {
+		this.status          = none;
+		this.name            = name;
+		this.percentComplete = percentComplete;
+        this.userName        = userName;
+        this.uniqueId        = uniqueId;
+        this.submissionTime  = submissionTime;
+	}
+
 	
 	/**
 	 * Subclasses must override this method.
@@ -54,6 +66,8 @@ public class StatusBean {
 		this();
 		this.name = name;
 	}
+
+
 	public Status getStatus() {
 		return status;
 	}

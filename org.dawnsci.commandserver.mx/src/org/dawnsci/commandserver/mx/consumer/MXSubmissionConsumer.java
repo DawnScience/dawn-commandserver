@@ -1,10 +1,10 @@
 package org.dawnsci.commandserver.mx.consumer;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.consumer.DummyProcess;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
-import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
+import org.dawnsci.commandserver.mx.beans.ProjectBean;
+import org.dawnsci.commandserver.mx.process.Xia2Process;
 
 /**
  * This consumer monitors a queue and starts runs based
@@ -46,7 +46,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 
 	@Override
 	protected Class<? extends StatusBean> getBeanClass() {
-		return DataCollectionsBean.class;
+		return ProjectBean.class;
 	}
 
 
@@ -56,7 +56,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 			                                    String statusQName, 
 			                                    StatusBean bean) {
 
-		return new DummyProcess(uri, statusTName, statusQName, bean);
+		return new Xia2Process(uri, statusTName, statusQName, bean);
 	}
 
 

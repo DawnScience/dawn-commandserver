@@ -1,10 +1,8 @@
 package org.dawnsci.commandserver.mx.example;
 
-import java.util.Arrays;
-
 import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.mx.beans.DataCollectionBean;
-import org.dawnsci.commandserver.mx.beans.DataCollectionsBean;
+import org.dawnsci.commandserver.mx.beans.ProjectBean;
+import org.dawnsci.commandserver.mx.beans.SweepBean;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -13,9 +11,9 @@ public class TestMarshall {
 	public static void main(String[] args) throws Exception {
 		
 		// We want to get the JSON string for this:
-		DataCollectionBean col = new DataCollectionBean("fred", "d0000000001", Arrays.asList("all"));
-		DataCollectionsBean bean = new DataCollectionsBean();
-		bean.addCollection(col);
+		SweepBean col = new SweepBean("fred", "d0000000001", 0, 100);
+		ProjectBean bean = new ProjectBean();
+		bean.addSweep(col);
 		bean.setStatus(Status.SUBMITTED);
 		bean.setPercentComplete(10);
 		
@@ -24,7 +22,7 @@ public class TestMarshall {
 		
 		System.out.println(jsonString);
 		
-		final DataCollectionsBean beanBack = mapper.readValue(jsonString, DataCollectionsBean.class);
+		final ProjectBean beanBack = mapper.readValue(jsonString, ProjectBean.class);
 		System.out.println("Read in equals written out = "+beanBack.equals(bean));
 	}
 }

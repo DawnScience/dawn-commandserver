@@ -3,8 +3,6 @@ package org.dawnsci.commandserver.mx.process;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.FilenameFilter;
-import java.io.Writer;
 
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.beans.SweepBean;
@@ -108,7 +106,7 @@ public class Xia2Writer extends BufferedWriter {
 			newLine();
 			write("DIRECTORY "+sweep.getImageDirectory());
 			newLine();
-			write("IMAGE "+getImageName(sweep));
+			write("IMAGE "+sweep.getFirstImageName());
 			newLine();
 			write("START_END "+sweep.getStart()+" "+sweep.getEnd());
 			newLine();
@@ -126,24 +124,6 @@ public class Xia2Writer extends BufferedWriter {
 		write("END PROJECT "+bean.getProjectName());
 		newLine();
 
-	}
-
-	/**
-	 * Gets the name of the image at the start location.
-	 * TODO Is this right?
-	 * 
-	 * @param sweep
-	 * @return
-	 */
-	private String getImageName(SweepBean sweep) {
-		try {
-			final File dir = new File(sweep.getImageDirectory());
-			final int start = sweep.getStart();
-			final String[] names = dir.list(); // Slightly faster than listing files.
-			return names[start];
-		} catch (Exception ne) {
-			return ne.getMessage(); // TODO Bit funny but clear why image name wrong in file.
-		}
 	}
 	
 	/**

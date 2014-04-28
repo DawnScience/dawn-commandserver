@@ -13,6 +13,7 @@ public class SweepBean {
 	private String        name;
 	private String        dataCollectionId;
 	private String        imageDirectory;
+	private String        firstImageName;
 	private int           start;
 	private int           end;
 	private double        wavelength = Double.NaN;
@@ -45,6 +46,8 @@ public class SweepBean {
 		result = prime * result + end;
 		result = prime * result
 				+ ((imageDirectory == null) ? 0 : imageDirectory.hashCode());
+		result = prime * result
+				+ ((firstImageName == null) ? 0 : firstImageName.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + start;
 		long temp;
@@ -76,6 +79,11 @@ public class SweepBean {
 			if (other.imageDirectory != null)
 				return false;
 		} else if (!imageDirectory.equals(other.imageDirectory))
+			return false;
+		if (firstImageName == null) {
+			if (other.firstImageName != null)
+				return false;
+		} else if (!firstImageName.equals(other.firstImageName))
 			return false;
 		if (name == null) {
 			if (other.name != null)
@@ -136,5 +144,19 @@ public class SweepBean {
 	}
 	public void setEnd(int end) {
 		this.end = end;
+	}
+	public String getFirstImageName() {
+		return firstImageName;
+	}
+	/**
+	 * The image pattern is of the form:
+	 *  <image prefix>_<data collection #>_${number}.<file extension>
+	 *  
+	 *  for instance:
+	 *     JMJD2AA-x545_2_0001.cbf
+	 * @param imageName
+	 */
+	public void setFirstImageName(String imageName) {
+		this.firstImageName = imageName;
 	}
 }

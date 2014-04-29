@@ -247,7 +247,7 @@ public class QueueView extends ViewPart {
 	protected Map<String, StatusBean> readQueue(final String uri) throws Exception {
 		
 		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		QueueConnection qCon  = connectionFactory.createQueueConnection(); 
+		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
 		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue   = qSes.createQueue(getQueueName());
 		qCon.start();

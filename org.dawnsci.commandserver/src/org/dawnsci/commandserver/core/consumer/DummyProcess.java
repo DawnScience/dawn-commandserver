@@ -38,19 +38,7 @@ public class DummyProcess extends ProgressableProcess {
         bean.setPercentComplete(1);
         broadcast(bean);
 		
-        for (int i = 0; i < 100; i++) {
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-			bean.setPercentComplete(i);
-	        broadcast(bean);
-		}
-        
-        bean.setStatus(Status.COMPLETE);
-        bean.setPercentComplete(100);
-        broadcast(bean);
+        dryRun();
 	}
 
 }

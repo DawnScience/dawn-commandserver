@@ -6,7 +6,7 @@
       <view
             allowMultiple="true"
             category="org.dawnsci.commandserver.category"
-            class="org.dawnsci.commandserver.ui.QueueView"
+            class="org.dawnsci.commandserver.ui.view.StatusQueueView"
             icon="icons/computer--arrow.png"
             id="org.dawnsci.commandserver.ui.queueView"
             name="Queue"
@@ -17,6 +17,21 @@
             name="Command Server"
             parentCategory="uk.ac.diamond.scisoft.analysis.rcp">
       </category>
+   </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="org.dawnsci.commandserver.ui.preference.CommandInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="uk.ac.diamond.scisoft.ispybexplorer.rcp.category"
+            class="org.dawnsci.commandserver.ui.preference.ActiveMQPage"
+            id="org.dawnsci.commandserver.ui.activemqPage"
+            name="Command Server Configuration">
+      </page>
    </extension>
 
 </plugin>

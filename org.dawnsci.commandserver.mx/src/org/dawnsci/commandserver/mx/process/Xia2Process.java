@@ -34,6 +34,11 @@ public class Xia2Process extends ProgressableProcess{
 	@Override
 	public void run() {
 		
+		writeFile();
+		dryRun();
+	}
+
+	private void writeFile() {
         ProjectBean dBean = (ProjectBean)bean;
         Xia2Writer writer = null;
 		try {
@@ -65,6 +70,7 @@ public class Xia2Process extends ProgressableProcess{
 				}
 			}
 		}
+		
 	}
 
 	public String getProcessingDir() {

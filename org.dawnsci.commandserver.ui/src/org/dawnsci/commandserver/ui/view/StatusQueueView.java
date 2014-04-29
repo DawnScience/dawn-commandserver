@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.ui;
+package org.dawnsci.commandserver.ui.view;
 
 import java.text.DateFormat;
 import java.util.Collection;
@@ -12,7 +12,6 @@ import java.util.TreeSet;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
@@ -29,6 +28,9 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.ui.Activator;
+import org.dawnsci.commandserver.ui.dialog.PropertiesDialog;
+import org.dawnsci.commandserver.ui.preference.CommandConstants;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -37,6 +39,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -59,11 +62,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * and optionally the queue view name if a custom one is required. Syntax of
  * these parameters in the secondary id are key1=value1;key2=value2...
  * 
- * The essential keys are: uri, queueName, beanBundleName, beanClassName, topicName
- * The optional keys are: partName
+ * The essential keys are: beanBundleName, beanClassName
+ * The optional keys are: partName, 
+ *                        uri (default CommandConstants.JMS_URI)
+ *                        queueName (default CommandConstants.STATUS_QUEUE)
+ *                        topicName (default CommandConstants.STATUS_TOPIC)
  * 
  * Example id for this view would be:
- * org.dawnsci.commandserver.ui.queueView:uri=tcp%3A//ws097.diamond.ac.uk%3A61616;queueName=scisoft.xia2.STATUS_QUEUE;partName=XIA2 Reprocessing;beanClassName=org.dawnsci.commandserver.mx.beans.ProjectBean
+ * org.dawnsci.commandserver.ui.queueView:beanClassName=org.dawnsci.commandserver.mx.beans.ProjectBean;beanBundleName=org.dawnsci.commandserver.mx
  * 
  * You can optionally extend this class to provide a table which is displayed for your
  * queue of custom objects. For instance for a queue showing xia2 reruns, the 
@@ -72,9 +78,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author fcp94556
  *
  */
-public class QueueView extends ViewPart {
+public class StatusQueueView extends ViewPart {
 	
-	private static final Logger logger = LoggerFactory.getLogger(QueueView.class);
+	private static final Logger logger = LoggerFactory.getLogger(StatusQueueView.class);
 	
 	// UI
 	private TableViewer                       viewer;
@@ -136,16 +142,7 @@ public class QueueView extends ViewPart {
 			        final ObjectMapper mapper = new ObjectMapper();
 			        
 			        MessageListener listener = new MessageListener() {
-			            public void onMessage(Message message) {
-			            	
-			            	if (viewer.getTable().isDisposed()) {
-			            		try {
-									consumer.setMessageListener(null);
-								} catch (JMSException e) {
-									logger.warn("Cannot reset message listener (not a fatal message).", e);
-								}
-			            		return;
-			            	}
+			            public void onMessage(Message message) {		            	
 			                try {
 			                    if (message instanceof TextMessage) {
 			                        TextMessage t = (TextMessage) message;
@@ -224,8 +221,8 @@ public class QueueView extends ViewPart {
 				if (ok == PropertiesDialog.OK) {
 					idProperties.clear();
 					idProperties.putAll(dialog.getProps());
+					reconnect();
 				}
-				reconnect();
 			}
 		};
 		
@@ -414,17 +411,26 @@ public class QueueView extends ViewPart {
 
 
 	private String getTopicName() {
-		return getSecondaryIdAttribute("topicName");
+		final String topicName = getSecondaryIdAttribute("topicName");
+		if (topicName != null) return topicName;
+		return getCommandPreference(CommandConstants.STATUS_TOPIC);
 	}
 
     protected String getUri() {
 		final String uri = getSecondaryIdAttribute("uri");
-		if (uri == null) return null;
-		return uri.replace("%3A", ":");
+		if (uri != null) return uri.replace("%3A", ":");
+		return getCommandPreference(CommandConstants.JMS_URI);
 	}
+    
+    protected String getCommandPreference(String key) {
+		final IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+    	return store.getString(key);
+    }
 
 	protected String getQueueName() {
-		return getSecondaryIdAttribute("queueName");
+		final String qName =  getSecondaryIdAttribute("queueName");
+		if (qName != null) return qName;
+		return getCommandPreference(CommandConstants.STATUS_QUEUE);
 	}
 	
 	private String getSecondaryIdAttribute(String key) {

@@ -164,4 +164,20 @@ public abstract class ProgressableProcess implements Runnable {
 	public void setCancelled(boolean isCancelled) {
 		this.isCancelled = isCancelled;
 	}
+	
+	protected void dryRun() {
+		for (int i = 0; i < 100; i++) {
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+			bean.setPercentComplete(i);
+			broadcast(bean);
+		}
+
+		bean.setStatus(Status.COMPLETE);
+		bean.setPercentComplete(100);
+		broadcast(bean);
+	}
 }

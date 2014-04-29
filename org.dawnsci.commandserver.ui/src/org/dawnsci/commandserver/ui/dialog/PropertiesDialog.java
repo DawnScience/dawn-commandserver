@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.ui;
+package org.dawnsci.commandserver.ui.dialog;
 
 import java.util.Map;
 import java.util.Map.Entry;
@@ -6,7 +6,9 @@ import java.util.Properties;
 import java.util.Set;
 import java.util.TreeMap;
 
+import org.dawnsci.commandserver.ui.Activator;
 import org.eclipse.jface.dialogs.Dialog;
+import org.eclipse.jface.preference.PreferenceDialog;
 import org.eclipse.jface.viewers.CellEditor;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.EditingSupport;
@@ -18,16 +20,21 @@ import org.eclipse.jface.viewers.TextCellEditor;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.CLabel;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
+import org.eclipse.swt.layout.GridLayout;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Shell;
+import org.eclipse.ui.dialogs.PreferencesUtil;
 
 public class PropertiesDialog extends Dialog {
 
 	private Map<Object,Object> props;
 
-	protected PropertiesDialog(Shell parentShell, Properties p) {
+	public PropertiesDialog(Shell parentShell, Properties p) {
 		super(parentShell);
 		setShellStyle(SWT.APPLICATION_MODAL | SWT.DIALOG_TRIM | SWT.RESIZE);
 		this.props = new TreeMap<Object,Object>();
@@ -38,6 +45,7 @@ public class PropertiesDialog extends Dialog {
 		
 		// create a composite with standard margins and spacing
 		Composite composite = (Composite)super.createDialogArea(parent);
+		composite.setLayout(new GridLayout(1, false));
 		
 		final CLabel warning = new CLabel(composite, SWT.LEFT);
 		warning.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false));
@@ -53,6 +61,17 @@ public class PropertiesDialog extends Dialog {
 		viewer.setContentProvider(createContentProvider());
 		
 		viewer.setInput(props);
+
+		final Button adv = new Button(composite, SWT.PUSH);
+		adv.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+		adv.setText("Advanced...");
+		
+		adv.addSelectionListener(new SelectionAdapter() {			
+			public void widgetSelected(SelectionEvent e) {
+				PreferenceDialog pref = PreferencesUtil.createPreferenceDialogOn(getShell(), "org.dawnsci.commandserver.ui.activemqPage", null, null);
+				if (pref != null) pref.open();
+			}
+		});
 
 		return composite;
 	}
@@ -99,7 +118,8 @@ public class PropertiesDialog extends Dialog {
         value.getColumn().setWidth(300);
         value.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((Entry<?, ?>)element).getValue().toString();
+				String val = ((Entry<?, ?>)element).getValue().toString();
+				return val.replace("%3A", ":");
 			}
 		});
         value.setEditingSupport(new EditingSupport(viewer) {
@@ -123,6 +143,9 @@ public class PropertiesDialog extends Dialog {
 			@Override
 			protected void setValue(Object element, Object value) {
 				Entry<Object, Object> e = (Entry<Object, Object>)element;
+				
+				String val = (String)value;
+				val = val.replace(":", "%3A");
 				e.setValue(value);
 				viewer.refresh(element);
 			}

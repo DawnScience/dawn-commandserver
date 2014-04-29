@@ -29,9 +29,14 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
@@ -94,7 +99,7 @@ public class QueueView extends ViewPart {
 		createColumns();
 		viewer.setContentProvider(createContentProvider());
 		
-		viewer.setInput(getUri());
+		updateQueue(getUri());
 		
 		String name = getSecondaryIdAttribute("partName");
         if (name!=null) setPartName(name);
@@ -112,41 +117,62 @@ public class QueueView extends ViewPart {
 	 */
 	private void createTopicListener(final String uri) throws Exception {
 		
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-        topicConnection = connectionFactory.createConnection();
-        topicConnection.start();
+		// Use job because connection might timeout.
+		final Job topicJob = new Job("Create topic listener") {
 
-        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-        final Topic           topic    = session.createTopic(getTopicName());
-        final MessageConsumer consumer = session.createConsumer(topic);
-
-        final Class        clazz  = getBeanClass();
-        final ObjectMapper mapper = new ObjectMapper();
-        
-        MessageListener listener = new MessageListener() {
-            public void onMessage(Message message) {
-            	
-            	if (viewer.getTable().isDisposed()) {
-            		try {
-						consumer.setMessageListener(null);
-					} catch (JMSException e) {
-						logger.warn("Cannot reset message listener (not a fatal message).", e);
-					}
-            		return;
-            	}
-                try {
-                    if (message instanceof TextMessage) {
-                        TextMessage t = (TextMessage) message;
-        				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-                        mergeBean(bean);
-                    }
-                } catch (Exception e) {
-                    logger.error("Updating changed bean from topic", e);
-                }
-            }
-        };
-        consumer.setMessageListener(listener);
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			        topicConnection = connectionFactory.createConnection();
+			        topicConnection.start();
+	
+			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	
+			        final Topic           topic    = session.createTopic(getTopicName());
+			        final MessageConsumer consumer = session.createConsumer(topic);
+	
+			        final Class        clazz  = getBeanClass();
+			        final ObjectMapper mapper = new ObjectMapper();
+			        
+			        MessageListener listener = new MessageListener() {
+			            public void onMessage(Message message) {
+			            	
+			            	if (viewer.getTable().isDisposed()) {
+			            		try {
+									consumer.setMessageListener(null);
+								} catch (JMSException e) {
+									logger.warn("Cannot reset message listener (not a fatal message).", e);
+								}
+			            		return;
+			            	}
+			                try {
+			                    if (message instanceof TextMessage) {
+			                        TextMessage t = (TextMessage) message;
+			        				final StatusBean bean = mapper.readValue(t.getText(), clazz);
+			                        mergeBean(bean);
+			                    }
+			                } catch (Exception e) {
+			                    logger.error("Updating changed bean from topic", e);
+			                }
+			            }
+			        };
+			        consumer.setMessageListener(listener);
+			        return Status.OK_STATUS;
+			        
+				} catch (Exception ne) {
+					logger.error("Cannot listen to topic changes because command server is not there", ne);
+			        return Status.CANCEL_STATUS;
+				}
+			}
+			
+			
+		};
+		
+		topicJob.setPriority(Job.INTERACTIVE);
+		topicJob.setSystem(true);
+		topicJob.setUser(false);
+		topicJob.schedule();
 	}
 	
 	public void dispose() {
@@ -207,8 +233,7 @@ public class QueueView extends ViewPart {
 	}
 
 	protected void reconnect() {
-		viewer.setInput(getUri());
-		viewer.refresh();
+		updateQueue(getUri());
 	}
 	
 	private IContentProvider createContentProvider() {
@@ -216,12 +241,7 @@ public class QueueView extends ViewPart {
 			
 			@Override
 			public void inputChanged(Viewer viewer, Object oldInput, Object newInput) {
-				final String uri   = (String)newInput;
-				try {
-					queue = readQueue(uri);
-				} catch (Exception e) {
-                    logger.error("Updating changed bean from topic", e);
-				}
+				queue = (Map<String, StatusBean>)newInput;
 			}
 			
 			@Override
@@ -244,50 +264,92 @@ public class QueueView extends ViewPart {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	protected Map<String, StatusBean> readQueue(final String uri) throws Exception {
+	protected synchronized void updateQueue(final String uri) {
 		
-		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
-		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue queue   = qSes.createQueue(getQueueName());
-		qCon.start();
-		
-	    QueueBrowser qb = qSes.createBrowser(queue);
-	    
-	    @SuppressWarnings("rawtypes")
-		Enumeration  e  = qb.getEnumeration();
-	    
-        Class        clazz  = getBeanClass();
-		ObjectMapper mapper = new ObjectMapper();
-		
-		final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
-			@Override
-			public int compare(StatusBean o1, StatusBean o2) {
-				// Newest first!
-		        long t1 = o2.getSubmissionTime();
-		        long t2 = o1.getSubmissionTime();
-		        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
-			}
-		});
 
-        while(e.hasMoreElements()) {
-	    	Message m = (Message)e.nextElement();
-	    	if (m==null) continue;
-        	if (m instanceof TextMessage) {
-            	TextMessage t = (TextMessage)m;
-				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-              	list.add(bean);
-        	}
-	    }
-        
-        // We reverse the queue because it comes out date ascending and we
-        // want newest submissions first.
-		final Map<String,StatusBean> ret = new LinkedHashMap<String,StatusBean>();
-        for (StatusBean bean : list) {
-        	ret.put(bean.getUniqueId(), bean);
-		}
-        
-        return ret;
+		final Job queueJob = new Job("Connect and read queue") {
+
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				try {
+					monitor.beginTask("Connect to command server", 10);
+					monitor.worked(1);
+					QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+					monitor.worked(1);
+					QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
+					QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+					Queue queue   = qSes.createQueue(getQueueName());
+					qCon.start();
+					
+				    QueueBrowser qb = qSes.createBrowser(queue);
+					monitor.worked(1);
+			    
+				    @SuppressWarnings("rawtypes")
+					Enumeration  e  = qb.getEnumeration();
+				    
+			        Class        clazz  = getBeanClass();
+					ObjectMapper mapper = new ObjectMapper();
+					
+					final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
+						@Override
+						public int compare(StatusBean o1, StatusBean o2) {
+							// Newest first!
+					        long t1 = o2.getSubmissionTime();
+					        long t2 = o1.getSubmissionTime();
+					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
+						}
+					});
+
+			        while(e.hasMoreElements()) {
+				    	Message m = (Message)e.nextElement();
+				    	if (m==null) continue;
+			        	if (m instanceof TextMessage) {
+			            	TextMessage t = (TextMessage)m;
+							final StatusBean bean = mapper.readValue(t.getText(), clazz);
+			              	list.add(bean);
+			        	}
+				    }
+					monitor.worked(1);
+			        
+			        // We reverse the queue because it comes out date ascending and we
+			        // want newest submissions first.
+					final Map<String,StatusBean> ret = new LinkedHashMap<String,StatusBean>();
+			        for (StatusBean bean : list) {
+			        	ret.put(bean.getUniqueId(), bean);
+					}
+					monitor.worked(1);
+			        
+			        getSite().getShell().getDisplay().syncExec(new Runnable() {
+			        	public void run() {
+			        		viewer.setInput(ret);
+			        		viewer.refresh();
+			        	}
+			        });
+			        monitor.done();
+			        
+			        return Status.OK_STATUS;
+			        
+				} catch (final Exception e) {
+					
+			        monitor.done();
+			        logger.error("Updating changed bean from topic", e);
+			        getSite().getShell().getDisplay().syncExec(new Runnable() {
+			        	public void run() {
+							ErrorDialog.openError(getViewSite().getShell(), "Cannot connect to queue", "The command server is unavailable.\n\nPlease contact your support representative.", 
+						              new Status(IStatus.ERROR, Activator.PLUGIN_ID, e.getMessage()));
+			        	}
+			        });
+			        return Status.CANCEL_STATUS;
+
+				}			
+			}
+			
+		};
+		queueJob.setPriority(Job.INTERACTIVE);
+		queueJob.setUser(true);
+		queueJob.schedule();
+
+
 	}
 
 	private Class getBeanClass() throws ClassNotFoundException {

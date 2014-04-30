@@ -230,39 +230,6 @@ public abstract class SubmissionConsumer {
 		
 	}
 
-
-	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME> <MX TOPIC NAME> <STATUS QUEUE NAME\n"+
-	                              "Example: java -jar ispyb.jar "+SubmissionConsumer.class.getName()+" tcp://ws097.diamond.ac.uk:61616 scisoft.xia2.SUBMISSION_QUEUE scisoft.xia2.STATUS_TOPIC scisoft.xia2.STATUS_QUEUE";
-	protected static boolean checkArguments(String[] args) {
-		
-        if (args == null || args.length!=4) {
-        	System.out.println(USAGE);
-        	return false;
-        }
-        
-        if (!args[0].startsWith("tcp://")) {
-        	System.out.println(USAGE);
-        	return false;
-        }
-        
-        if ("".equals(args[1])) {
-        	System.out.println(USAGE);
-        	return false;
-        }
-        
-        if ("".equals(args[2])) {
-        	System.out.println(USAGE);
-        	return false;
-        }
-        
-        if ("".equals(args[3])) {
-        	System.out.println(USAGE);
-        	return false;
-        }
-        
-        return true;
-
-	}
 	
 	/**
 	 * 
@@ -311,5 +278,4 @@ public abstract class SubmissionConsumer {
 	public void setActive(boolean active) {
 		this.active = active;
 	}
-
 }

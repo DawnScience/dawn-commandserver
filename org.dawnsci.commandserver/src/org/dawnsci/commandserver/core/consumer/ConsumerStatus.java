@@ -7,5 +7,5 @@ package org.dawnsci.commandserver.core.consumer;
  */
 public enum ConsumerStatus {
 
-	STARTING, STOPPING, RUNNING;
+	STARTING, STOPPING, RUNNING, NOT_AVAILABLE, STOPPED;
 }

@@ -9,10 +9,14 @@ package org.dawnsci.commandserver.core.consumer;
  */
 public class ConsumerBean {
 
+	public static final ConsumerBean EMPTY = new ConsumerBean();
+	
 	private ConsumerStatus status;
 	private String         name;
 	private String         version;
 	private String         consumerId;
+	private long           startTime;
+	private long           lastAlive;
 	
 	public ConsumerStatus getStatus() {
 		return status;
@@ -44,7 +48,9 @@ public class ConsumerBean {
 		int result = 1;
 		result = prime * result
 				+ ((consumerId == null) ? 0 : consumerId.hashCode());
+		result = prime * result + (int) (lastAlive ^ (lastAlive >>> 32));
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + (int) (startTime ^ (startTime >>> 32));
 		result = prime * result + ((status == null) ? 0 : status.hashCode());
 		result = prime * result + ((version == null) ? 0 : version.hashCode());
 		return result;
@@ -63,10 +69,14 @@ public class ConsumerBean {
 				return false;
 		} else if (!consumerId.equals(other.consumerId))
 			return false;
+		if (lastAlive != other.lastAlive)
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
+			return false;
+		if (startTime != other.startTime)
 			return false;
 		if (status != other.status)
 			return false;
@@ -76,6 +86,18 @@ public class ConsumerBean {
 		} else if (!version.equals(other.version))
 			return false;
 		return true;
+	}
+	public long getStartTime() {
+		return startTime;
+	}
+	public void setStartTime(long startTime) {
+		this.startTime = startTime;
+	}
+	public long getLastAlive() {
+		return lastAlive;
+	}
+	public void setLastAlive(long lastAlive) {
+		this.lastAlive = lastAlive;
 	}
 	
 }

@@ -17,6 +17,14 @@
             name="Command Server"
             parentCategory="uk.ac.diamond.scisoft.analysis.rcp">
       </category>
+      <view
+            category="org.dawnsci.commandserver.category"
+            class="org.dawnsci.commandserver.ui.view.ConsumerView"
+            icon="icons/hand-share.png"
+            id="org.dawnsci.commandserver.ui.consumerView"
+            name="Active Consumers"
+            restorable="true">
+      </view>
    </extension>
    <extension
          point="org.eclipse.core.runtime.preferences">

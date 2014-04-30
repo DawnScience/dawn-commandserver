@@ -244,6 +244,7 @@ public abstract class SubmissionConsumer {
 		cbean.setName(getName());
 		cbean.setConsumerId(consumerId);
 		cbean.setVersion(consumerVersion);
+		cbean.setStartTime(System.currentTimeMillis());
 		
 		JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
 		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");

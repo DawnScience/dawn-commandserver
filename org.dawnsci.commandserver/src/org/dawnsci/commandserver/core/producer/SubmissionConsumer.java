@@ -5,6 +5,7 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -22,8 +23,12 @@ import javax.jms.TextMessage;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.Constants;
+import org.dawnsci.commandserver.core.consumer.ConsumerBean;
+import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -38,17 +43,26 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public abstract class SubmissionConsumer {
 	
+	protected final String       consumerId;
+	protected String             consumerVersion;
 
 	private String uri, submitQName, statusTName, statusQName;
+	
+	private boolean active = true;
 	
 	public SubmissionConsumer(String uri, 
 			                  String submitQName,
 			                  String statusTName,
-			                  String statusQName) {
+			                  String statusQName) throws Exception {
 		this.uri         = uri;
 		this.submitQName = submitQName;
 		this.statusTName = statusTName;
 		this.statusQName = statusQName;
+		
+		this.consumerId      = System.currentTimeMillis()+"_"+UUID.randomUUID().toString();
+		this.consumerVersion = "1.0";
+		
+		startNotifications();
 	}
 	
 	/**
@@ -77,7 +91,7 @@ public abstract class SubmissionConsumer {
 	 * @param bean
 	 * @return
 	 */
-	protected abstract ProgressableProcess createProcess(String uri, String statusTName, String statusQName, StatusBean bean);
+	protected abstract ProgressableProcess createProcess(String uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
 
 
 	/**
@@ -249,4 +263,53 @@ public abstract class SubmissionConsumer {
         return true;
 
 	}
+	
+	/**
+	 * 
+	 * @return the name which the user will see for this consumer.
+	 */
+	public abstract String getName();
+	
+	private void startNotifications() throws Exception {
+		
+		final ConsumerBean cbean = new ConsumerBean();
+		cbean.setStatus(ConsumerStatus.STARTING);
+		cbean.setName(getName());
+		cbean.setConsumerId(consumerId);
+		cbean.setVersion(consumerVersion);
+		
+		JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
+		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");
+		
+		cbean.setStatus(ConsumerStatus.RUNNING);
+		
+		final Thread aliveThread = new Thread(new Runnable() {
+			public void run() {
+				while(isActive()) {
+					try {
+						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
+						
+						JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
+						
+					} catch (InterruptedException ne) {
+						break;
+					} catch (Exception neOther) {
+						neOther.printStackTrace();
+					}
+				}
+			}
+		});
+		aliveThread.setDaemon(true);
+		aliveThread.setPriority(Thread.MIN_PRIORITY);
+		aliveThread.start();
+	}
+
+	public boolean isActive() {
+		return active;
+	}
+
+	public void setActive(boolean active) {
+		this.active = active;
+	}
+
 }

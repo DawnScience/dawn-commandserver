@@ -2,8 +2,6 @@ package org.dawnsci.commandserver.core.process;
 
 import java.util.Enumeration;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -14,11 +12,11 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
-import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -43,6 +41,7 @@ public abstract class ProgressableProcess implements Runnable {
 		this.statusTName     = statusTName;
 		this.statusQName   = statusQName;
 		this.bean          = bean;
+		
 		bean.setStatus(Status.QUEUED);
 		broadcast(bean);
 	}
@@ -130,30 +129,7 @@ public abstract class ProgressableProcess implements Runnable {
 	}
 
 	private void sendTopic(StatusBean bean) throws Exception {
-		
-		Connection connection = null;
-		try {
-			ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
-			connection = connectionFactory.createConnection();
-	        connection.start();
-	
-	        // JMS messages are sent and received using a Session. We will
-	        // create here a non-transactional session object. If you want
-	        // to use transactions you should set the first parameter to 'true'
-	        Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	
-	        Topic topic = session.createTopic(statusTName);
-	
-	        MessageProducer producer = session.createProducer(topic);
-	
-            final ObjectMapper mapper = new ObjectMapper();
- 	        
-            // Here we are sending the message out to the topic
-            producer.send(session.createTextMessage(mapper.writeValueAsString(bean)));
-
-		} finally {
-			if (connection!=null) connection.close();
-		}
+		JSONUtils.sendTopic(bean, statusTName, uri);
 	}
 
 	public boolean isCancelled() {
@@ -180,4 +156,5 @@ public abstract class ProgressableProcess implements Runnable {
 		bean.setPercentComplete(100);
 		broadcast(bean);
 	}
+
 }

@@ -35,11 +35,16 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 	}
 	
 
+	@Override
+	public String getName() {
+		return "Xia2 Multi-crystal Queue";
+	}
+
 
 	public MXSubmissionConsumer(String uri, 
 			                    String submitQName,
 			                    String statusTName, 
-			                    String statusQName) {
+			                    String statusQName) throws Exception {
 		
 		super(uri, submitQName, statusTName, statusQName);
 	}
@@ -54,10 +59,9 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 	protected ProgressableProcess createProcess(String uri, 
 			                                    String statusTName,
 			                                    String statusQName, 
-			                                    StatusBean bean) {
+			                                    StatusBean bean) throws Exception {
 
 		return new Xia2Process(uri, statusTName, statusQName, bean);
 	}
-
 
 }

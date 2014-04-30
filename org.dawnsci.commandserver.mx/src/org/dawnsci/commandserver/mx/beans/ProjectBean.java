@@ -20,7 +20,6 @@ public class ProjectBean extends StatusBean {
 	private String      cystalName;              
 	private List<SweepBean> sweeps;
 	private double      wavelength = Double.NaN;
-	private String      runDirectory;
 	
 	public ProjectBean(){
 	}
@@ -50,8 +49,6 @@ public class ProjectBean extends StatusBean {
 		result = prime * result
 				+ ((projectName == null) ? 0 : projectName.hashCode());
 		result = prime * result + ((sweeps == null) ? 0 : sweeps.hashCode());
-		result = prime * result
-				+ ((runDirectory == null) ? 0 : runDirectory.hashCode());
 		long temp;
 		temp = Double.doubleToLongBits(wavelength);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -81,11 +78,6 @@ public class ProjectBean extends StatusBean {
 			if (other.sweeps != null)
 				return false;
 		} else if (!sweeps.equals(other.sweeps))
-			return false;
-		if (runDirectory == null) {
-			if (other.runDirectory != null)
-				return false;
-		} else if (!runDirectory.equals(other.runDirectory))
 			return false;
 		if (Double.doubleToLongBits(wavelength) != Double
 				.doubleToLongBits(other.wavelength))
@@ -132,13 +124,5 @@ public class ProjectBean extends StatusBean {
 
 	public void setWavelength(double wavelength) {
 		this.wavelength = wavelength;
-	}
-
-	public String getRunDirectory() {
-		return runDirectory;
-	}
-
-	public void setRunDirectory(String visitDir) {
-		this.runDirectory = visitDir;
 	}
 }

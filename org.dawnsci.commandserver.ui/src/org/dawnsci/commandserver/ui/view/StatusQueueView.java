@@ -389,7 +389,7 @@ public class StatusQueueView extends ViewPart {
 
 		final TableViewerColumn submittedDate = new TableViewerColumn(viewer, SWT.CENTER);
 		submittedDate.getColumn().setText("Date Submitted");
-		submittedDate.getColumn().setWidth(200);
+		submittedDate.getColumn().setWidth(150);
 		submittedDate.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
@@ -399,6 +399,21 @@ public class StatusQueueView extends ViewPart {
 				}
 			}
 		});
+		
+		final TableViewerColumn location = new TableViewerColumn(viewer, SWT.LEFT);
+		location.getColumn().setText("Location");
+		location.getColumn().setWidth(300);
+		location.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					final StatusBean bean = (StatusBean)element;
+		            return bean.getRunDirectory();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
+			}
+		});
+
 
 	}
 

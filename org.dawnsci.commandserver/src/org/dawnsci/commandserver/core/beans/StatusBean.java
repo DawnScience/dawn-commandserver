@@ -23,6 +23,11 @@ public class StatusBean {
 	protected String userName;
 	
 	/**
+	 * Directory of rerun, may be null
+	 */
+	private String   runDirectory;
+	
+	/**
 	 * We intentionally ignore the JMS version of this
 	 */
 	protected String uniqueId;
@@ -89,6 +94,8 @@ public class StatusBean {
 		long temp;
 		temp = Double.doubleToLongBits(percentComplete);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
+		result = prime * result
+				+ ((runDirectory == null) ? 0 : runDirectory.hashCode());
 		result = prime * result + ((status == null) ? 0 : status.hashCode());
 		result = prime * result
 				+ (int) (submissionTime ^ (submissionTime >>> 32));
@@ -119,6 +126,11 @@ public class StatusBean {
 			return false;
 		if (Double.doubleToLongBits(percentComplete) != Double
 				.doubleToLongBits(other.percentComplete))
+			return false;
+		if (runDirectory == null) {
+			if (other.runDirectory != null)
+				return false;
+		} else if (!runDirectory.equals(other.runDirectory))
 			return false;
 		if (status != other.status)
 			return false;
@@ -198,4 +210,14 @@ public class StatusBean {
 				+ ", userName=" + userName + ", uniqueId=" + uniqueId
 				+ ", submissionTime=" + submissionTime + "]";
 	}
+	
+
+	public String getRunDirectory() {
+		return runDirectory;
+	}
+
+	public void setRunDirectory(String visitDir) {
+		this.runDirectory = visitDir;
+	}
+
 }

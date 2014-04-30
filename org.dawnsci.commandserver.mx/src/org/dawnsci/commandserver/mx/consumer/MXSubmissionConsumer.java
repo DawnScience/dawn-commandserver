@@ -61,7 +61,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {
 
-		return new Xia2Process(uri, statusTName, statusQName, bean);
+		return new Xia2Process(uri, statusTName, statusQName, (ProjectBean)bean);
 	}
 
 	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME> <MX TOPIC NAME> <STATUS QUEUE NAME\n"+

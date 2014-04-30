@@ -39,6 +39,11 @@ END SWEEP SWEEP1
 END CRYSTAL xThaumM1S21
 END PROJECT cm4952v2
 
+
+Example of data which could be processed for testing:
+
+/dls/i03/data/2014/cm4950-2/processed/20140425/gw/thau1
+ * 
  * 
  * @author fcp94556
  *

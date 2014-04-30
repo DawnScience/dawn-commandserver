@@ -31,6 +31,9 @@ public class Xia2Process extends ProgressableProcess{
 		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
 		xia2Dir.mkdirs();
 		
+		//   Example:
+		//   /dls/i03/data/2014/cm4950-2/2014-04-10/processing/fake161118/MultiCrystal_2
+		
 		processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
 	}

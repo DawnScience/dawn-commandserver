@@ -17,4 +17,8 @@ public enum Status {
 	public boolean isStarted() {
 		return this!=SUBMITTED;
 	}
+	
+	public boolean isFinal() {
+		return this==CANCELLED || this==FAILED || this==COMPLETE || this==NONE;
+	}
 }

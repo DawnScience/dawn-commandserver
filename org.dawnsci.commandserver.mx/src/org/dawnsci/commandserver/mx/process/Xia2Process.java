@@ -24,6 +24,7 @@ public class Xia2Process extends ProgressableProcess{
 	
 	private static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
 	private static String XIA2_COMMAND  = "xia2 -xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
+	private static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
 	
@@ -48,7 +49,9 @@ public class Xia2Process extends ProgressableProcess{
 	@Override
 	public void run() {
 		
-		writeFile();
+		boolean fileOk = writeFile();
+		if (!fileOk) return;
+		
 		runXia2();
 	}
 
@@ -75,37 +78,83 @@ public class Xia2Process extends ProgressableProcess{
 			// In order to know this we look for a file with the extension .error with a 
 			// String in it "Error:"
 			// We assume that this failure happens fast during this sleep.
-			Thread.sleep(1200);
+			Thread.sleep(1000);
 			checkXia2Errors(); // We do this to avoid starting an output
 			                   // file monitor at all.
 			
 			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
-			startOutputMonitor();
+			startProgressMonitor();
 			p.waitFor();
 			checkXia2Errors();			
 			
+			bean.setStatus(Status.COMPLETE);
+			bean.setMessage("Xia2 run completed normally");
+			bean.setPercentComplete(100);
+			broadcast(bean);
+
 		} catch (Exception ne) {
-			stopOutputMonitor();
 			
 			bean.setStatus(Status.FAILED);
 			bean.setMessage(ne.getMessage());
 			bean.setPercentComplete(0);
 			broadcast(bean);
 			
-		} finally {
-			stopOutputMonitor();
 		}
 
 	}
 	
-	private void stopOutputMonitor() {
-		// TODO Auto-generated method stub
+    /**
+     * Starts file polling on the output file, stops when bean reaches a final state.
+     */
+	private void startProgressMonitor() {
 		
-	}
-
-	private void startOutputMonitor() {
-		// TODO Auto-generated method stub
-		
+		final Thread poll = new Thread(new Runnable() {
+			public void run() {
+			
+				try {
+					// First wait until file is there or bean is done.
+					final String name     = System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")!=null
+					                      ? System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")
+					                      : XIA2_FILE;
+					final File xia2Output = new File(processingDir, name);
+					while(!bean.getStatus().isFinal() && !xia2Output.exists()) {
+	                    Thread.sleep(1000);
+					}
+					
+					// Now the file must exist or we are done
+					if (xia2Output.exists()) {
+						BufferedReader br = null;
+						try {
+							br = new BufferedReader( new FileReader(xia2Output) );
+						    while(!bean.getStatus().isFinal()) {
+								String line = br.readLine();
+								if (line==null) {
+									Thread.sleep(500); // Xia2 writes some more lines
+									continue;
+								}
+								
+								// TODO parse the lines when we have them
+								// broadcast any %-complete that we think we have found.
+								System.out.println("XIA2 says >> "+line);
+								
+								
+							} 
+						}finally {
+							if (br!=null) br.close();
+						}
+					}
+					
+				} catch (Exception ne) {
+					// TODO should we send the failure to monitor the file as an error?
+					// Probably not because xia2 writes an error file.
+					ne.printStackTrace();
+				}
+			}
+		});
+		poll.setName("xia2.txt polling thread");
+		poll.setPriority(Thread.MIN_PRIORITY);
+		poll.setDaemon(true);
+		poll.start();
 	}
 
 	/**
@@ -153,7 +202,8 @@ public class Xia2Process extends ProgressableProcess{
 	    return setupCmd+" ; "+xia2Cmd;
 	}
 
-	private void writeFile() {
+	private boolean writeFile() {
+		
         ProjectBean dBean = (ProjectBean)bean;
         Xia2Writer writer = null;
 		try {
@@ -167,12 +217,14 @@ public class Xia2Process extends ProgressableProcess{
 			dBean.setStatus(Status.RUNNING);
 			dBean.setPercentComplete(1);
 			broadcast(dBean);
-
+    
+			return true;
 	        
 		} catch (Exception ne) {
 			dBean.setStatus(Status.FAILED);
 			dBean.setMessage(ne.getMessage());
 			broadcast(dBean);
+			return false;
 			
 		} finally {
 			if (writer!=null) {
@@ -182,6 +234,7 @@ public class Xia2Process extends ProgressableProcess{
 					dBean.setStatus(Status.FAILED);
 					dBean.setMessage(e.getMessage());
 					broadcast(dBean);
+					return false;
 				}
 			}
 		}

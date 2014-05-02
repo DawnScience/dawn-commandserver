@@ -18,6 +18,9 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  *
  */
 public class Xia2Process extends ProgressableProcess{
+	
+	private static String SETUP_COMMAND = "module load xia2";
+	private String setupCmd;
 
 	private String processingDir;
 	
@@ -31,18 +34,23 @@ public class Xia2Process extends ProgressableProcess{
 		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
 		xia2Dir.mkdirs();
 		
-		//   Example:
+		// Example:
 		//   /dls/i03/data/2014/cm4950-2/2014-04-10/processing/fake161118/MultiCrystal_2
 		
 		processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
+		
+		setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
+				 ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
+				 : SETUP_COMMAND;
 	}
 
 	@Override
 	public void run() {
 		
 		writeFile();
-		dryRun(); // TODO real run!
+		
+		
 	}
 
 	private void writeFile() {

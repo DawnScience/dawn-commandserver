@@ -2,6 +2,10 @@ package org.dawnsci.commandserver.mx.process;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -19,8 +23,8 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  */
 public class Xia2Process extends ProgressableProcess{
 	
-	private static String SETUP_COMMAND = "module load xia2";
-	private String setupCmd;
+	private static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
+	private static String XIA2_COMMAND  = "xia2 -xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
 	
@@ -40,17 +44,52 @@ public class Xia2Process extends ProgressableProcess{
 		processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
 		
-		setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
-				 ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
-				 : SETUP_COMMAND;
 	}
 
 	@Override
 	public void run() {
 		
 		writeFile();
+		runXia2();
+	}
+
+	private void runXia2() {
 		
+		ProcessBuilder pb = new ProcessBuilder(createProcessCommandLine());
 		
+		// Can adjust env if needed:
+		// Map<String, String> env = pb.environment();
+		pb.directory(new File(processingDir));
+		
+		File log = new File(processingDir, "xia2_output.txt");
+		pb.redirectErrorStream(true);
+		pb.redirectOutput(Redirect.appendTo(log));
+		
+		try {
+			Process p = pb.start();
+			assert pb.redirectInput() == Redirect.PIPE;
+			assert pb.redirectOutput().file() == log;
+			assert p.getInputStream().read() == -1;		
+		} catch (Exception ne) {
+			ne.printStackTrace();
+		}
+	}
+
+	private List<String> createProcessCommandLine() {
+		
+		final List<String> ret = new ArrayList<String>(3);
+		
+		String setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
+				        ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
+				        : SETUP_COMMAND;
+		ret.add(setupCmd);
+		
+		String xia2Cmd = System.getProperty("org.dawnsci.commandserver.mx.xia2Command")!=null
+		               ? System.getProperty("org.dawnsci.commandserver.mx.xia2Command")
+		               : XIA2_COMMAND;
+        ret.add(xia2Cmd);
+		
+		return ret;
 	}
 
 	private void writeFile() {

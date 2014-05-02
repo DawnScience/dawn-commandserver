@@ -400,6 +400,19 @@ public class StatusQueueView extends ViewPart {
 			}
 		});
 		
+		final TableViewerColumn message = new TableViewerColumn(viewer, SWT.LEFT);
+		message.getColumn().setText("Message");
+		message.getColumn().setWidth(150);
+		message.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					return ((StatusBean)element).getMessage();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
+			}
+		});
+		
 		final TableViewerColumn location = new TableViewerColumn(viewer, SWT.LEFT);
 		location.getColumn().setText("Location");
 		location.getColumn().setWidth(300);

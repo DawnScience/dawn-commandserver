@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -55,7 +56,7 @@ public class Xia2Process extends ProgressableProcess{
 
 	private void runXia2() {
 		
-		ProcessBuilder pb = new ProcessBuilder(createProcessCommandLine());
+		ProcessBuilder pb = new ProcessBuilder();
 		
 		// Can adjust env if needed:
 		// Map<String, String> env = pb.environment();
@@ -65,31 +66,33 @@ public class Xia2Process extends ProgressableProcess{
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(Redirect.appendTo(log));
 		
+		pb.command("bash", "-c", createXai2Command());
+		
 		try {
 			Process p = pb.start();
 			assert pb.redirectInput() == Redirect.PIPE;
-			assert pb.redirectOutput().file() == log;
 			assert p.getInputStream().read() == -1;		
 		} catch (Exception ne) {
-			ne.printStackTrace();
-		}
-	}
+			bean.setStatus(Status.FAILED);
+			bean.setMessage(ne.getMessage());
+			bean.setPercentComplete(0);
+			broadcast(bean);
+		}		
 
-	private List<String> createProcessCommandLine() {
+	}
+	
+	private String createXai2Command() {
 		
-		final List<String> ret = new ArrayList<String>(3);
-		
+		// Get a linux enviroment		
 		String setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
 				        ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
 				        : SETUP_COMMAND;
-		ret.add(setupCmd);
-		
+
 		String xia2Cmd = System.getProperty("org.dawnsci.commandserver.mx.xia2Command")!=null
-		               ? System.getProperty("org.dawnsci.commandserver.mx.xia2Command")
-		               : XIA2_COMMAND;
-        ret.add(xia2Cmd);
-		
-		return ret;
+	               ? System.getProperty("org.dawnsci.commandserver.mx.xia2Command")
+	               : XIA2_COMMAND;
+	               
+	    return setupCmd+" ; "+xia2Cmd;
 	}
 
 	private void writeFile() {

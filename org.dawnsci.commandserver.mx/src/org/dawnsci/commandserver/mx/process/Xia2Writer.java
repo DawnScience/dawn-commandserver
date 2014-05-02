@@ -107,8 +107,8 @@ public class Xia2Writer extends BufferedWriter {
 			
 			write("BEGIN SWEEP SWEEP"+iSweep);
 			newLine();
-			write("WAVELENGTH "+sweep.getWavelength());
-			newLine();
+//			write("WAVELENGTH "+sweep.getWavelength());
+//			newLine();
 			write("DIRECTORY "+sweep.getImageDirectory());
 			newLine();
 			write("IMAGE "+sweep.getFirstImageName());

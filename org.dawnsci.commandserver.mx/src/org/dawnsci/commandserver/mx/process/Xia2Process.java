@@ -1,12 +1,10 @@
 package org.dawnsci.commandserver.mx.process;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -40,7 +38,7 @@ public class Xia2Process extends ProgressableProcess{
 		xia2Dir.mkdirs();
 		
 		// Example:
-		//   /dls/i03/data/2014/cm4950-2/2014-04-10/processing/fake161118/MultiCrystal_2
+		//   /dls/i03/data/2014/cm4950-2/20140425/gw/processing/thau1/MultiCrystal_12
 		
 		processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
@@ -71,16 +69,76 @@ public class Xia2Process extends ProgressableProcess{
 		try {
 			Process p = pb.start();
 			assert pb.redirectInput() == Redirect.PIPE;
-			assert p.getInputStream().read() == -1;		
+			assert p.getInputStream().read() == -1;	
+			
+			// Now we check if xia2 itself failed
+			// In order to know this we look for a file with the extension .error with a 
+			// String in it "Error:"
+			// We assume that this failure happens fast during this sleep.
+			Thread.sleep(1200);
+			checkXia2Errors(); // We do this to avoid starting an output
+			                   // file monitor at all.
+			
+			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
+			startOutputMonitor();
+			p.waitFor();
+			checkXia2Errors();			
+			
 		} catch (Exception ne) {
+			stopOutputMonitor();
+			
 			bean.setStatus(Status.FAILED);
 			bean.setMessage(ne.getMessage());
 			bean.setPercentComplete(0);
 			broadcast(bean);
-		}		
+			
+		} finally {
+			stopOutputMonitor();
+		}
 
 	}
 	
+	private void stopOutputMonitor() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	private void startOutputMonitor() {
+		// TODO Auto-generated method stub
+		
+	}
+
+	/**
+	 * Throws an exception if an error file is found with the string Error: in it.
+	 * @throws Exception
+	 */
+	private void checkXia2Errors() throws Exception {
+		
+		final File dir = new File(processingDir);
+		for (File c : dir.listFiles()) {
+			if (c.isFile() && c.getName().toLowerCase().endsWith(".error")) {
+				checkErrorFile(c);
+			}
+		}
+	}
+
+	private void checkErrorFile(File c) throws Exception {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(c));
+			
+			String line = null;
+			while((line = br.readLine())!=null) {
+				if (line.contains("Error:")) {
+					final String[] split = line.split(":");
+					throw new Exception(split[1]);
+				}
+			}
+		} finally {
+			if (br!=null) br.close();
+		}
+	}
+
 	private String createXai2Command() {
 		
 		// Get a linux enviroment		

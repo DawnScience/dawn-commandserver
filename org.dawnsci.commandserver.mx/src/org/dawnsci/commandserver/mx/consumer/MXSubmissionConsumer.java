@@ -99,11 +99,23 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 	
 	private static final long TWO_DAYS = 48*60*60*1000; // ms
 	
-	protected long getMaximumRunAge() {
-		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2JobAge")!=null) {
-			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumXia2JobAge"));
+	@Override
+	protected long getMaximumRunningAge() {
+		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2RunningAge")!=null) {
+			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumXia2RunningAge"));
 		}
 		return TWO_DAYS;
 	}
+	
+	private static final long A_WEEK = 7*24*60*60*1000; // ms
+	
+	@Override
+	protected long getMaximumCompleteAge() {
+		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2CompleteAge")!=null) {
+			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumXia2CompleteAge"));
+		}
+		return A_WEEK;
+	}
+
 
 }

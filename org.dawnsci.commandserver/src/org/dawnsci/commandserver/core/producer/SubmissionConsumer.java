@@ -70,7 +70,7 @@ public abstract class SubmissionConsumer {
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
-		cleanStatusQueue(uri, statusQName);
+		processStatusQueue(uri, statusQName);
 		
 		// This is the blocker
 		monitorSubmissionQueue(uri, submitQName, statusTName, statusQName);
@@ -140,7 +140,7 @@ public abstract class SubmissionConsumer {
                     	
                     	factory.submit(bean, false);
                     	
-                    	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean); // TODO Xia2 anyone?
+                    	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
                     	process.start();
                     	
                     	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
@@ -155,11 +155,11 @@ public abstract class SubmissionConsumer {
 	}
 	
 	/**
-	 * 
+	 * Parse the queue for stale jobs and things that should be rerun.
 	 * @param bean
 	 * @throws Exception 
 	 */
-	private void cleanStatusQueue(String uri, String statusQName) throws Exception {
+	private void processStatusQueue(String uri, String statusQName) throws Exception {
 		
 		QueueConnection qCon = null;
 		
@@ -192,21 +192,33 @@ public abstract class SubmissionConsumer {
 		            	if (qbean.getStatus()==null)   continue;
 		            	if (!qbean.getStatus().isStarted()) {
 		            		failIds.put(t.getJMSMessageID(), qbean);
+		            		continue;
 		            	}
 		            	
 		            	// If it has failed, we clear it up
 		            	if (qbean.getStatus()==Status.FAILED) {
 		            		removeIds.add(t.getJMSMessageID());
+		            		continue;
 		            	}
 		            	
 		            	// If it is running and older than a certain time, we clear it up
 		            	if (qbean.getStatus()==Status.RUNNING) {
 		            		final long submitted = qbean.getSubmissionTime();
 		            		final long current   = System.currentTimeMillis();
-		            		if (current-submitted > getMaximumRunAge()) {
+		            		if (current-submitted > getMaximumRunningAge()) {
+		            			removeIds.add(t.getJMSMessageID());
+		            			continue;
+		            		}
+		            	}
+		            	
+		            	if (qbean.getStatus().isFinal()) {
+		            		final long submitted = qbean.getSubmissionTime();
+		            		final long current   = System.currentTimeMillis();
+		            		if (current-submitted > getMaximumCompleteAge()) {
 		            			removeIds.add(t.getJMSMessageID());
 		            		}
 		            	}
+
 	            	} catch (Exception ne) {
 	            		System.out.println("Message "+t.getText()+" is not legal and will be removed.");
 	            		removeIds.add(t.getJMSMessageID());
@@ -252,9 +264,18 @@ public abstract class SubmissionConsumer {
 	 * 
 	 * @return
 	 */
-	protected abstract long getMaximumRunAge();
+	protected abstract long getMaximumRunningAge();
 	
 
+	/**
+	 * Defines the time in ms that a job may be in the complete (or other final) state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old compelte jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected abstract long getMaximumCompleteAge();
 	/**
 	 * 
 	 * @return the name which the user will see for this consumer.

@@ -193,6 +193,20 @@ public abstract class SubmissionConsumer {
 		            	if (!qbean.getStatus().isStarted()) {
 		            		failIds.put(t.getJMSMessageID(), qbean);
 		            	}
+		            	
+		            	// If it has failed, we clear it up
+		            	if (qbean.getStatus()==Status.FAILED) {
+		            		removeIds.add(t.getJMSMessageID());
+		            	}
+		            	
+		            	// If it is running and older than a certain time, we clear it up
+		            	if (qbean.getStatus()==Status.RUNNING) {
+		            		final long submitted = qbean.getSubmissionTime();
+		            		final long current   = System.currentTimeMillis();
+		            		if (current-submitted > getMaximumRunAge()) {
+		            			removeIds.add(t.getJMSMessageID());
+		            		}
+		            	}
 	            	} catch (Exception ne) {
 	            		System.out.println("Message "+t.getText()+" is not legal and will be removed.");
 	            		removeIds.add(t.getJMSMessageID());
@@ -230,7 +244,17 @@ public abstract class SubmissionConsumer {
 		
 	}
 
+	/**
+	 * Defines the time in ms that a job may be in the running state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old running jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected abstract long getMaximumRunAge();
 	
+
 	/**
 	 * 
 	 * @return the name which the user will see for this consumer.

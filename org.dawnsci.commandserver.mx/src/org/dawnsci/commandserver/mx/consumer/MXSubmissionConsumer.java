@@ -96,5 +96,14 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
         return true;
 
 	}
+	
+	private static final long TWO_DAYS = 48*60*60*1000; // ms
+	
+	protected long getMaximumRunAge() {
+		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2JobAge")!=null) {
+			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumXia2JobAge"));
+		}
+		return TWO_DAYS;
+	}
 
 }

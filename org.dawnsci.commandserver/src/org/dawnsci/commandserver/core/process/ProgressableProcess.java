@@ -191,6 +191,7 @@ public abstract class ProgressableProcess implements Runnable {
 
 		bean.setStatus(Status.COMPLETE);
 		bean.setPercentComplete(100);
+		bean.setMessage("Dry run complete (no software run)");
 		broadcast(bean);
 	}
 

@@ -62,11 +62,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * and optionally the queue view name if a custom one is required. Syntax of
  * these parameters in the secondary id are key1=value1;key2=value2...
  * 
- * The essential keys are: beanBundleName, beanClassName
+ * The essential keys are: beanBundleName, beanClassName, queueName, topicName
+ * You can use createId(...) to generate a legal id from them.
+ * 
  * The optional keys are: partName, 
  *                        uri (default CommandConstants.JMS_URI)
- *                        queueName (default CommandConstants.STATUS_QUEUE)
- *                        topicName (default CommandConstants.STATUS_TOPIC)
  * 
  * Example id for this view would be:
  * org.dawnsci.commandserver.ui.queueView:beanClassName=org.dawnsci.commandserver.mx.beans.ProjectBean;beanBundleName=org.dawnsci.commandserver.mx
@@ -79,6 +79,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  *
  */
 public class StatusQueueView extends ViewPart {
+	
+	public static final String ID = "org.dawnsci.commandserver.ui.queueView";
 	
 	private static final Logger logger = LoggerFactory.getLogger(StatusQueueView.class);
 	
@@ -441,7 +443,7 @@ public class StatusQueueView extends ViewPart {
 	private String getTopicName() {
 		final String topicName = getSecondaryIdAttribute("topicName");
 		if (topicName != null) return topicName;
-		return getCommandPreference(CommandConstants.STATUS_TOPIC);
+		return "scisoft.default.STATUS_TOPIC";
 	}
 
     protected String getUri() {
@@ -458,7 +460,7 @@ public class StatusQueueView extends ViewPart {
 	protected String getQueueName() {
 		final String qName =  getSecondaryIdAttribute("queueName");
 		if (qName != null) return qName;
-		return getCommandPreference(CommandConstants.STATUS_QUEUE);
+		return "scisoft.default.STATUS_QUEUE";
 	}
 	
 	private String getSecondaryIdAttribute(String key) {
@@ -468,5 +470,31 @@ public class StatusQueueView extends ViewPart {
 		if (secondId == null) return null;
 		idProperties = PropUtils.parseString(secondId);
 		return idProperties.getProperty(key);
+	}
+
+	public static String createId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName) {
+		
+		final StringBuilder buf = new StringBuilder();
+		buf.append(ID);
+		buf.append(":");
+		buf.append(createSecondaryId(beanBundleName, beanClassName, queueName, topicName));
+		return buf.toString();
+	}
+	
+	public static String createSecondaryId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName) {
+		
+		final StringBuilder buf = new StringBuilder();
+		append(buf, "beanBundleName", beanBundleName);
+		append(buf, "beanClassName",  beanClassName);
+		append(buf, "queueName",      queueName);
+		append(buf, "topicName",      topicName);
+		return buf.toString();
+	}
+
+	private static void append(StringBuilder buf, String name, String value) {
+		buf.append(name);
+		buf.append("=");
+		buf.append(value);
+		buf.append(";");
 	}
 }

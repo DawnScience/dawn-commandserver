@@ -57,6 +57,11 @@ public class TomoProcess extends ProgressableProcess{
 	@Override
 	public void run() {
 		
+		// Right we a starting the reconstruction, tell them.
+		bean.setStatus(Status.RUNNING);
+		bean.setPercentComplete(0d);
+		broadcast(bean);
+		
 		// TODO Is this even needed?
 		boolean fileOk = writeFile();
 		if (!fileOk) return;

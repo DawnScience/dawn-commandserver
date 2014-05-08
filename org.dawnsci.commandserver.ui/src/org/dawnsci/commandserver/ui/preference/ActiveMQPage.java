@@ -31,15 +31,6 @@ public class ActiveMQPage extends FieldEditorPreferencePage implements IWorkbenc
 	    final StringFieldEditor uri = new StringFieldEditor(CommandConstants.JMS_URI, "Comamnd Server", getFieldEditorParent());
 	    addField(uri);
 
-	    final StringFieldEditor q1 = new StringFieldEditor(CommandConstants.SUBMISSION_QUEUE, "Submission Queue", getFieldEditorParent());
-	    addField(q1);
-	    
-	    final StringFieldEditor q2 = new StringFieldEditor(CommandConstants.STATUS_QUEUE, "Status Queue", getFieldEditorParent());
-	    addField(q2);
-	    
-	    final StringFieldEditor t1 = new StringFieldEditor(CommandConstants.STATUS_TOPIC, "Status Topic", getFieldEditorParent());
-	    addField(t1);
-
 	}
 
 	@Override

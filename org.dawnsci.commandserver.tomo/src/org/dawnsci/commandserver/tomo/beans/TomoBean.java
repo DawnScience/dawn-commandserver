@@ -14,6 +14,7 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
 public class TomoBean extends StatusBean {
 
 	private String      projectName;              
+	private String      fileName;              
 	
 	public TomoBean(){
 	}
@@ -23,6 +24,7 @@ public class TomoBean extends StatusBean {
         super.merge(with);
         TomoBean db = (TomoBean)with;
         this.projectName  = db.projectName;
+        this.fileName     = db.fileName;
 	}
 	
 
@@ -40,6 +42,8 @@ public class TomoBean extends StatusBean {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result
+				+ ((fileName == null) ? 0 : fileName.hashCode());
+		result = prime * result
 				+ ((projectName == null) ? 0 : projectName.hashCode());
 		return result;
 	}
@@ -53,11 +57,24 @@ public class TomoBean extends StatusBean {
 		if (getClass() != obj.getClass())
 			return false;
 		TomoBean other = (TomoBean) obj;
+		if (fileName == null) {
+			if (other.fileName != null)
+				return false;
+		} else if (!fileName.equals(other.fileName))
+			return false;
 		if (projectName == null) {
 			if (other.projectName != null)
 				return false;
 		} else if (!projectName.equals(other.projectName))
 			return false;
 		return true;
+	}
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 }

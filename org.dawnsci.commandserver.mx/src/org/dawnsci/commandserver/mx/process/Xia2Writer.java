@@ -109,7 +109,7 @@ public class Xia2Writer extends BufferedWriter {
 			newLine();
 //			write("WAVELENGTH "+sweep.getWavelength());
 //			newLine();
-			write("DIRECTORY "+sweep.getImageDirectory());
+			write("DIRECTORY "+getSanitizedImageDirectory(sweep.getImageDirectory()));
 			newLine();
 			write("IMAGE "+sweep.getFirstImageName());
 			newLine();
@@ -130,7 +130,22 @@ public class Xia2Writer extends BufferedWriter {
 		newLine();
 
 	}
-	
+
+	/**
+	 * Tries to write the xinfo correctly even if the run is on windows.
+	 * @param path
+	 * @return
+	 */
+	private String getSanitizedImageDirectory(String path) {
+		if (isWindowsOS() && path.startsWith("/dls/")) {
+			path = "\\\\Data.diamond.ac.uk\\"+path.substring(5);
+		}
+		return path;
+	}
+	static public boolean isWindowsOS() {
+		return (System.getProperty("os.name").indexOf("Windows") == 0);
+	}
+
 	/**
 	 * 
 	 * 

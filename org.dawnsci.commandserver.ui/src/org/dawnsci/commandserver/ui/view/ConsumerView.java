@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.ui.view;
 
 import java.text.DateFormat;
+import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
@@ -76,7 +77,7 @@ public class ConsumerView extends ViewPart {
 		createColumns();
 		viewer.setContentProvider(createContentProvider());
 		
-		consumers = new TreeMap<String, ConsumerBean>();
+		consumers = new TreeMap<String, ConsumerBean>(Collections.reverseOrder());
 		viewer.setInput(consumers);	
 		
         createActions();

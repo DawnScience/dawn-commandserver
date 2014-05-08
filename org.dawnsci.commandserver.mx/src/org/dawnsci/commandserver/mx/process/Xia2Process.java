@@ -34,14 +34,22 @@ public class Xia2Process extends ProgressableProcess{
 			           ProjectBean bean) {
 		super(uri, statusTName, statusQName, bean);
 		
-        final String runDir  = bean.getRunDirectory();
-		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
+        final String runDir;
+		if (isWindowsOS()) {
+			// We are likely to be a test consumer, anyway the unix paths
+			// from ISPyB will certainly not work, so we process in C:/tmp/
+			runDir  = "C:/tmp/"+bean.getRunDirectory();
+		} else {
+			runDir  = bean.getRunDirectory();
+		}
+
+ 		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
 		xia2Dir.mkdirs();
 		
 		// Example:
 		//   /dls/i03/data/2014/cm4950-2/20140425/gw/processing/thau1/MultiCrystal_12
 		
-		processingDir = xia2Dir.getAbsolutePath();
+	    processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
 		
 		// We record the bean so that reruns of reruns are possible.
@@ -50,6 +58,13 @@ public class Xia2Process extends ProgressableProcess{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	/**
+	 * @return true if windows
+	 */
+	static public boolean isWindowsOS() {
+		return (System.getProperty("os.name").indexOf("Windows") == 0);
 	}
 
 	@Override
@@ -73,7 +88,11 @@ public class Xia2Process extends ProgressableProcess{
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(Redirect.appendTo(log));
 		
-		pb.command("bash", "-c", createXai2Command());
+		if (isWindowsOS()) {
+		    pb.command("cmd", "/C", createXai2Command());
+		} else {
+		    pb.command("bash", "-c", createXai2Command());
+		}
 		
 		try {
 			Process p = pb.start();
@@ -91,8 +110,8 @@ public class Xia2Process extends ProgressableProcess{
 			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
 			startProgressMonitor();
 			p.waitFor();
-			checkXia2Errors();			
-			
+			checkXia2Errors();						
+
 			bean.setStatus(Status.COMPLETE);
 			bean.setMessage("Xia2 run completed normally");
 			bean.setPercentComplete(100);
@@ -174,7 +193,28 @@ public class Xia2Process extends ProgressableProcess{
 			if (c.isFile() && c.getName().toLowerCase().endsWith(".error")) {
 				checkErrorFile(c);
 			}
+			
+			if (c.isFile() && c.getName().toLowerCase().contains("xia2_output.txt")) {
+				checkNotRecognised(c);
+			}
 		}
+	}
+
+	private void checkNotRecognised(File c) throws Exception {
+		BufferedReader br = null;
+		try {
+			br = new BufferedReader(new FileReader(c));
+			
+			String line = null;
+			while((line = br.readLine())!=null) {
+				if (line.contains("not recognized")) {
+					throw new Exception(line);
+				}
+			}
+		} finally {
+			if (br!=null) br.close();
+		}
+		
 	}
 
 	private void checkErrorFile(File c) throws Exception {
@@ -196,16 +236,22 @@ public class Xia2Process extends ProgressableProcess{
 
 	private String createXai2Command() {
 		
-		// Get a linux enviroment		
-		String setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
-				        ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
-				        : SETUP_COMMAND;
+		String setupCmd = "";
+		if (!isWindowsOS()) { // We use module load xia2
+			// Get a linux enviroment		
+			setupCmd = System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")!=null
+					        ? System.getProperty("org.dawnsci.commandserver.mx.moduleCommand")
+					        : SETUP_COMMAND;
+					        
+			setupCmd+=" ; ";
+		}
 
+		// For windows xia2 must be on the path already.
 		String xia2Cmd = System.getProperty("org.dawnsci.commandserver.mx.xia2Command")!=null
 	               ? System.getProperty("org.dawnsci.commandserver.mx.xia2Command")
 	               : XIA2_COMMAND;
 	               
-	    return setupCmd+" ; "+xia2Cmd;
+	    return setupCmd+xia2Cmd;
 	}
 
 	private boolean writeFile() {

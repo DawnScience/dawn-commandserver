@@ -59,6 +59,8 @@ public class StatusBean {
         this.userName        = with.userName;
         this.uniqueId        = with.uniqueId;
         this.submissionTime  = with.submissionTime;
+        this.message         = with.message;
+        this.runDirectory    = with.runDirectory;
 	}
 
 	

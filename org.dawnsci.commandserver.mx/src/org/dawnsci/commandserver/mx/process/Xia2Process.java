@@ -59,13 +59,6 @@ public class Xia2Process extends ProgressableProcess{
 			e.printStackTrace();
 		}
 	}
-	
-	/**
-	 * @return true if windows
-	 */
-	static public boolean isWindowsOS() {
-		return (System.getProperty("os.name").indexOf("Windows") == 0);
-	}
 
 	@Override
 	public void run() {
@@ -299,24 +292,6 @@ public class Xia2Process extends ProgressableProcess{
 
 	public void setProcessingDir(String processingDir) {
 		this.processingDir = processingDir;
-	}
-
-
-	/**
-	 * @param dir
-	 * @param template
-	 * @param ext
-	 * @param i
-	 * @return file
-	 */
-	private static File getUnique(final File dir, final String template, final String ext, int i) {
-		final String extension = ext != null ? (ext.startsWith(".")) ? ext : "." + ext : null;
-		final File file = ext != null ? new File(dir, template + i + extension) : new File(dir, template + i);
-		if (!file.exists()) {
-			return file;
-		}
-
-		return getUnique(dir, template, ext, ++i);
 	}
 
 }

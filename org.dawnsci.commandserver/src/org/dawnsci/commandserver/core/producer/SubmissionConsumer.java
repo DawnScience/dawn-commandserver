@@ -324,4 +324,36 @@ public abstract class SubmissionConsumer {
 	public void setActive(boolean active) {
 		this.active = active;
 	}
+	
+	protected final static boolean checkArguments(String[] args, String usage) {
+		
+        if (args == null || args.length!=4) {
+        	System.out.println(usage);
+        	return false;
+        }
+        
+        if (!args[0].startsWith("tcp://")) {
+        	System.out.println(usage);
+        	return false;
+        }
+        
+        if ("".equals(args[1])) {
+        	System.out.println(usage);
+        	return false;
+        }
+        
+        if ("".equals(args[2])) {
+        	System.out.println(usage);
+        	return false;
+        }
+        
+        if ("".equals(args[3])) {
+        	System.out.println(usage);
+        	return false;
+        }
+        
+        return true;
+
+	}
+
 }

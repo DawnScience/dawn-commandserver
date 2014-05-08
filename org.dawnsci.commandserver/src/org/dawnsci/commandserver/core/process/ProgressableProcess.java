@@ -52,6 +52,13 @@ public abstract class ProgressableProcess implements Runnable {
 		broadcast(bean);
 	}
 	
+	
+	/**
+	 * @return true if windows
+	 */
+	static public final boolean isWindowsOS() {
+		return (System.getProperty("os.name").indexOf("Windows") == 0);
+	}
 
 	/**
 	 * Writes the project bean at the point where it is run.
@@ -185,6 +192,26 @@ public abstract class ProgressableProcess implements Runnable {
 		bean.setStatus(Status.COMPLETE);
 		bean.setPercentComplete(100);
 		broadcast(bean);
+	}
+
+	
+
+
+	/**
+	 * @param dir
+	 * @param template
+	 * @param ext
+	 * @param i
+	 * @return file
+	 */
+	protected final static File getUnique(final File dir, final String template, final String ext, int i) {
+		final String extension = ext != null ? (ext.startsWith(".")) ? ext : "." + ext : null;
+		final File file = ext != null ? new File(dir, template + i + extension) : new File(dir, template + i);
+		if (!file.exists()) {
+			return file;
+		}
+
+		return getUnique(dir, template, ext, ++i);
 	}
 
 }

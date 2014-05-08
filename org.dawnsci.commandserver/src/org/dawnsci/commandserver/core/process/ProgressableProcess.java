@@ -1,5 +1,9 @@
 package org.dawnsci.commandserver.core.process;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.util.Enumeration;
 
 import javax.jms.Message;
@@ -18,6 +22,8 @@ import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 
+import com.fasterxml.jackson.core.JsonGenerationException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 
@@ -45,6 +51,30 @@ public abstract class ProgressableProcess implements Runnable {
 		bean.setStatus(Status.QUEUED);
 		broadcast(bean);
 	}
+	
+
+	/**
+	 * Writes the project bean at the point where it is run.
+	 * 
+	 * @param processingDir2
+	 * @throws IOException 
+	 * @throws FileNotFoundException 
+	 * @throws JsonMappingException 
+	 * @throws JsonGenerationException 
+	 */
+	protected void writeProjectBean(String dir) throws Exception {
+		
+		final File beanFile = new File(dir, "projectBean.json");
+    	ObjectMapper mapper = new ObjectMapper();
+    	
+    	final FileOutputStream stream = new FileOutputStream(beanFile);
+    	try {
+    	    mapper.writeValue(stream, bean);
+    	} finally {
+    		stream.close();
+    	}
+	}
+
 
 	/**
 	 * Call to start the process and broadcast status

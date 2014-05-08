@@ -44,6 +44,12 @@ public class Xia2Process extends ProgressableProcess{
 		processingDir = xia2Dir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
 		
+		// We record the bean so that reruns of reruns are possible.
+		try {
+			writeProjectBean(processingDir);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	@Override

@@ -39,7 +39,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 
 	@Override
 	public String getName() {
-		return "Multi-crystall Reprocessing Consumer";
+		return "Multi-crystal Reprocessing Consumer";
 	}
 
 

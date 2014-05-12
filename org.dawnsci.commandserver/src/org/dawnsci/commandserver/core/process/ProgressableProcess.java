@@ -6,8 +6,11 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Enumeration;
 
+import javax.jms.Connection;
+import javax.jms.ConnectionFactory;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Queue;
 import javax.jms.QueueBrowser;
@@ -16,6 +19,7 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
@@ -103,12 +107,96 @@ public abstract class ProgressableProcess implements Runnable {
 	 */
 	protected void broadcast(StatusBean bean) {
 		try {
+			cancelMonitor();
 			updateQueue(bean); // For clients connecting in future or after a refresh - persistence.
 			sendTopic(bean);   // For topic listeners wait for updates (more efficient than polling queue)
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
  	}
+
+	/**
+	 * Cancels the current topic monitor, if there is one. Prints exception if cannot.
+	 */
+	private void cancelMonitor() {
+		if (bean.getStatus().isFinal() && topicConnection!=null) {
+			try {
+			    topicConnection.close();
+			} catch (Exception ne) {
+				ne.printStackTrace();
+			}
+		}
+	}
+
+	protected Connection topicConnection;
+
+	/**
+	 * Starts a thread which listens to the topic and if
+	 * a cancel is found published, tries to terminate the subprocess.
+	 * 
+	 * @param p
+	 */
+    protected void startTerminateMonitor(final Process p) {
+		
+
+    	final Thread cancelMonitor = new Thread(new Runnable() {
+    		public void run() {
+    			
+    			try {
+					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+					ProgressableProcess.this.topicConnection = connectionFactory.createConnection();
+			        topicConnection.start();
+	
+			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+	
+			        final Topic           topic    = session.createTopic(statusTName);
+			        final MessageConsumer consumer = session.createConsumer(topic);
+	
+			        final Class        clazz  = bean.getClass();
+			        final ObjectMapper mapper = new ObjectMapper();
+			        
+			        MessageListener listener = new MessageListener() {
+			            public void onMessage(Message message) {		            	
+			                try {
+			                    if (message instanceof TextMessage) {
+			                        TextMessage t = (TextMessage) message;
+			        				final StatusBean tbean = mapper.readValue(t.getText(), clazz);
+	                                
+			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
+				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
+				        					
+				        					// TODO FIXME Test if this destroy works. In the past this
+				        					// was not reliable from Java and JNI had to be used to kill
+				        					// a process tree properly.
+				        					p.destroy();
+				        					
+				        					tbean.setStatus(Status.CANCELLED);
+				        					tbean.setMessage("Foricibly terminated before finishing.");
+				        					broadcast(tbean);
+				        				}
+			        				}
+			        				
+			                    }
+			                } catch (Exception e) {
+			                    e.printStackTrace();
+			                }
+			            }
+			        };
+			        consumer.setMessageListener(listener);
+			        
+    			} catch (Exception ne) {
+    				
+    				ne.printStackTrace();
+    			}
+
+    		}
+    	});
+    	cancelMonitor.setDaemon(true);
+    	cancelMonitor.setPriority(Thread.MIN_PRIORITY);
+    	cancelMonitor.setName("Monitor for cancellation of '"+bean.getName()+"'");
+    	cancelMonitor.start();
+    }
+
 
 
 	/**

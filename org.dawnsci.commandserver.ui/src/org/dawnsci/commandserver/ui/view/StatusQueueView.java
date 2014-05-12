@@ -28,6 +28,7 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.dialog.PropertiesDialog;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
@@ -38,11 +39,17 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
+import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ISelectionChangedListener;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
@@ -104,6 +111,7 @@ public class StatusQueueView extends ViewPart {
 		viewer.getTable().setHeaderVisible(true);
 		viewer.getControl().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		
+		
 		createColumns();
 		viewer.setContentProvider(createContentProvider());
 		
@@ -118,6 +126,15 @@ public class StatusQueueView extends ViewPart {
 		} catch (Exception e) {
 			logger.error("Cannot listen to topic of command server!", e);
 		}
+        
+		getViewSite().setSelectionProvider(viewer);
+		viewer.addSelectionChangedListener(new ISelectionChangedListener() {	
+			@Override
+			public void selectionChanged(SelectionChangedEvent event) {
+				getViewSite().getActionBars().getToolBarManager().update(true);
+			}
+		});
+
 	}
 	
 	/**
@@ -132,7 +149,7 @@ public class StatusQueueView extends ViewPart {
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
 					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			        topicConnection = connectionFactory.createConnection();
+			        StatusQueueView.this.topicConnection = connectionFactory.createConnection();
 			        topicConnection.start();
 	
 			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -205,15 +222,55 @@ public class StatusQueueView extends ViewPart {
 	}
 
 	private void createActions() {
-		final IContributionManager man = getViewSite().getActionBars().getToolBarManager();
+		
+		final IContributionManager toolMan = getViewSite().getActionBars().getToolBarManager();
+		final MenuManager          menuMan = new MenuManager();
 	
+		final Action kill = new Action("Terminate job", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
+			public void run() {
+				
+				final StatusBean bean = getSelection();
+				if (bean==null) return;
+				
+				if (bean.getStatus().isFinal()) {
+					MessageDialog.openInformation(getViewSite().getShell(), "Run '"+bean.getName()+"' inactive", "Run '"+bean.getName()+"' is inactive and cannot be terminated.");
+					return;
+				}
+				try {
+					
+					final DateFormat format = DateFormat.getDateTimeInstance();
+					boolean ok = MessageDialog.openConfirm(getViewSite().getShell(), "Confirm terminate "+bean.getName(), 
+							  "Are you sure you want to terminate "+bean.getName()+" submitted on "+format.format(new Date(bean.getSubmissionTime()))+"?");
+					
+					if (!ok) return;
+					
+					bean.setStatus(org.dawnsci.commandserver.core.beans.Status.REQUEST_TERMINATE);
+					bean.setMessage("Requesting a termination of "+bean.getName());
+					JSONUtils.sendTopic(bean, getTopicName(), getUri());
+					
+				} catch (Exception e) {
+					ErrorDialog.openError(getViewSite().getShell(), "Cannot terminate "+bean.getName(), "Cannot terminate "+bean.getName()+"\n\nPlease contact your support representative.",
+							new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
+				}
+			}
+			public boolean isEnabled() {
+				final StatusBean bean = getSelection();
+				if (bean==null) return false;
+				return !bean.getStatus().isFinal();
+			}
+
+		};
+		toolMan.add(kill);
+		menuMan.add(kill);
+		
 		final Action refresh = new Action("Refresh", Activator.getDefault().getImageDescriptor("icons/arrow-circle-double-135.png")) {
 			public void run() {
 				reconnect();
 			}
 		};
 		
-		man.add(refresh);
+		toolMan.add(refresh);
+		menuMan.add(refresh);
 
 		final Action configure = new Action("Configure...", Activator.getDefault().getImageDescriptor("icons/document--pencil.png")) {
 			public void run() {
@@ -228,7 +285,10 @@ public class StatusQueueView extends ViewPart {
 			}
 		};
 		
-		man.add(configure);
+		toolMan.add(configure);
+		menuMan.add(configure);
+		
+		viewer.getControl().setMenu(menuMan.createContextMenu(viewer.getControl()));
 	}
 
 	protected void reconnect() {
@@ -254,6 +314,15 @@ public class StatusQueueView extends ViewPart {
 				return queue.values().toArray(new StatusBean[queue.size()]);
 			}
 		};
+	}
+	
+	protected StatusBean getSelection() {
+		final ISelection sel = viewer.getSelection();
+		if (sel instanceof IStructuredSelection) {
+			IStructuredSelection ss = (IStructuredSelection)sel;
+			if (ss.size()>0) return (StatusBean)ss.getFirstElement();
+		}
+		return null;
 	}
 
 	/**
@@ -364,16 +433,16 @@ public class StatusQueueView extends ViewPart {
 		
 		final TableViewerColumn name = new TableViewerColumn(viewer, SWT.LEFT);
 		name.getColumn().setText("Name");
-		name.getColumn().setWidth(300);
+		name.getColumn().setWidth(260);
 		name.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				return ((StatusBean)element).getName();
 			}
 		});
 		
-		final TableViewerColumn status = new TableViewerColumn(viewer, SWT.CENTER);
+		final TableViewerColumn status = new TableViewerColumn(viewer, SWT.LEFT);
 		status.getColumn().setText("Status");
-		status.getColumn().setWidth(100);
+		status.getColumn().setWidth(140);
 		status.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				return ((StatusBean)element).getStatus().toString();

@@ -103,13 +103,16 @@ public class Xia2Process extends ProgressableProcess{
 			
 			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
 			startProgressMonitor();
+			startTerminateMonitor(p);
 			p.waitFor();
 			checkXia2Errors();						
 
-			bean.setStatus(Status.COMPLETE);
-			bean.setMessage("Xia2 run completed normally");
-			bean.setPercentComplete(100);
-			broadcast(bean);
+			if (!bean.getStatus().isFinal()) {
+				bean.setStatus(Status.COMPLETE);
+				bean.setMessage("Xia2 run completed normally");
+				bean.setPercentComplete(100);
+				broadcast(bean);
+			}
 
 		} catch (Exception ne) {
 			
@@ -121,8 +124,8 @@ public class Xia2Process extends ProgressableProcess{
 		}
 
 	}
-	
-    /**
+
+	/**
      * Starts file polling on the output file, stops when bean reaches a final state.
      */
 	private void startProgressMonitor() {
@@ -158,6 +161,12 @@ public class Xia2Process extends ProgressableProcess{
 									bean.setPercentComplete(0);
 									broadcast(bean);
 									return;
+								}
+								
+								if (line.startsWith("--------------------")) {
+									bean.setStatus(Status.RUNNING);
+									bean.setMessage(line.substring("--------------------".length()));
+									broadcast(bean);
 								}
 								
 								// TODO parse the lines when we have them

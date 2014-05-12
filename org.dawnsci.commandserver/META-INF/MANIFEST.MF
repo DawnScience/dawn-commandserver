@@ -18,4 +18,5 @@ Export-Package: javax.jms,
  org.dawnsci.commandserver.core.beans,
  org.dawnsci.commandserver.core.consumer,
  org.dawnsci.commandserver.core.process,
- org.dawnsci.commandserver.core.producer
+ org.dawnsci.commandserver.core.producer,
+ org.dawnsci.commandserver.core.util

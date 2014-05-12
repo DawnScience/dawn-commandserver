@@ -105,8 +105,9 @@ public abstract class ProgressableProcess implements Runnable {
 	 * Notify any clients of the beans status
 	 * @param bean
 	 */
-	protected void broadcast(StatusBean bean) {
+	protected void broadcast(StatusBean tbean) {
 		try {
+			bean.merge(tbean);
 			cancelMonitor();
 			updateQueue(bean); // For clients connecting in future or after a refresh - persistence.
 			sendTopic(bean);   // For topic listeners wait for updates (more efficient than polling queue)
@@ -165,6 +166,7 @@ public abstract class ProgressableProcess implements Runnable {
 			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
 				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
 				        					
+				        					System.out.println("Terminating job '"+tbean.getName()+"'");
 				        					// TODO FIXME Test if this destroy works. In the past this
 				        					// was not reliable from Java and JNI had to be used to kill
 				        					// a process tree properly.

@@ -171,6 +171,7 @@ public abstract class ProgressableProcess implements Runnable {
 				        					
 				        					System.out.println("Terminating job '"+tbean.getName()+"'");
 				        					terminate(p);
+				        					p.destroy();
 				        				}
 			        				}
 			        				

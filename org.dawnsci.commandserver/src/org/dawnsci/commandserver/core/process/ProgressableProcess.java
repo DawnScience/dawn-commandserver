@@ -108,8 +108,9 @@ public abstract class ProgressableProcess implements Runnable {
 	 * Notify any clients of the beans status
 	 * @param bean
 	 */
-	protected void broadcast(StatusBean bean) {
+	protected void broadcast(StatusBean tbean) {
 		try {
+			bean.merge(tbean);
 			cancelMonitor();
 			updateQueue(bean); // For clients connecting in future or after a refresh - persistence.
 			sendTopic(bean);   // For topic listeners wait for updates (more efficient than polling queue)
@@ -167,7 +168,10 @@ public abstract class ProgressableProcess implements Runnable {
 	                                
 			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
 				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
+				        					bean.merge(tbean);
+				        					System.out.println("Terminating job '"+tbean.getName()+"'");
 				        					terminate(p, dir);
+				        					p.destroy();
 				        				}
 			        				}
 			        				
@@ -225,6 +229,10 @@ public abstract class ProgressableProcess implements Runnable {
 			Process p = pb.start();
 			p.waitFor();
 	    }
+	    
+	    bean.setStatus(Status.CANCELLED);
+	    bean.setMessage("Foricibly terminated before finishing.");
+		broadcast(bean);
 	}
 
 	public static int getPid(Process p) throws Exception {

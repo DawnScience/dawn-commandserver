@@ -103,7 +103,7 @@ public class Xia2Process extends ProgressableProcess{
 			
 			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
 			startProgressMonitor();
-			startTerminateMonitor(p);
+			startTerminateMonitor(p, processingDir);
 			p.waitFor();
 			checkXia2Errors();						
 

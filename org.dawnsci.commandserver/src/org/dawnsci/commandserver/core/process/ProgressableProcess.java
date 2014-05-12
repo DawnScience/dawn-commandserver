@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.util.Enumeration;
 
@@ -30,7 +31,6 @@ import org.dawnsci.commandserver.core.util.JSONUtils;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.sun.jna.Native;
 import com.sun.jna.Platform;
 
 
@@ -139,7 +139,7 @@ public abstract class ProgressableProcess implements Runnable {
 	 * 
 	 * @param p
 	 */
-    protected void startTerminateMonitor(final Process p) {
+    protected void startTerminateMonitor(final Process p, final String dir) {
 		
 
     	final Thread cancelMonitor = new Thread(new Runnable() {
@@ -167,7 +167,7 @@ public abstract class ProgressableProcess implements Runnable {
 	                                
 			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
 				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
-				        					terminate(p);
+				        					terminate(p, dir);
 				        				}
 			        				}
 			        				
@@ -198,10 +198,33 @@ public abstract class ProgressableProcess implements Runnable {
      * @param p
      * @throws Exception
      */
-	private void terminate(Process p) throws Exception {
+	private void terminate(Process process, final String dir) throws Exception {
 
-	    final int pid = getPid(p);
-	    POSIX.INSTANCE.kill(pid, 9);
+	    final int pid = getPid(process);
+	    
+	    if (Platform.isWindows()) {
+	    	
+	        // Not sure if this works
+	        POSIX.INSTANCE.kill(pid, 9);
+	        
+	    } else if (Platform.isLinux()) {
+	    	
+	    	// Use pkill, seems to kill all of the tree more reliably
+	    	ProcessBuilder pb = new ProcessBuilder();
+			
+			// Can adjust env if needed:
+			// Map<String, String> env = pb.environment();
+			pb.directory(new File(dir));
+			
+			File log = new File(dir, "xia2_kill.txt");
+			pb.redirectErrorStream(true);
+			pb.redirectOutput(Redirect.appendTo(log));
+			
+			pb.command("bash", "-c", "pkill -9 -s "+pid);
+			
+			Process p = pb.start();
+			p.waitFor();
+	    }
 	}
 
 	public static int getPid(Process p) throws Exception {

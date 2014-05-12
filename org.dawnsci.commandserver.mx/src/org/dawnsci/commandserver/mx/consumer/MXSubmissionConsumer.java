@@ -10,6 +10,8 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  * This consumer monitors a queue and starts runs based
  * on what is submitted.
  * 
+ * Example commissioning run: /dls/i03/data/2014/cm4950-2/20140425/gw/processing/thau1
+ * 
  * @author fcp94556
  *
  */

@@ -102,13 +102,22 @@ public class Xia2Writer extends BufferedWriter {
 		newLine();
 		newLine();
 		
+		write("BEGIN WAVELENGTH NATIVE");
+		newLine();
+		if (bean.isAnomalous()) {
+			write("ATOM X");
+			newLine();			
+		}
+		write("END WAVELENGTH NATIVE");
+		newLine();
+
 		int iSweep = 1;
 		for (SweepBean sweep : bean.getSweeps()) {
 			
 			write("BEGIN SWEEP SWEEP"+iSweep);
 			newLine();
-//			write("WAVELENGTH "+sweep.getWavelength());
-//			newLine();
+			write("WAVELENGTH NATIVE");
+			newLine();
 			write("DIRECTORY "+getSanitizedImageDirectory(sweep.getImageDirectory()));
 			newLine();
 			write("IMAGE "+sweep.getFirstImageName());

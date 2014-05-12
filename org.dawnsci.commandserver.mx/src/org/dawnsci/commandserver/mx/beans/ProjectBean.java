@@ -20,7 +20,26 @@ public class ProjectBean extends StatusBean {
 	private String      cystalName;              
 	private List<SweepBean> sweeps;
 	private double      wavelength = Double.NaN;
+	private String      commandLineSwitches;              
+	private boolean     anomalous;              
+
 	
+	public String getCommandLineSwitches() {
+		return commandLineSwitches;
+	}
+
+	public void setCommandLineSwitches(String commandLine) {
+		this.commandLineSwitches = commandLine;
+	}
+
+	public boolean isAnomalous() {
+		return anomalous;
+	}
+
+	public void setAnomalous(boolean anomalous) {
+		this.anomalous = anomalous;
+	}
+
 	public ProjectBean(){
 	}
 
@@ -32,6 +51,8 @@ public class ProjectBean extends StatusBean {
         this.cystalName   = db.cystalName;
         this.sweeps       = db.sweeps;
         this.wavelength   = db.wavelength;
+        this.anomalous    = db.anomalous;
+        this.commandLineSwitches  = db.commandLineSwitches;
 	}
 	
 
@@ -44,6 +65,9 @@ public class ProjectBean extends StatusBean {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + (anomalous ? 1231 : 1237);
+		result = prime * result
+				+ ((commandLineSwitches == null) ? 0 : commandLineSwitches.hashCode());
 		result = prime * result
 				+ ((cystalName == null) ? 0 : cystalName.hashCode());
 		result = prime * result
@@ -64,6 +88,13 @@ public class ProjectBean extends StatusBean {
 		if (getClass() != obj.getClass())
 			return false;
 		ProjectBean other = (ProjectBean) obj;
+		if (anomalous != other.anomalous)
+			return false;
+		if (commandLineSwitches == null) {
+			if (other.commandLineSwitches != null)
+				return false;
+		} else if (!commandLineSwitches.equals(other.commandLineSwitches))
+			return false;
 		if (cystalName == null) {
 			if (other.cystalName != null)
 				return false;

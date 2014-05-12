@@ -169,6 +169,7 @@ public abstract class ProgressableProcess implements Runnable {
 			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
 				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
 				        					
+				        					bean.merge(tbean);
 				        					System.out.println("Terminating job '"+tbean.getName()+"'");
 				        					terminate(p);
 				        					p.destroy();
@@ -206,6 +207,10 @@ public abstract class ProgressableProcess implements Runnable {
 
 	    final int pid = getPid(p);
 	    POSIX.INSTANCE.kill(pid, 9);
+	    
+	    bean.setStatus(Status.CANCELLED);
+	    bean.setMessage("Foricibly terminated before finishing.");
+		broadcast(bean);
 	}
 
 	public static int getPid(Process p) throws Exception {

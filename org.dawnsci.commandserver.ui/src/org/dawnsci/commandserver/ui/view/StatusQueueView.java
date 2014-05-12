@@ -100,6 +100,8 @@ public class StatusQueueView extends ViewPart {
 
 	private Connection topicConnection;
 
+	private Action kill;
+
 	@Override
 	public void createPartControl(Composite content) {
 		
@@ -131,7 +133,11 @@ public class StatusQueueView extends ViewPart {
 		viewer.addSelectionChangedListener(new ISelectionChangedListener() {	
 			@Override
 			public void selectionChanged(SelectionChangedEvent event) {
-				getViewSite().getActionBars().getToolBarManager().update(true);
+				final StatusBean bean = getSelection();
+				boolean enabled = true;
+				if (bean==null) enabled = false;
+				if (bean!=null) enabled = !bean.getStatus().isFinal();
+				kill.setEnabled(enabled);
 			}
 		});
 
@@ -226,7 +232,7 @@ public class StatusQueueView extends ViewPart {
 		final IContributionManager toolMan = getViewSite().getActionBars().getToolBarManager();
 		final MenuManager          menuMan = new MenuManager();
 	
-		final Action kill = new Action("Terminate job", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
+		this.kill = new Action("Terminate job", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
 			public void run() {
 				
 				final StatusBean bean = getSelection();
@@ -253,12 +259,6 @@ public class StatusQueueView extends ViewPart {
 							new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
 				}
 			}
-			public boolean isEnabled() {
-				final StatusBean bean = getSelection();
-				if (bean==null) return false;
-				return !bean.getStatus().isFinal();
-			}
-
 		};
 		toolMan.add(kill);
 		menuMan.add(kill);

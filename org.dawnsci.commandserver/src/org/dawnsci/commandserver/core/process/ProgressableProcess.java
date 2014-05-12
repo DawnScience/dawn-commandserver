@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.lang.reflect.Field;
 import java.util.Enumeration;
 
 import javax.jms.Connection;
@@ -29,6 +30,8 @@ import org.dawnsci.commandserver.core.util.JSONUtils;
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.sun.jna.Native;
+import com.sun.jna.Platform;
 
 
 /**
@@ -167,14 +170,7 @@ public abstract class ProgressableProcess implements Runnable {
 				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
 				        					
 				        					System.out.println("Terminating job '"+tbean.getName()+"'");
-				        					// TODO FIXME Test if this destroy works. In the past this
-				        					// was not reliable from Java and JNI had to be used to kill
-				        					// a process tree properly.
-				        					p.destroy();
-				        					
-				        					tbean.setStatus(Status.CANCELLED);
-				        					tbean.setMessage("Foricibly terminated before finishing.");
-				        					broadcast(tbean);
+				        					terminate(p);
 				        				}
 			        				}
 			        				
@@ -183,6 +179,7 @@ public abstract class ProgressableProcess implements Runnable {
 			                    e.printStackTrace();
 			                }
 			            }
+
 			        };
 			        consumer.setMessageListener(listener);
 			        
@@ -198,7 +195,36 @@ public abstract class ProgressableProcess implements Runnable {
     	cancelMonitor.setName("Monitor for cancellation of '"+bean.getName()+"'");
     	cancelMonitor.start();
     }
+    
+    /**
+     * Forcibly kills a process tree.
+     * @param p
+     * @throws Exception
+     */
+	private void terminate(Process p) throws Exception {
 
+	    final int pid = getPid(p);
+	    CLibrary.INSTANCE.kill(pid, 9);
+	}
+
+	public static int getPid(Process p) throws Exception {
+		
+		if (Platform.isWindows()) {
+			Field f = p.getClass().getDeclaredField("handle");
+			f.setAccessible(true);
+			int pid = Kernel32.INSTANCE.GetProcessId((Long) f.get(p));
+			return pid;
+			
+		} else if (Platform.isLinux()) {
+			Field	f = p.getClass().getDeclaredField("pid");
+			f.setAccessible(true);
+			int pid = (Integer) f.get(p);
+			return pid;
+
+		} else{
+			throw new Exception("Cannot currently process pid for "+System.getProperty("os.name"));
+		}
+	}
 
 
 	/**

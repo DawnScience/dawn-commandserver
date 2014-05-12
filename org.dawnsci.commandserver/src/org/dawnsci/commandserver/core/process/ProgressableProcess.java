@@ -205,7 +205,7 @@ public abstract class ProgressableProcess implements Runnable {
 	private void terminate(Process p) throws Exception {
 
 	    final int pid = getPid(p);
-	    CLibrary.INSTANCE.kill(pid, 9);
+	    POSIX.INSTANCE.kill(pid, 9);
 	}
 
 	public static int getPid(Process p) throws Exception {

@@ -23,7 +23,8 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
 public class Xia2Process extends ProgressableProcess{
 	
 	private static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
-	private static String XIA2_COMMAND  = "xia2 -xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
+	private static String XIA2_NAME     = "xia2"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
+	private static String XIA2_XINFO    = "-xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 	private static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
@@ -82,9 +83,9 @@ public class Xia2Process extends ProgressableProcess{
 		pb.redirectOutput(Redirect.appendTo(log));
 		
 		if (isWindowsOS()) {
-		    pb.command("cmd", "/C", createXai2Command());
+		    pb.command("cmd", "/C", createXai2Command((ProjectBean)bean));
 		} else {
-		    pb.command("bash", "-c", createXai2Command());
+		    pb.command("bash", "-c", createXai2Command((ProjectBean)bean));
 		}
 		
 		try {
@@ -149,6 +150,14 @@ public class Xia2Process extends ProgressableProcess{
 								if (line==null) {
 									Thread.sleep(500); // Xia2 writes some more lines
 									continue;
+								}
+								
+								if (line.contains("No images assigned for crystal test")) {
+									bean.setStatus(Status.FAILED);
+									bean.setMessage(line);
+									bean.setPercentComplete(0);
+									broadcast(bean);
+									return;
 								}
 								
 								// TODO parse the lines when we have them
@@ -227,7 +236,7 @@ public class Xia2Process extends ProgressableProcess{
 		}
 	}
 
-	private String createXai2Command() {
+	private String createXai2Command(ProjectBean bean) {
 		
 		String setupCmd = "";
 		if (!isWindowsOS()) { // We use module load xia2
@@ -240,9 +249,13 @@ public class Xia2Process extends ProgressableProcess{
 		}
 
 		// For windows xia2 must be on the path already.
-		String xia2Cmd = System.getProperty("org.dawnsci.commandserver.mx.xia2Command")!=null
-	               ? System.getProperty("org.dawnsci.commandserver.mx.xia2Command")
-	               : XIA2_COMMAND;
+		String xia2Cmd = System.getProperty("org.dawnsci.commandserver.mx.xia2Command");
+		
+		if (xia2Cmd==null) {
+			String cmd = bean.getCommandLineSwitches();
+			if (cmd==null) cmd = "";
+			xia2Cmd = XIA2_NAME+" "+cmd+" "+XIA2_XINFO;
+		}
 	               
 	    return setupCmd+xia2Cmd;
 	}

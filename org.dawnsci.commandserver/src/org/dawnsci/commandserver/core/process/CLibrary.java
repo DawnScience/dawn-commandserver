@@ -20,4 +20,12 @@ public interface CLibrary extends Library {
 	 * @param signal
 	 */
 	void kill(int pid, int signal);
+	
+	/**
+	 * Kill a process by pid, signal can be 9.
+	 * @param pid
+	 * @param signal
+	 */
+	void killall(String name);
+
 }

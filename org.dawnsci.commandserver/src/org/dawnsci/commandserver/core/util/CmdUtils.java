@@ -4,6 +4,20 @@ import java.io.File;
 
 public class CmdUtils {
 
+
+	/**
+	 * Attempts to get a uri to the data which works on linux and windows and MacOS if they have 
+	 * mounted /dls/
+	 * 
+	 * @param runDirectory
+	 * @return
+	 */
+	public static String getUri(String runDirectory) {
+		String ret = getSanitizedPath(runDirectory);
+		if (ret.contains(":")) return ret;
+		return "file://"+runDirectory;
+	}
+
 	/**
 	 * Tries to write the xinfo correctly even if the run is on windows.
 	 * @param path

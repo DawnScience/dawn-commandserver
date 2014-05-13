@@ -565,17 +565,22 @@ public class StatusQueueView extends ViewPart {
 		
 		try {
 			final IWorkbenchPage page = EclipseUtils.getPage();
-			final String         dir  = CmdUtils.getSanitizedPath(bean.getRunDirectory());
 			
-			final File fdir = new File(dir);
+			final File fdir = new File(CmdUtils.getSanitizedPath(bean.getRunDirectory()));
 			if (!fdir.exists()){
 				MessageDialog.openConfirm(getSite().getShell(), "Directory Not There", "The directory '"+bean.getRunDirectory()+"' has been moved or deleted.\n\nPlease contact your support representative.");
 			    return;
 			}
 			
-			IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(dir+"/fred.html");
-			final IEditorInput edInput = EclipseUtils.getExternalFileStoreEditorInput(dir);
-			page.openEditor(edInput, desc.getId());
+			if (CmdUtils.isWindowsOS()) { // Open inside DAWN
+				final String         dir  = fdir.toURI().toString();			
+				IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(dir+"/fred.html");
+				final IEditorInput edInput = EclipseUtils.getExternalFileStoreEditorInput(dir);
+				page.openEditor(edInput, desc.getId());
+				
+			} else { // Linux cannot be relied on
+				CmdUtils.browse(fdir);
+			}
 			
 		} catch (Exception e1) {
 			ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot open "+bean.getRunDirectory()+".\n\nPlease contact your support representative.", 

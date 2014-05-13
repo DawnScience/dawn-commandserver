@@ -30,6 +30,7 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
@@ -41,9 +42,11 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.action.Separator;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
@@ -74,6 +77,7 @@ import org.eclipse.ui.IEditorInput;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -85,7 +89,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * and optionally the queue view name if a custom one is required. Syntax of
  * these parameters in the secondary id are key1=value1;key2=value2...
  * 
- * The essential keys are: beanBundleName, beanClassName, queueName, topicName
+ * The essential keys are: beanBundleName, beanClassName, queueName, topicName, submissionQueueName
  * You can use createId(...) to generate a legal id from them.
  * 
  * The optional keys are: partName, 
@@ -278,6 +282,43 @@ public class StatusQueueView extends ViewPart {
 		};
 		toolMan.add(kill);
 		menuMan.add(kill);
+		
+		final Action rerun = new Action("Rerun", Activator.getDefault().getImageDescriptor("icons/rerun.png")) {
+			public void run() {
+				
+				final StatusBean bean = getSelection();
+				if (bean==null) return;
+				
+				try {
+					
+					final DateFormat format = DateFormat.getDateTimeInstance();
+					boolean ok = MessageDialog.openQuestion(getViewSite().getShell(), "Confirm resubmission "+bean.getName(), 
+							  "Are you sure you want to rerun "+bean.getName()+" submitted on "+format.format(new Date(bean.getSubmissionTime()))+"?");
+					
+					if (!ok) return;
+					
+					final StatusBean copy = bean.getClass().newInstance();
+					copy.merge(bean);
+					
+					IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
+					final String uri        = store.getString("org.dawnsci.commandserver.URI");
+					
+					final RemoteSubmission factory = new RemoteSubmission(uri);
+					factory.setQueueName(getSubmissionQueueName());
+					
+					factory.submit(copy, true);
+
+				} catch (Exception e) {
+					ErrorDialog.openError(getViewSite().getShell(), "Cannot rerun "+bean.getName(), "Cannot rerun "+bean.getName()+"\n\nPlease contact your support representative.",
+							new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
+				}
+			}
+		};
+		toolMan.add(rerun);
+		menuMan.add(rerun);
+
+		toolMan.add(new Separator());
+		menuMan.add(new Separator());
 		
 		final Action refresh = new Action("Refresh", Activator.getDefault().getImageDescriptor("icons/arrow-circle-double-135.png")) {
 			public void run() {
@@ -640,6 +681,12 @@ public class StatusQueueView extends ViewPart {
 		return "scisoft.default.STATUS_QUEUE";
 	}
 	
+	protected String getSubmissionQueueName() {
+		final String qName =  getSecondaryIdAttribute("submissionQueueName");
+		if (qName != null) return qName;
+		return "scisoft.default.SUBMISSION_QUEUE";
+	}
+	
 	private String getSecondaryIdAttribute(String key) {
 		if (idProperties!=null) return idProperties.getProperty(key);
 		if (getViewSite()==null) return null;
@@ -649,22 +696,23 @@ public class StatusQueueView extends ViewPart {
 		return idProperties.getProperty(key);
 	}
 
-	public static String createId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName) {
+	public static String createId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName, final String submissionQueueName) {
 		
 		final StringBuilder buf = new StringBuilder();
 		buf.append(ID);
 		buf.append(":");
-		buf.append(createSecondaryId(beanBundleName, beanClassName, queueName, topicName));
+		buf.append(createSecondaryId(beanBundleName, beanClassName, queueName, topicName, submissionQueueName));
 		return buf.toString();
 	}
 	
-	public static String createSecondaryId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName) {
+	public static String createSecondaryId(final String beanBundleName, final String beanClassName, final String queueName, final String topicName, final String submissionQueueName) {
 		
 		final StringBuilder buf = new StringBuilder();
-		append(buf, "beanBundleName", beanBundleName);
-		append(buf, "beanClassName",  beanClassName);
-		append(buf, "queueName",      queueName);
-		append(buf, "topicName",      topicName);
+		append(buf, "beanBundleName",      beanBundleName);
+		append(buf, "beanClassName",       beanClassName);
+		append(buf, "queueName",           queueName);
+		append(buf, "topicName",           topicName);
+		append(buf, "submissionQueueName", submissionQueueName);
 		return buf.toString();
 	}
 

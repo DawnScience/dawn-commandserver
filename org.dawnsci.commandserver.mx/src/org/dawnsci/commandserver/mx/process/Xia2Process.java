@@ -190,6 +190,8 @@ public class Xia2Process extends ProgressableProcess{
 									
 									ProjectBean pbean = (ProjectBean)bean;
 									final double complete = (processedSweeps.size()/(double)pbean.getSweeps().size())*100d;
+									System.out.println("XIA2 % commplete>> "+complete);
+									
 									bean.setMessage("Integrating "+sweepName);
 									bean.setPercentComplete(complete);
 									broadcast(bean);

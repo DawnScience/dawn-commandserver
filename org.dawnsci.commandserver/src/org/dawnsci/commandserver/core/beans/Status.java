@@ -8,7 +8,7 @@ package org.dawnsci.commandserver.core.beans;
  */
 public enum Status {
 
-	SUBMITTED, QUEUED, RUNNING, CANCELLED, REQUEST_TERMINATE, FAILED, COMPLETE, NONE;
+	SUBMITTED, QUEUED, RUNNING, TERMINATED, REQUEST_TERMINATE, FAILED, COMPLETE, NONE;
 
 	/**
 	 * 
@@ -19,6 +19,6 @@ public enum Status {
 	}
 	
 	public boolean isFinal() {
-		return this==CANCELLED || this==FAILED || this==COMPLETE || this==NONE;
+		return this==TERMINATED || this==FAILED || this==COMPLETE || this==NONE;
 	}
 }

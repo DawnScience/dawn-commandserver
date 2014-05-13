@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 
 import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.process.POSIX;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 
@@ -22,12 +23,16 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  */
 public class Xia2Process extends ProgressableProcess{
 	
-	private static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
+	// TODO temporary use of 4599 because it prints the process id.
+	private static String SETUP_COMMAND = "module load xia2/4599"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
+	
 	private static String XIA2_NAME     = "xia2"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 	private static String XIA2_XINFO    = "-xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 	private static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
+
+	private Process process;
 	
 	public Xia2Process(String     uri, 
 			           String     statusTName, 
@@ -62,68 +67,77 @@ public class Xia2Process extends ProgressableProcess{
 	}
 
 	@Override
-	public void run() {
+	public void execute() throws Exception {
 		
-		boolean fileOk = writeFile();
-		if (!fileOk) return;
-		
+		writeFile();
 		runXia2();
 	}
 
-	private void runXia2() {
-		
+	private void runXia2() throws Exception {
+
 		ProcessBuilder pb = new ProcessBuilder();
-		
+
 		// Can adjust env if needed:
 		// Map<String, String> env = pb.environment();
 		pb.directory(new File(processingDir));
-		
+
 		File log = new File(processingDir, "xia2_output.txt");
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(Redirect.appendTo(log));
-		
+
 		if (isWindowsOS()) {
-		    pb.command("cmd", "/C", createXai2Command((ProjectBean)bean));
+			pb.command("cmd", "/C", createXai2Command((ProjectBean)bean));
 		} else {
-		    pb.command("bash", "-c", createXai2Command((ProjectBean)bean));
+			pb.command("bash", "-c", createXai2Command((ProjectBean)bean));
 		}
-		
-		try {
-			Process p = pb.start();
-			assert pb.redirectInput() == Redirect.PIPE;
-			assert p.getInputStream().read() == -1;	
-			
-			// Now we check if xia2 itself failed
-			// In order to know this we look for a file with the extension .error with a 
-			// String in it "Error:"
-			// We assume that this failure happens fast during this sleep.
-			Thread.sleep(1000);
-			checkXia2Errors(); // We do this to avoid starting an output
-			                   // file monitor at all.
-			
-			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
-			startProgressMonitor();
-			startTerminateMonitor(p, processingDir);
-			p.waitFor();
-			checkXia2Errors();						
 
-			if (!bean.getStatus().isFinal()) {
-				bean.setStatus(Status.COMPLETE);
-				bean.setMessage("Xia2 run completed normally");
-				bean.setPercentComplete(100);
-				broadcast(bean);
-			}
+		this.process = pb.start();
+		assert pb.redirectInput() == Redirect.PIPE;
+		assert process.getInputStream().read() == -1;	
 
-		} catch (Exception ne) {
-			
-			bean.setStatus(Status.FAILED);
-			bean.setMessage(ne.getMessage());
-			bean.setPercentComplete(0);
+		// Now we check if xia2 itself failed
+		// In order to know this we look for a file with the extension .error with a 
+		// String in it "Error:"
+		// We assume that this failure happens fast during this sleep.
+		Thread.sleep(1000);
+		checkXia2Errors(); // We do this to avoid starting an output
+		// file monitor at all.
+
+		// Now we monitor the output file. Then we wait for the process, then we check for errors again.
+		startProgressMonitor();
+		createTerminateListener();
+		process.waitFor();
+		checkXia2Errors();						
+
+		if (!bean.getStatus().isFinal()) {
+			bean.setStatus(Status.COMPLETE);
+			bean.setMessage("Xia2 run completed normally");
+			bean.setPercentComplete(100);
 			broadcast(bean);
-			
 		}
 
 	}
+
+
+	/**
+	 * Forcibly kills a process tree by default. You may override the terminate 
+	 * for instance when a job should be killed on the cluster.
+	 *  
+	 * You must manually call createTerminateListener() or the terminate will not be 
+	 * listened to and the topic will never trigger this method to be called.
+	 *  
+	 * @param p
+	 * @throws Exception
+	 */
+	protected void terminate() throws Exception {
+
+	    final int pid = getPid(process);
+	    
+	    // Not sure if this works
+	    POSIX.INSTANCE.kill(pid, 9);
+	    
+	}
+
 
 	/**
      * Starts file polling on the output file, stops when bean reaches a final state.
@@ -269,7 +283,7 @@ public class Xia2Process extends ProgressableProcess{
 	    return setupCmd+xia2Cmd;
 	}
 
-	private boolean writeFile() {
+	private void writeFile() throws Exception {
 		
         ProjectBean dBean = (ProjectBean)bean;
         Xia2Writer writer = null;
@@ -285,25 +299,9 @@ public class Xia2Process extends ProgressableProcess{
 			dBean.setPercentComplete(1);
 			broadcast(dBean);
     
-			return true;
-	        
-		} catch (Exception ne) {
-			dBean.setStatus(Status.FAILED);
-			dBean.setMessage(ne.getMessage());
-			broadcast(dBean);
-			return false;
-			
+	        			
 		} finally {
-			if (writer!=null) {
-				try {
-					writer.close();
-				} catch (IOException e) {
-					dBean.setStatus(Status.FAILED);
-					dBean.setMessage(e.getMessage());
-					broadcast(dBean);
-					return false;
-				}
-			}
+			if (writer!=null) writer.close();
 		}
 		
 	}

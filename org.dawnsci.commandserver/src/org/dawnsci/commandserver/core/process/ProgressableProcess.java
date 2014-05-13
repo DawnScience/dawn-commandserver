@@ -59,6 +59,35 @@ public abstract class ProgressableProcess implements Runnable {
 		broadcast(bean);
 	}
 	
+	@Override
+	public final void run() {
+        try {
+        	execute();
+        } catch (Exception ne) {
+        	
+			bean.setStatus(Status.FAILED);
+			bean.setMessage(ne.getMessage());
+			bean.setPercentComplete(0);
+			broadcast(bean);
+        }
+	}
+	
+	/**
+	 * Execute the process, if an exception is thrown the process is set to 
+	 * failed and the message is the message of the exception.
+	 * 
+	 * @throws Exception
+	 */
+	protected abstract void execute() throws Exception;
+	
+	/**
+	 * Please provide a termination for the process by implementing this method.
+	 * If the process has a stop file, write it now; if it needs to be killed,
+	 * get its pid and kill it; if it is running on a cluster, use the qdel or dramaa api.
+	 * 
+	 * @throws Exception
+	 */
+	protected abstract void terminate() throws Exception;
 	
 	/**
 	 * @return true if windows
@@ -135,107 +164,84 @@ public abstract class ProgressableProcess implements Runnable {
 	protected Connection topicConnection;
 
 	/**
-	 * Starts a thread which listens to the topic and if
+	 * Starts a connection which listens to the topic and if
 	 * a cancel is found published, tries to terminate the subprocess.
 	 * 
 	 * @param p
 	 */
-    protected void startTerminateMonitor(final Process p, final String dir) {
+    protected void createTerminateListener() throws Exception {
 		
+    	ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+    	ProgressableProcess.this.topicConnection = connectionFactory.createConnection();
+    	topicConnection.start();
 
-    	final Thread cancelMonitor = new Thread(new Runnable() {
-    		public void run() {
-    			
+    	Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+    	final Topic           topic    = session.createTopic(statusTName);
+    	final MessageConsumer consumer = session.createConsumer(topic);
+
+    	final Class        clazz  = bean.getClass();
+    	final ObjectMapper mapper = new ObjectMapper();
+
+    	MessageListener listener = new MessageListener() {
+    		public void onMessage(Message message) {		            	
     			try {
-					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-					ProgressableProcess.this.topicConnection = connectionFactory.createConnection();
-			        topicConnection.start();
-	
-			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	
-			        final Topic           topic    = session.createTopic(statusTName);
-			        final MessageConsumer consumer = session.createConsumer(topic);
-	
-			        final Class        clazz  = bean.getClass();
-			        final ObjectMapper mapper = new ObjectMapper();
-			        
-			        MessageListener listener = new MessageListener() {
-			            public void onMessage(Message message) {		            	
-			                try {
-			                    if (message instanceof TextMessage) {
-			                        TextMessage t = (TextMessage) message;
-			        				final StatusBean tbean = mapper.readValue(t.getText(), clazz);
-	                                
-			        				if (bean.getUniqueId().equals(tbean.getUniqueId())) {
-				        				if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
-				        					bean.merge(tbean);
-				        					System.out.println("Terminating job '"+tbean.getName()+"'");
-				        					terminate(p, dir);
-				        					p.destroy();
-				        				}
-			        				}
-			        				
-			                    }
-			                } catch (Exception e) {
-			                    e.printStackTrace();
-			                }
-			            }
+    				if (message instanceof TextMessage) {
+    					TextMessage t = (TextMessage) message;
+    					final StatusBean tbean = mapper.readValue(t.getText(), clazz);
 
-			        };
-			        consumer.setMessageListener(listener);
-			        
-    			} catch (Exception ne) {
-    				
-    				ne.printStackTrace();
+    					if (bean.getStatus().isFinal()) { // Something else already happened
+    						topicConnection.close();
+    					return;
+    					}
+
+    					if (bean.getUniqueId().equals(tbean.getUniqueId())) {
+    						if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
+    							bean.merge(tbean);
+    							System.out.println("Terminating job '"+tbean.getName()+"'");
+
+    							terminate();
+    							topicConnection.close();
+
+    							bean.setStatus(Status.TERMINATED);
+    							bean.setMessage("Foricibly terminated before finishing.");
+    							broadcast(bean);
+
+    							return;
+    						}
+    					}
+
+    				}
+    			} catch (Exception e) {
+    				e.printStackTrace();
     			}
-
     		}
-    	});
-    	cancelMonitor.setDaemon(true);
-    	cancelMonitor.setPriority(Thread.MIN_PRIORITY);
-    	cancelMonitor.setName("Monitor for cancellation of '"+bean.getName()+"'");
-    	cancelMonitor.start();
+
+    	};
+    	consumer.setMessageListener(listener);
+
     }
-    
-    /**
-     * Forcibly kills a process tree.
-     * @param p
-     * @throws Exception
-     */
-	private void terminate(Process process, final String dir) throws Exception {
 
-	    final int pid = getPid(process);
-	    
-	    if (Platform.isWindows()) {
-	    	
-	        // Not sure if this works
-	        POSIX.INSTANCE.kill(pid, 9);
-	        
-	    } else if (Platform.isLinux()) {
-	    	
-	    	// Use pkill, seems to kill all of the tree more reliably
-	    	ProcessBuilder pb = new ProcessBuilder();
-			
-			// Can adjust env if needed:
-			// Map<String, String> env = pb.environment();
-			pb.directory(new File(dir));
-			
-			File log = new File(dir, "xia2_kill.txt");
-			pb.redirectErrorStream(true);
-			pb.redirectOutput(Redirect.appendTo(log));
-			
-			pb.command("bash", "-c", "pkill -9 -s "+pid);
-			
-			Process p = pb.start();
-			p.waitFor();
-	    }
-	    
-	    bean.setStatus(Status.CANCELLED);
-	    bean.setMessage("Foricibly terminated before finishing.");
-		broadcast(bean);
-	}
+    protected void pkill(int pid, String dir) throws Exception {
+    	
+    	// Use pkill, seems to kill all of the tree more reliably
+    	ProcessBuilder pb = new ProcessBuilder();
+		
+		// Can adjust env if needed:
+		// Map<String, String> env = pb.environment();
+		pb.directory(new File(dir));
+		
+		File log = new File(dir, "xia2_kill.txt");
+		pb.redirectErrorStream(true);
+		pb.redirectOutput(Redirect.appendTo(log));
+		
+		pb.command("bash", "-c", "pkill -9 -s "+pid);
+		
+		Process p = pb.start();
+		p.waitFor();
+    }
 
-	public static int getPid(Process p) throws Exception {
+	protected static int getPid(Process p) throws Exception {
 		
 		if (Platform.isWindows()) {
 			Field f = p.getClass().getDeclaredField("handle");
@@ -324,6 +330,11 @@ public abstract class ProgressableProcess implements Runnable {
 	
 	protected void dryRun() {
 		for (int i = 0; i < 100; i++) {
+			
+			if (bean.getStatus()==Status.REQUEST_TERMINATE ||
+			    bean.getStatus()==Status.TERMINATED) {
+				return;
+			}
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {

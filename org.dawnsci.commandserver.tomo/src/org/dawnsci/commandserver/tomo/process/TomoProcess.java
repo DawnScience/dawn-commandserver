@@ -55,7 +55,7 @@ public class TomoProcess extends ProgressableProcess{
 	}
 
 	@Override
-	public void run() {
+	public void execute() throws Exception {
 		
 		// Right we a starting the reconstruction, tell them.
 		bean.setStatus(Status.RUNNING);
@@ -63,8 +63,7 @@ public class TomoProcess extends ProgressableProcess{
 		broadcast(bean);
 		
 		// TODO Is this even needed?
-		boolean fileOk = writeFile();
-		if (!fileOk) return;
+		writeFile();
 		
 		// TODO Remove this, it is just to give an idea of how something can report progress to the UI.
 		dryRun();
@@ -76,7 +75,7 @@ public class TomoProcess extends ProgressableProcess{
 	/**
 	 * TODO Please implement the running of tomo properly
 	 */
-	private void runReconstruction() {
+	protected void runReconstruction() throws Exception {
 		
 		ProcessBuilder pb = new ProcessBuilder();
 		
@@ -93,40 +92,37 @@ public class TomoProcess extends ProgressableProcess{
 		} else {
 		    pb.command("bash", "-c", createTomoCommand());
 		}
-		
-		try {
-			Process p = pb.start();
-			assert pb.redirectInput() == Redirect.PIPE;
-			assert p.getInputStream().read() == -1;	
-			
-			// Now we check if xia2 itself failed
-			// In order to know this we look for a file with the extension .error with a 
-			// String in it "Error:"
-			// We assume that this failure happens fast during this sleep.
-			Thread.sleep(1000);
-			// checkTomoErrors(); // We do this to avoid starting an output file monitor at all.
-			
-			// Now we monitor the output file. Then we wait for the process, then we check for errors again.
-			// startProgressMonitor();
-			p.waitFor();
-			// checkXia2Errors(); // Check errors again at end					
 
-			bean.setStatus(Status.COMPLETE);
-			bean.setMessage("Reconstruction run completed normally");
-			bean.setPercentComplete(100);
-			broadcast(bean);
+		Process p = pb.start();
+		assert pb.redirectInput() == Redirect.PIPE;
+		assert p.getInputStream().read() == -1;	
 
-		} catch (Exception ne) {
-			
-			bean.setStatus(Status.FAILED);
-			bean.setMessage(ne.getMessage());
-			bean.setPercentComplete(0);
-			broadcast(bean);
-			
-		}
+		// Now we check if xia2 itself failed
+		// In order to know this we look for a file with the extension .error with a 
+		// String in it "Error:"
+		// We assume that this failure happens fast during this sleep.
+		Thread.sleep(1000);
+		// checkTomoErrors(); // We do this to avoid starting an output file monitor at all.
+
+		// Now we monitor the output file. Then we wait for the process, then we check for errors again.
+		// startProgressMonitor();
+		// createTerminateListener();
+		p.waitFor();
+		// checkXia2Errors(); // Check errors again at end					
+
+		bean.setStatus(Status.COMPLETE);
+		bean.setMessage("Reconstruction run completed normally");
+		bean.setPercentComplete(100);
+		broadcast(bean);
+
 
 	}
 	
+
+	@Override
+	protected void terminate() throws Exception {
+		// Please implement to clean up on the cluster.
+	}
 
 	private String createTomoCommand() {
 		
@@ -148,10 +144,9 @@ public class TomoProcess extends ProgressableProcess{
 	    return setupCmd+xia2Cmd;
 	}
 
-	private boolean writeFile() {
+	private void writeFile() throws Exception {
 		
         // TODO Does tomo need a file to drive its running?
-		return true;
 	}
 
 	public String getProcessingDir() {

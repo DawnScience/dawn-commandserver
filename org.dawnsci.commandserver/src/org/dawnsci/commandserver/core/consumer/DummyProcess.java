@@ -32,13 +32,20 @@ public class DummyProcess extends ProgressableProcess {
 
 
 	@Override
-	public void run() {
+	public void execute() throws Exception {
 		
         bean.setStatus(Status.RUNNING);
         bean.setPercentComplete(1);
         broadcast(bean);
 		
         dryRun();
+	}
+
+
+	@Override
+	protected void terminate() throws Exception {
+		// We do nothing here, normally the dryRun() will now exist because
+		// the status changed.
 	}
 
 }

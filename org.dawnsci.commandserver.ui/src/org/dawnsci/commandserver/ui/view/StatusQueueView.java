@@ -299,6 +299,7 @@ public class StatusQueueView extends ViewPart {
 					
 					final StatusBean copy = bean.getClass().newInstance();
 					copy.merge(bean);
+					copy.setMessage("Rerun of "+bean.getName());
 					
 					IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
 					final String uri        = store.getString("org.dawnsci.commandserver.URI");

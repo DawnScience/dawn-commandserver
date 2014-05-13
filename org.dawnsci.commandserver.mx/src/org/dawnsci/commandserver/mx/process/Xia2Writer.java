@@ -4,6 +4,7 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 
+import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.beans.SweepBean;
 
@@ -118,7 +119,7 @@ public class Xia2Writer extends BufferedWriter {
 			newLine();
 			write("WAVELENGTH NATIVE");
 			newLine();
-			write("DIRECTORY "+getSanitizedImageDirectory(sweep.getImageDirectory()));
+			write("DIRECTORY "+CmdUtils.getSanitizedPath(sweep.getImageDirectory()));
 			newLine();
 			write("IMAGE "+sweep.getFirstImageName());
 			newLine();
@@ -140,20 +141,6 @@ public class Xia2Writer extends BufferedWriter {
 
 	}
 
-	/**
-	 * Tries to write the xinfo correctly even if the run is on windows.
-	 * @param path
-	 * @return
-	 */
-	private String getSanitizedImageDirectory(String path) {
-		if (isWindowsOS() && path.startsWith("/dls/")) {
-			path = "\\\\Data.diamond.ac.uk\\"+path.substring(5);
-		}
-		return path;
-	}
-	static public boolean isWindowsOS() {
-		return (System.getProperty("os.name").indexOf("Windows") == 0);
-	}
 
 	/**
 	 * 

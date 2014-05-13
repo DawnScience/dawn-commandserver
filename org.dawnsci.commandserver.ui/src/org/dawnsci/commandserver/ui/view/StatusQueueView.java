@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.ui.view;
 
+import java.io.File;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Comparator;
@@ -28,6 +29,7 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.dialog.PropertiesDialog;
@@ -54,9 +56,17 @@ import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.MouseAdapter;
+import org.eclipse.swt.events.MouseEvent;
+import org.eclipse.swt.events.MouseMoveListener;
+import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Point;
+import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
+import org.eclipse.swt.widgets.TableItem;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.slf4j.Logger;
@@ -245,7 +255,7 @@ public class StatusQueueView extends ViewPart {
 				try {
 					
 					final DateFormat format = DateFormat.getDateTimeInstance();
-					boolean ok = MessageDialog.openConfirm(getViewSite().getShell(), "Confirm terminate "+bean.getName(), 
+					boolean ok = MessageDialog.openQuestion(getViewSite().getShell(), "Confirm terminate "+bean.getName(), 
 							  "Are you sure you want to terminate "+bean.getName()+" submitted on "+format.format(new Date(bean.getSubmissionTime()))+"?");
 					
 					if (!ok) return;
@@ -496,8 +506,60 @@ public class StatusQueueView extends ViewPart {
 					return e.getMessage();
 				}
 			}
+			public Color getForeground(Object element) {
+				return getSite().getShell().getDisplay().getSystemColor(SWT.COLOR_BLUE);
+			}
 		});
 
+	    MouseMoveListener cursorListener = new MouseMoveListener() {		
+			@Override
+			public void mouseMove(MouseEvent e) {
+				Point pt = new Point(e.x, e.y);
+				TableItem item = viewer.getTable().getItem(pt);
+				if (item == null) {
+					viewer.getTable().setCursor(null);
+					return;
+				}
+				Rectangle rect = item.getBounds(5);
+				if (rect.contains(pt)) {
+					viewer.getTable().setCursor(Display.getDefault().getSystemCursor(SWT.CURSOR_HAND));
+				} else {
+					viewer.getTable().setCursor(null);
+				}
+				
+			}
+		};
+        viewer.getTable().addMouseMoveListener(cursorListener);
+ 
+        MouseAdapter mouseClick = new MouseAdapter() {
+			@Override
+			public void mouseDown(MouseEvent e) {
+			    Point pt = new Point(e.x, e.y);
+				TableItem item = viewer.getTable().getItem(pt);
+				if (item == null) return;
+				Rectangle rect = item.getBounds(5);
+				if (rect.contains(pt)) {
+					
+					final StatusBean bean = (StatusBean)item.getData();
+					try {
+						boolean ok = CmdUtils.browse(bean.getRunDirectory());
+						
+						if (ok) {
+							// MessageDialog.openConfirm(getSite().getShell(), "Directory Opened", "Directory '"+bean.getRunDirectory()+"' exists but will take a second to open...");
+						} else {
+							MessageDialog.openConfirm(getSite().getShell(), "Directory Not There", "The directory '"+bean.getRunDirectory()+"' has been moved or deleted.\n\nPlease contact your support representative.");
+						}
+						
+					} catch (Exception e1) {
+						ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot open "+bean.getRunDirectory()+".\n\nPlease contact your support representative.", 
+								new Status(IStatus.ERROR, Activator.PLUGIN_ID, e1.getMessage()));
+					}
+					
+				}
+			}
+        };
+        
+        viewer.getTable().addMouseListener(mouseClick);
 
 	}
 

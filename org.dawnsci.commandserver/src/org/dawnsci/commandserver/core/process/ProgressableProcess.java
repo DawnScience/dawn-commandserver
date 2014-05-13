@@ -100,14 +100,15 @@ public abstract class ProgressableProcess implements Runnable {
 	 * Writes the project bean at the point where it is run.
 	 * 
 	 * @param processingDir2
+	 * @param fileName - name of file
 	 * @throws IOException 
 	 * @throws FileNotFoundException 
 	 * @throws JsonMappingException 
 	 * @throws JsonGenerationException 
 	 */
-	protected void writeProjectBean(String dir) throws Exception {
+	protected void writeProjectBean(final String dir, final String fileName) throws Exception {
 		
-		final File beanFile = new File(dir, "projectBean.json");
+		final File beanFile = new File(dir, fileName);
     	ObjectMapper mapper = new ObjectMapper();
     	
     	final FileOutputStream stream = new FileOutputStream(beanFile);
@@ -192,7 +193,7 @@ public abstract class ProgressableProcess implements Runnable {
 
     					if (bean.getStatus().isFinal()) { // Something else already happened
     						topicConnection.close();
-    					return;
+    						return;
     					}
 
     					if (bean.getUniqueId().equals(tbean.getUniqueId())) {

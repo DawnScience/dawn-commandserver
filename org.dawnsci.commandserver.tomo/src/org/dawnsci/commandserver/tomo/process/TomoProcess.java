@@ -48,7 +48,7 @@ public class TomoProcess extends ProgressableProcess{
 		
 		// We record the bean so that reruns of reruns are possible.
 		try {
-			writeProjectBean(processingDir);
+			writeProjectBean(processingDir, "tomoBean.json");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

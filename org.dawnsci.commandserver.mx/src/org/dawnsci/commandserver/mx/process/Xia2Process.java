@@ -3,8 +3,11 @@ package org.dawnsci.commandserver.mx.process;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
+import java.util.HashSet;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.POSIX;
@@ -139,7 +142,7 @@ public class Xia2Process extends ProgressableProcess{
 	    
 	}
 
-
+    private static final Pattern STATUS_LINE = Pattern.compile("\\-+ Integrating ([a-zA-Z0-9_]+) \\-+");
 	/**
      * Starts file polling on the output file, stops when bean reaches a final state.
      */
@@ -149,6 +152,8 @@ public class Xia2Process extends ProgressableProcess{
 			public void run() {
 			
 				try {
+					final Set<String> processedSweeps = new HashSet<String>();
+					
 					// First wait until file is there or bean is done.
 					final String name     = System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")!=null
 					                      ? System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")
@@ -178,6 +183,19 @@ public class Xia2Process extends ProgressableProcess{
 									return;
 								}
 								
+								final Matcher matcher = STATUS_LINE.matcher(line);
+								if (matcher.matches()) {
+									final String sweepName = matcher.group(1);
+									processedSweeps.add(sweepName); // They are not in order!
+									
+									ProjectBean pbean = (ProjectBean)bean;
+									final double complete = (processedSweeps.size()/(double)pbean.getSweeps().size())*100d;
+									bean.setMessage("Integrating "+sweepName);
+									bean.setPercentComplete(complete);
+									broadcast(bean);
+									continue;
+								}
+								
 								if (line.startsWith("--------------------")) {
 									bean.setStatus(Status.RUNNING);
 									bean.setMessage(line.substring("--------------------".length()));
@@ -186,18 +204,18 @@ public class Xia2Process extends ProgressableProcess{
 								
 								// TODO parse the lines when we have them
 								// broadcast any %-complete that we think we have found.
-								System.out.println("XIA2 says >> "+line);
+								System.out.println("XIA2>> "+line);
 								
 								
 							} 
-						}finally {
+						} finally {
 							if (br!=null) br.close();
 						}
 					}
 					
 				} catch (Exception ne) {
-					// TODO should we send the failure to monitor the file as an error?
-					// Probably not because xia2 writes an error file.
+					// Should we send the failure to monitor the file as an error?
+					// NOPE because xia2 writes an error file, that info is more useful.
 					ne.printStackTrace();
 				}
 			}

@@ -35,6 +35,7 @@ import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.dialog.PropertiesDialog;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
+import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Platform;
@@ -564,6 +565,26 @@ public class StatusQueueView extends ViewPart {
 	protected void openResults(StatusBean bean) {
 		
 		try {
+			final IConfigurationElement[] c = Platform.getExtensionRegistry().getConfigurationElementsFor("org.dawnsci.commandserver.ui.resultsOpenHandler");
+			if (c!=null) {
+				for (IConfigurationElement i : c) {
+					final IResultOpenHandler handler = (IResultOpenHandler)i.createExecutableExtension("class");
+					if (handler.isHandled(bean)) {
+						boolean ok = handler.open(bean);
+						if (ok) return;
+					}
+				}
+			}
+		} catch (Exception ne) {
+			ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot open "+bean.getRunDirectory()+" normally, will show directory instead.\n\nPlease contact your support representative.", 
+					new Status(IStatus.ERROR, Activator.PLUGIN_ID, ne.getMessage()));
+		}
+
+		openDirectory(bean);
+	}
+
+	private void openDirectory(StatusBean bean) {
+		try {
 			final IWorkbenchPage page = EclipseUtils.getPage();
 			
 			final File fdir = new File(CmdUtils.getSanitizedPath(bean.getRunDirectory()));
@@ -573,12 +594,12 @@ public class StatusQueueView extends ViewPart {
 			}
 			
 			if (CmdUtils.isWindowsOS()) { // Open inside DAWN
-				final String         dir  = fdir.toURI().toString();			
+				final String         dir  = fdir.getAbsolutePath();		
 				IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(dir+"/fred.html");
 				final IEditorInput edInput = EclipseUtils.getExternalFileStoreEditorInput(dir);
 				page.openEditor(edInput, desc.getId());
 				
-			} else { // Linux cannot be relied on
+			} else { // Linux cannot be relied on to open the browser on a directory.
 				CmdUtils.browse(fdir);
 			}
 			

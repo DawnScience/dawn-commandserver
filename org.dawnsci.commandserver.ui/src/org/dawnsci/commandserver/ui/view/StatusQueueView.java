@@ -25,6 +25,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawb.common.ui.util.EclipseUtils;
 import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
@@ -67,6 +68,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.TableItem;
+import org.eclipse.ui.IEditorDescriptor;
+import org.eclipse.ui.IEditorInput;
+import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.osgi.framework.Bundle;
 import org.slf4j.Logger;
@@ -541,26 +546,41 @@ public class StatusQueueView extends ViewPart {
 				if (rect.contains(pt)) {
 					
 					final StatusBean bean = (StatusBean)item.getData();
-					try {
-						boolean ok = CmdUtils.browse(bean.getRunDirectory());
-						
-						if (ok) {
-							// MessageDialog.openConfirm(getSite().getShell(), "Directory Opened", "Directory '"+bean.getRunDirectory()+"' exists but will take a second to open...");
-						} else {
-							MessageDialog.openConfirm(getSite().getShell(), "Directory Not There", "The directory '"+bean.getRunDirectory()+"' has been moved or deleted.\n\nPlease contact your support representative.");
-						}
-						
-					} catch (Exception e1) {
-						ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot open "+bean.getRunDirectory()+".\n\nPlease contact your support representative.", 
-								new Status(IStatus.ERROR, Activator.PLUGIN_ID, e1.getMessage()));
-					}
-					
+					openResults(bean);
 				}
 			}
         };
         
         viewer.getTable().addMouseListener(mouseClick);
 
+	}
+
+	/**
+	 * You can override this method to provide custom opening of
+	 * results if required.
+	 * 
+	 * @param bean
+	 */
+	protected void openResults(StatusBean bean) {
+		
+		try {
+			final IWorkbenchPage page = EclipseUtils.getPage();
+			final String         dir  = CmdUtils.getSanitizedPath(bean.getRunDirectory());
+			
+			final File fdir = new File(dir);
+			if (!fdir.exists()){
+				MessageDialog.openConfirm(getSite().getShell(), "Directory Not There", "The directory '"+bean.getRunDirectory()+"' has been moved or deleted.\n\nPlease contact your support representative.");
+			    return;
+			}
+			
+			IEditorDescriptor desc = PlatformUI.getWorkbench().getEditorRegistry().getDefaultEditor(dir+"/fred.html");
+			final IEditorInput edInput = EclipseUtils.getExternalFileStoreEditorInput(dir);
+			page.openEditor(edInput, desc.getId());
+			
+		} catch (Exception e1) {
+			ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot open "+bean.getRunDirectory()+".\n\nPlease contact your support representative.", 
+					new Status(IStatus.ERROR, Activator.PLUGIN_ID, e1.getMessage()));
+		}
 	}
 
 	@Override

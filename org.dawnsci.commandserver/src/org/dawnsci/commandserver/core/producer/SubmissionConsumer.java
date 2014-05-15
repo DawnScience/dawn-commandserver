@@ -108,6 +108,31 @@ public abstract class SubmissionConsumer {
 	 */
 	protected abstract ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
 
+	/**
+	 * Defines the time in ms that a job may be in the running state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old running jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected abstract long getMaximumRunningAge();
+	
+
+	/**
+	 * Defines the time in ms that a job may be in the complete (or other final) state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old complete jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected abstract long getMaximumCompleteAge();
+	/**
+	 * 
+	 * @return the name which the user will see for this consumer.
+	 */
+	public abstract String getName();
 
 	/**
 	 * WARNING - starts infinite loop - you have to kill 
@@ -271,31 +296,6 @@ public abstract class SubmissionConsumer {
 		
 	}
 
-	/**
-	 * Defines the time in ms that a job may be in the running state
-	 * before the consumer might consider it for deletion. If a consumer
-	 * is restarted it will normally delete old running jobs older than 
-	 * this age.
-	 * 
-	 * @return
-	 */
-	protected abstract long getMaximumRunningAge();
-	
-
-	/**
-	 * Defines the time in ms that a job may be in the complete (or other final) state
-	 * before the consumer might consider it for deletion. If a consumer
-	 * is restarted it will normally delete old compelte jobs older than 
-	 * this age.
-	 * 
-	 * @return
-	 */
-	protected abstract long getMaximumCompleteAge();
-	/**
-	 * 
-	 * @return the name which the user will see for this consumer.
-	 */
-	public abstract String getName();
 	
 	private void startNotifications() throws Exception {
 		

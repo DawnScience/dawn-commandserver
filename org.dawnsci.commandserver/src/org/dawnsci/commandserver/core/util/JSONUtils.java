@@ -31,7 +31,7 @@ public class JSONUtils {
 	} 
 	/**
 	 * Generic way of sending a topic notification
-	 * @param connection - does not get closed afterwards.
+	 * @param connection - does not get closed afterwards nust be started before.
 	 * @param message
 	 * @param topicName
 	 * @param uri

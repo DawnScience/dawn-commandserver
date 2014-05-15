@@ -77,6 +77,27 @@ public class Xia2Process extends ProgressableProcess{
 		runXia2();
 	}
 
+	/**
+	 * Forcibly kills a process tree by default. You may override the terminate 
+	 * for instance when a job should be killed on the cluster.
+	 *  
+	 * You must manually call createTerminateListener() or the terminate will not be 
+	 * listened to and the topic will never trigger this method to be called.
+	 *  
+	 * @param p
+	 * @throws Exception
+	 */
+	protected void terminate() throws Exception {
+
+	    final int pid = getPid(process);
+	    
+	    System.out.println("killing pid "+pid);
+	    // Not sure if this works
+	    POSIX.INSTANCE.kill(pid, 9);
+	    
+	}
+
+
 	private void runXia2() throws Exception {
 
 		ProcessBuilder pb = new ProcessBuilder();
@@ -122,26 +143,6 @@ public class Xia2Process extends ProgressableProcess{
 
 	}
 
-
-	/**
-	 * Forcibly kills a process tree by default. You may override the terminate 
-	 * for instance when a job should be killed on the cluster.
-	 *  
-	 * You must manually call createTerminateListener() or the terminate will not be 
-	 * listened to and the topic will never trigger this method to be called.
-	 *  
-	 * @param p
-	 * @throws Exception
-	 */
-	protected void terminate() throws Exception {
-
-	    final int pid = getPid(process);
-	    
-	    System.out.println("killing pid "+pid);
-	    // Not sure if this works
-	    POSIX.INSTANCE.kill(pid, 9);
-	    
-	}
 
     private static final Pattern STATUS_LINE = Pattern.compile("\\-+ Integrating ([a-zA-Z0-9_]+) \\-+");
 	/**

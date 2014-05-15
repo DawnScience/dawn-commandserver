@@ -399,6 +399,8 @@ public class StatusQueueView extends ViewPart {
 					StatusBean statusBean = (StatusBean) it.next();
 					if (!userName.equals(statusBean.getUserName())) it.remove();
 				}
+				// This form of filtering is not at all secure because we
+				// give the full list of the queue to the clients.
 				return retained.toArray(new StatusBean[retained.size()]);
 			}
 		};

@@ -255,6 +255,18 @@ public class StatusQueueView extends ViewPart {
 		final IContributionManager toolMan = getViewSite().getActionBars().getToolBarManager();
 		final MenuManager          menuMan = new MenuManager();
 	
+		final Action openResults = new Action("Open results for selected run", Activator.getDefault().getImageDescriptor("icons/results.png")) {
+			public void run() {
+				openResults(getSelection());
+			}
+		};
+		
+		toolMan.add(openResults);
+		menuMan.add(openResults);
+		toolMan.add(new Separator());
+		menuMan.add(new Separator());
+		
+		
 		this.kill = new Action("Terminate job", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
 			public void run() {
 				
@@ -613,6 +625,7 @@ public class StatusQueueView extends ViewPart {
 	 */
 	protected void openResults(StatusBean bean) {
 		
+		if (bean == null) return;
 		try {
 			final IConfigurationElement[] c = Platform.getExtensionRegistry().getConfigurationElementsFor("org.dawnsci.commandserver.ui.resultsOpenHandler");
 			if (c!=null) {

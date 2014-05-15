@@ -3,11 +3,14 @@ package org.dawnsci.commandserver.ui.view;
 import java.io.File;
 import java.net.URI;
 import java.text.DateFormat;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.Enumeration;
+import java.util.Iterator;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 import java.util.TreeSet;
@@ -94,7 +97,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * You can use createId(...) to generate a legal id from them.
  * 
  * The optional keys are: partName, 
- *                        uri (default CommandConstants.JMS_URI)
+ *                        uri (default CommandConstants.JMS_URI),
+ *                        userName (default is user.name system property)
  * 
  * Example id for this view would be:
  * org.dawnsci.commandserver.ui.queueView:beanClassName=org.dawnsci.commandserver.mx.beans.ProjectBean;beanBundleName=org.dawnsci.commandserver.mx
@@ -388,7 +392,14 @@ public class StatusQueueView extends ViewPart {
 			@Override
 			public Object[] getElements(Object inputElement) {
 				if (queue==null) return new StatusBean[]{StatusBean.EMPTY};
-				return queue.values().toArray(new StatusBean[queue.size()]);
+				final List<StatusBean> retained = new ArrayList<StatusBean>(queue.values());
+				// Old fashioned loop. In Java8 we will use a predicate...
+				final String userName = getUserName();
+				for (Iterator it = retained.iterator(); it.hasNext();) {
+					StatusBean statusBean = (StatusBean) it.next();
+					if (!userName.equals(statusBean.getUserName())) it.remove();
+				}
+				return retained.toArray(new StatusBean[retained.size()]);
 			}
 		};
 	}
@@ -691,6 +702,12 @@ public class StatusQueueView extends ViewPart {
 		return new URI(getCommandPreference(CommandConstants.JMS_URI));
 	}
     
+    protected String getUserName() {
+		final String name = getSecondaryIdAttribute("userName");
+		if (name != null) return name;
+		return System.getProperty("user.name");
+	}
+   
     protected String getCommandPreference(String key) {
 		final IPreferenceStore store = Activator.getDefault().getPreferenceStore();
     	return store.getString(key);

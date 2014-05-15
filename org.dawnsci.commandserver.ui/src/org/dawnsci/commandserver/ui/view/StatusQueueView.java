@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.ui.view;
 
 import java.io.File;
+import java.net.URI;
 import java.text.DateFormat;
 import java.util.Collection;
 import java.util.Comparator;
@@ -137,14 +138,16 @@ public class StatusQueueView extends ViewPart {
 		createColumns();
 		viewer.setContentProvider(createContentProvider());
 		
-		updateQueue(getUri());
-		
-		String name = getSecondaryIdAttribute("partName");
-        if (name!=null) setPartName(name);
-		
-        createActions();
         try {
-			createTopicListener(getUri());
+    		updateQueue(getUri());
+    		
+    		String name = getSecondaryIdAttribute("partName");
+            if (name!=null) setPartName(name);
+    		
+            createActions();
+
+            createTopicListener(getUri());
+            
 		} catch (Exception e) {
 			logger.error("Cannot listen to topic of command server!", e);
 		}
@@ -166,7 +169,7 @@ public class StatusQueueView extends ViewPart {
 	/**
 	 * Listens to a topic
 	 */
-	private void createTopicListener(final String uri) throws Exception {
+	private void createTopicListener(final URI uri) throws Exception {
 		
 		// Use job because connection might timeout.
 		final Job topicJob = new Job("Create topic listener") {
@@ -302,7 +305,7 @@ public class StatusQueueView extends ViewPart {
 					copy.setMessage("Rerun of "+bean.getName());
 					
 					IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
-					final String uri        = store.getString("org.dawnsci.commandserver.URI");
+					final URI    uri       = new URI(store.getString("org.dawnsci.commandserver.URI"));
 					
 					final RemoteSubmission factory = new RemoteSubmission(uri);
 					factory.setQueueName(getSubmissionQueueName());
@@ -350,7 +353,11 @@ public class StatusQueueView extends ViewPart {
 	}
 
 	protected void reconnect() {
-		updateQueue(getUri());
+		try {
+			updateQueue(getUri());
+		} catch (Exception e) {
+			logger.error("Cannot resolve uri for activemq server of "+getSecondaryIdAttribute("uri"));
+		}
 	}
 	
 	private IContentProvider createContentProvider() {
@@ -390,7 +397,7 @@ public class StatusQueueView extends ViewPart {
 	 * @throws Exception
 	 */
 	@SuppressWarnings("unchecked")
-	protected synchronized void updateQueue(final String uri) {
+	protected synchronized void updateQueue(final URI uri) {
 		
 
 		final Job queueJob = new Job("Connect and read queue") {
@@ -665,10 +672,10 @@ public class StatusQueueView extends ViewPart {
 		return "scisoft.default.STATUS_TOPIC";
 	}
 
-    protected String getUri() {
+    protected URI getUri() throws Exception {
 		final String uri = getSecondaryIdAttribute("uri");
-		if (uri != null) return uri.replace("%3A", ":");
-		return getCommandPreference(CommandConstants.JMS_URI);
+		if (uri != null) return new URI(uri.replace("%3A", ":"));
+		return new URI(getCommandPreference(CommandConstants.JMS_URI));
 	}
     
     protected String getCommandPreference(String key) {

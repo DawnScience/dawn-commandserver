@@ -1,5 +1,7 @@
 package org.dawnsci.commandserver.core.consumer;
 
+import java.net.URI;
+
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -23,7 +25,7 @@ public class DummyProcess extends ProgressableProcess {
 	 * @param queuedMessage
 	 * @param bean
 	 */
-	public DummyProcess(final String   uri, 
+	public DummyProcess(final URI   uri, 
 			            final String   statusTName, 
 			            final String   statusQName, 
                         StatusBean     bean) {	

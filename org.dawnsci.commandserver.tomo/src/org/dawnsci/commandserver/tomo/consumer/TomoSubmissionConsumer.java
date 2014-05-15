@@ -1,5 +1,7 @@
 package org.dawnsci.commandserver.tomo.consumer;
 
+import java.net.URI;
+
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
@@ -32,7 +34,7 @@ public class TomoSubmissionConsumer extends SubmissionConsumer {
 		final String statusTName = args[2];
 		final String statusQName = args[3];
 		
-        final SubmissionConsumer instance = new TomoSubmissionConsumer(uri, submitQName, statusTName, statusQName);
+        final SubmissionConsumer instance = new TomoSubmissionConsumer(new URI(uri), submitQName, statusTName, statusQName);
         instance.start();
 	}
 	
@@ -43,7 +45,7 @@ public class TomoSubmissionConsumer extends SubmissionConsumer {
 	}
 
 
-	public TomoSubmissionConsumer(String uri, 
+	public TomoSubmissionConsumer(URI uri, 
 			                    String submitQName,
 			                    String statusTName, 
 			                    String statusQName) throws Exception {
@@ -58,7 +60,7 @@ public class TomoSubmissionConsumer extends SubmissionConsumer {
 
 
 	@Override
-	protected ProgressableProcess createProcess(String uri, 
+	protected ProgressableProcess createProcess(URI uri, 
 			                                    String statusTName,
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {

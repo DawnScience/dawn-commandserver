@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.core.consumer;
 
+import java.net.URI;
 import java.util.UUID;
 
 import javax.jms.Connection;
@@ -17,14 +18,14 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class RemoteSubmission {
 	
-	private String uri;
+	private URI    uri;
 	private String uniqueId;
 	private String queueName;
 	private int    priority;
 	private long   lifeTime;
 	private long   timestamp;
 	
-	public RemoteSubmission(String uri) {
+	public RemoteSubmission(URI uri) {
 	    this.uri       = uri;
 	    this.uniqueId = System.currentTimeMillis()+"_"+UUID.randomUUID();
 	}
@@ -169,11 +170,11 @@ public class RemoteSubmission {
 		this.timestamp = timestamp;
 	}
 
-	public String getUri() {
+	public URI getUri() {
 		return uri;
 	}
 
-	public void setUri(String uri) {
+	public void setUri(URI uri) {
 		this.uri = uri;
 	}
 

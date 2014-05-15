@@ -6,6 +6,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
+import java.net.URI;
 import java.util.Enumeration;
 
 import javax.jms.Connection;
@@ -45,13 +46,13 @@ public abstract class ProgressableProcess implements Runnable {
 
 	private boolean            isCancelled = false;
 	protected final StatusBean bean;
-	protected final String     uri;
+	protected final URI        uri;
 	protected final String     statusTName;
 	protected final String     statusQName;
 
-	public ProgressableProcess(final String uri, final String statusTName, final String   statusQName, StatusBean bean) {
+	public ProgressableProcess(final URI uri, final String statusTName, final String   statusQName, StatusBean bean) {
 		this.uri           = uri;
-		this.statusTName     = statusTName;
+		this.statusTName   = statusTName;
 		this.statusQName   = statusQName;
 		this.bean          = bean;
 		

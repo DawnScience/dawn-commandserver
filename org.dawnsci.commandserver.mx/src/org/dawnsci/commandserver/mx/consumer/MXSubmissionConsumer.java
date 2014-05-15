@@ -1,5 +1,7 @@
 package org.dawnsci.commandserver.mx.consumer;
 
+import java.net.URI;
+
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
@@ -34,7 +36,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 		final String statusTName = args[2];
 		final String statusQName = args[3];
 		
-        final SubmissionConsumer instance = new MXSubmissionConsumer(uri, submitQName, statusTName, statusQName);
+        final SubmissionConsumer instance = new MXSubmissionConsumer(new URI(uri), submitQName, statusTName, statusQName);
         instance.start();
 	}
 	
@@ -45,7 +47,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 	}
 
 
-	public MXSubmissionConsumer(String uri, 
+	public MXSubmissionConsumer(URI uri, 
 			                    String submitQName,
 			                    String statusTName, 
 			                    String statusQName) throws Exception {
@@ -60,7 +62,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 
 
 	@Override
-	protected ProgressableProcess createProcess(String uri, 
+	protected ProgressableProcess createProcess(URI uri, 
 			                                    String statusTName,
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {

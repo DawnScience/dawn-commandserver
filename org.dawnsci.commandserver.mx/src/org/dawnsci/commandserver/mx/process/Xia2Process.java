@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.URI;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
@@ -37,7 +38,7 @@ public class Xia2Process extends ProgressableProcess{
 
 	private Process process;
 	
-	public Xia2Process(String     uri, 
+	public Xia2Process(URI        uri, 
 			           String     statusTName, 
 			           String     statusQName,
 			           ProjectBean bean) {

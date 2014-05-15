@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.ui.view;
 
+import java.net.URI;
 import java.text.DateFormat;
 import java.util.Collections;
 import java.util.Date;
@@ -117,7 +118,7 @@ public class ConsumerView extends ViewPart {
 	/**
 	 * Listens to a topic
 	 */
-	private void createTopicListener(final String uri) throws Exception {
+	private void createTopicListener(final URI uri) throws Exception {
 		
 		// Use job because connection might timeout.
 		final Job topicJob = new Job("Create topic listener") {
@@ -290,8 +291,8 @@ public class ConsumerView extends ViewPart {
 	}
 
 
-    protected String getUri() {
-		return getCommandPreference(CommandConstants.JMS_URI);
+    protected URI getUri() throws Exception {
+		return new URI(getCommandPreference(CommandConstants.JMS_URI));
 	}
     
     protected String getCommandPreference(String key) {

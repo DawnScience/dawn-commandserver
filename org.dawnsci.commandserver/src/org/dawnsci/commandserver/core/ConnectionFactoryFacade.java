@@ -1,5 +1,7 @@
 package org.dawnsci.commandserver.core;
 
+import java.net.URI;
+
 import javax.jms.JMSException;
 import javax.jms.QueueConnectionFactory;
 
@@ -21,6 +23,16 @@ public class ConnectionFactoryFacade {
 	 * @throws JMSException
 	 */
 	public static QueueConnectionFactory createConnectionFactory(final String uri) throws JMSException {
+		return new ActiveMQConnectionFactory(uri);
+	}
+
+	/**
+	 * Create a ConnectionFactory using activemq
+	 * @param uri
+	 * @return
+	 * @throws JMSException
+	 */
+	public static QueueConnectionFactory createConnectionFactory(final URI uri) throws JMSException {
 		return new ActiveMQConnectionFactory(uri);
 	}
 }

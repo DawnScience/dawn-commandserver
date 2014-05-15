@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.core.producer;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
@@ -9,6 +10,7 @@ import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -45,12 +47,14 @@ public abstract class SubmissionConsumer {
 	
 	protected final String       consumerId;
 	protected String             consumerVersion;
+	protected Connection         aliveConnection;
 
-	private String uri, submitQName, statusTName, statusQName;
+	private URI    uri;
+	private String submitQName, statusTName, statusQName;
 	
 	private boolean active = true;
 	
-	public SubmissionConsumer(String uri, 
+	public SubmissionConsumer(URI uri, 
 			                  String submitQName,
 			                  String statusTName,
 			                  String statusQName) throws Exception {
@@ -75,6 +79,17 @@ public abstract class SubmissionConsumer {
 		// This is the blocker
 		monitorSubmissionQueue(uri, submitQName, statusTName, statusQName);
 	}
+	
+	/**
+	 * You may override this method to stop the consumer cleanly. Please
+	 * call super.stop() if you do.
+	 * @throws JMSException 
+	 */
+	public void stop() throws Exception {
+		
+		setActive(false);
+		if (aliveConnection!=null) aliveConnection.close();
+	}
 
 	/**
 	 * Implement to return the actual bean class in the queue
@@ -91,7 +106,7 @@ public abstract class SubmissionConsumer {
 	 * @param bean
 	 * @return
 	 */
-	protected abstract ProgressableProcess createProcess(String uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
+	protected abstract ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
 
 
 	/**
@@ -102,7 +117,7 @@ public abstract class SubmissionConsumer {
 	 * @param statusQName
 	 * @throws Exception
 	 */
-	private void monitorSubmissionQueue(String uri, 
+	private void monitorSubmissionQueue(URI uri, 
 										String submitQName,
 										String statusTName, 
 										String statusQName) throws Exception {
@@ -116,7 +131,7 @@ public abstract class SubmissionConsumer {
 		connection.start();
 		
 		System.out.println("Starting consumer for submissions to queue "+submitQName);
-        while (true) { // You have to kill it to stop it!
+        while (isActive()) { // You have to kill it to stop it!
             
         	try {
         		
@@ -159,7 +174,7 @@ public abstract class SubmissionConsumer {
 	 * @param bean
 	 * @throws Exception 
 	 */
-	private void processStatusQueue(String uri, String statusQName) throws Exception {
+	private void processStatusQueue(URI uri, String statusQName) throws Exception {
 		
 		QueueConnection qCon = null;
 		
@@ -302,7 +317,11 @@ public abstract class SubmissionConsumer {
 					try {
 						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
 						
-						JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
+						ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
+						aliveConnection = connectionFactory.createConnection();
+						aliveConnection.start();
+						
+						JSONUtils.sendTopic(aliveConnection, cbean, Constants.ALIVE_TOPIC, uri);
 						
 					} catch (InterruptedException ne) {
 						break;

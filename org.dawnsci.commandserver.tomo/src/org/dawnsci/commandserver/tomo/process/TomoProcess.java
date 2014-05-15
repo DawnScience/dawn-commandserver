@@ -2,6 +2,7 @@ package org.dawnsci.commandserver.tomo.process;
 
 import java.io.File;
 import java.lang.ProcessBuilder.Redirect;
+import java.net.URI;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -25,7 +26,7 @@ public class TomoProcess extends ProgressableProcess{
 
 	private String processingDir;
 	
-	public TomoProcess(String     uri, 
+	public TomoProcess(URI        uri, 
 			           String     statusTName, 
 			           String     statusQName,
 			           TomoBean bean) {

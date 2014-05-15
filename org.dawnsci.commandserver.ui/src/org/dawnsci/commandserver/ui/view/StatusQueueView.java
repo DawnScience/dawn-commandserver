@@ -393,14 +393,18 @@ public class StatusQueueView extends ViewPart {
 			public Object[] getElements(Object inputElement) {
 				if (queue==null) return new StatusBean[]{StatusBean.EMPTY};
 				final List<StatusBean> retained = new ArrayList<StatusBean>(queue.values());
-				// Old fashioned loop. In Java8 we will use a predicate...
-				final String userName = getUserName();
-				for (Iterator it = retained.iterator(); it.hasNext();) {
-					StatusBean statusBean = (StatusBean) it.next();
-					if (!userName.equals(statusBean.getUserName())) it.remove();
+				
+				// This preference is not secure people could hack DAWN to do this.
+				if (!Boolean.getBoolean("org.dawnsci.commandserver.ui.view.showWholeQueue")) {
+					// Old fashioned loop. In Java8 we will use a predicate...
+					final String userName = getUserName();
+					for (Iterator it = retained.iterator(); it.hasNext();) {
+						StatusBean statusBean = (StatusBean) it.next();
+						if (!userName.equals(statusBean.getUserName())) it.remove();
+					}
+					// This form of filtering is not at all secure because we
+					// give the full list of the queue to the clients.
 				}
-				// This form of filtering is not at all secure because we
-				// give the full list of the queue to the clients.
 				return retained.toArray(new StatusBean[retained.size()]);
 			}
 		};

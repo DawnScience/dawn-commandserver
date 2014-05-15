@@ -313,24 +313,29 @@ public abstract class SubmissionConsumer {
 		
 		final Thread aliveThread = new Thread(new Runnable() {
 			public void run() {
-				while(isActive()) {
-					try {
-						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
-						
-						ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
-						aliveConnection = connectionFactory.createConnection();
-						aliveConnection.start();
-						
-						JSONUtils.sendTopic(aliveConnection, cbean, Constants.ALIVE_TOPIC, uri);
-						
-					} catch (InterruptedException ne) {
-						break;
-					} catch (Exception neOther) {
-						neOther.printStackTrace();
+				
+				try {
+					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
+					aliveConnection = connectionFactory.createConnection();
+					aliveConnection.start();
+	
+					while(isActive()) {
+						try {
+							Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
+							JSONUtils.sendTopic(aliveConnection, cbean, Constants.ALIVE_TOPIC, uri);
+							
+						} catch (InterruptedException ne) {
+							break;
+						} catch (Exception neOther) {
+							neOther.printStackTrace();
+						}
 					}
+				} catch (Exception ne) {
+					ne.printStackTrace();
 				}
 			}
 		});
+		aliveThread.setName("Alive Notification Topic");
 		aliveThread.setDaemon(true);
 		aliveThread.setPriority(Thread.MIN_PRIORITY);
 		aliveThread.start();

@@ -38,7 +38,7 @@ public class Xia2Process extends ProgressableProcess{
 
 	private Process process;
 	
-	public Xia2Process(URI        uri, 
+	public Xia2Process(URI     uri, 
 			           String     statusTName, 
 			           String     statusQName,
 			           ProjectBean bean) {
@@ -159,6 +159,7 @@ public class Xia2Process extends ProgressableProcess{
 					final String name     = System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")!=null
 					                      ? System.getProperty("org.dawnsci.commandserver.mx.xia2OutputFile")
 					                      : XIA2_FILE;
+					                      
 					final File xia2Output = new File(processingDir, name);
 					while(!bean.getStatus().isFinal() && !xia2Output.exists()) {
 	                    Thread.sleep(1000);
@@ -172,7 +173,7 @@ public class Xia2Process extends ProgressableProcess{
 						    while(!bean.getStatus().isFinal()) {
 								String line = br.readLine();
 								if (line==null) {
-									Thread.sleep(500); // Xia2 writes some more lines
+									Thread.sleep(2000); // Xia2 writes some more lines
 									continue;
 								}
 								
@@ -196,6 +197,7 @@ public class Xia2Process extends ProgressableProcess{
 									bean.setMessage("Integrating "+sweepName);
 									bean.setPercentComplete(complete);
 									broadcast(bean);
+									System.out.println("XIA2>> "+line);
 									continue;
 								}
 								

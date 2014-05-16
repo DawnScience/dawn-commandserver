@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Commandserver
-Bundle-SymbolicName: org.dawnsci.commandserver
+Bundle-SymbolicName: org.dawnsci.commandserver;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.core.Activator
 Bundle-Vendor: DLS

@@ -17,40 +17,10 @@ import org.dawnsci.commandserver.tomo.process.TomoProcess;
  */
 public class TomoSubmissionConsumer extends SubmissionConsumer {
 
-	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME> <MX TOPIC NAME> <STATUS QUEUE NAME\n"+
-            "Example: java -jar ispyb.jar "+TomoSubmissionConsumer.class.getName()+" tcp://ws097.diamond.ac.uk:61616 scisoft.tomo.SUBMISSION_QUEUE scisoft.tomo.STATUS_TOPIC scisoft.tomo.STATUS_QUEUE";
-
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
-		
-		if (!checkArguments(args, USAGE)) return;
-		
-		
-		final String uri         = args[0];
-		final String submitQName = args[1];
-		final String statusTName = args[2];
-		final String statusQName = args[3];
-		
-        final SubmissionConsumer instance = new TomoSubmissionConsumer(new URI(uri), submitQName, statusTName, statusQName);
-        instance.start();
-	}
-	
 
 	@Override
 	public String getName() {
 		return "Tomography Reconstruction Consumer";
-	}
-
-
-	public TomoSubmissionConsumer(URI uri, 
-			                    String submitQName,
-			                    String statusTName, 
-			                    String statusQName) throws Exception {
-		
-		super(uri, submitQName, statusTName, statusQName);
 	}
 
 	@Override

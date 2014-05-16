@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         id="consumer"
+         point="org.eclipse.core.runtime.applications">
+      <application
+            cardinality="singleton-scoped"
+            thread="any"
+            visible="true">
+         <run
+               class="org.dawnsci.commandserver.core.application.Consumer">
+            <parameter
+                  name="optimize"
+                  value="true">
+            </parameter>
+         </run>
+      </application>
+   </extension>
+
+</plugin>

@@ -19,40 +19,9 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  */
 public class MXSubmissionConsumer extends SubmissionConsumer {
 
-	private static String USAGE = "Usage: java -jar <...> "+SubmissionConsumer.class.getName()+" <URI ACTIVEMQ> <MX SUBMISSION QUEUE NAME> <MX TOPIC NAME> <STATUS QUEUE NAME\n"+
-            "Example: java -jar ispyb.jar "+MXSubmissionConsumer.class.getName()+" tcp://ws097.diamond.ac.uk:61616 scisoft.xia2.SUBMISSION_QUEUE scisoft.xia2.STATUS_TOPIC scisoft.xia2.STATUS_QUEUE";
-
-	/**
-	 * 
-	 * @param args
-	 */
-	public static void main(String[] args) throws Exception {
-		
-		if (!checkArguments(args, USAGE)) return;
-		
-		
-		final String uri         = args[0];
-		final String submitQName = args[1];
-		final String statusTName = args[2];
-		final String statusQName = args[3];
-		
-        final SubmissionConsumer instance = new MXSubmissionConsumer(new URI(uri), submitQName, statusTName, statusQName);
-        instance.start();
-	}
-	
-
 	@Override
 	public String getName() {
 		return "Multi-crystal Reprocessing Consumer";
-	}
-
-
-	public MXSubmissionConsumer(URI uri, 
-			                    String submitQName,
-			                    String statusTName, 
-			                    String statusQName) throws Exception {
-		
-		super(uri, submitQName, statusTName, statusQName);
 	}
 
 	@Override

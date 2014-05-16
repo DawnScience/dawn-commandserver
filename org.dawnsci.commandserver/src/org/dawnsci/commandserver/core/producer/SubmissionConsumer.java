@@ -40,6 +40,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * 
  * Please extend this consumer to create it and call the start method.
  * 
+ * You must have the no argument constructor because the org.dawnsci.commandserver.core.application.Consumer
+ * application requires this to start and stop the consumer.
+ * 
  * @author fcp94556
  *
  */
@@ -54,26 +57,39 @@ public abstract class SubmissionConsumer {
 	
 	private boolean active = true;
 	
-	public SubmissionConsumer(URI uri, 
-			                  String submitQName,
-			                  String statusTName,
-			                  String statusQName) throws Exception {
-		this.uri         = uri;
-		this.submitQName = submitQName;
-		this.statusTName = statusTName;
-		this.statusQName = statusQName;
-		
+	
+	public SubmissionConsumer() {
 		this.consumerId      = System.currentTimeMillis()+"_"+UUID.randomUUID().toString();
 		this.consumerVersion = "1.0";
-		
-		startNotifications();
 	}
-	
+
+	/**
+	 * Method which configures the submission consumer for the queues and topics required.
+	 * 
+     * uri       activemq URI, e.g. tcp://ws097.diamond.ac.uk:61616 
+     * submit    queue to submit e.g. scisoft.xia2.SUBMISSION_QUEUE 
+     * topic     topic to notify e.g. scisoft.xia2.STATUS_TOPIC 
+     * status    queue for status e.g. scisoft.xia2.STATUS_QUEUE 
+	 * 
+	 * @param configuration
+	 * @throws Exception
+	 */
+	public void init(Map<String, String> configuration) throws Exception {
+		
+		this.uri         = new URI(configuration.get("uri"));
+		this.submitQName = configuration.get("submit");
+		this.statusTName = configuration.get("topic");
+		this.statusQName = configuration.get("status");
+	}
+
 	/**
 	 * Starts the consumer and does not return.
 	 * @throws Exception
 	 */
 	public void start() throws Exception {
+		
+		startNotifications();
+
 		processStatusQueue(uri, statusQName);
 		
 		// This is the blocker
@@ -156,7 +172,7 @@ public abstract class SubmissionConsumer {
 		connection.start();
 		
 		System.out.println("Starting consumer for submissions to queue "+submitQName);
-        while (isActive()) { // You have to kill it to stop it!
+        while (isActive()) { // You have to kill it or call stop() to stop it!
             
         	try {
         		

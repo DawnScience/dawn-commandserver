@@ -13,7 +13,7 @@ public class CommandInitializer extends AbstractPreferenceInitializer {
 		final IPreferenceStore store = Activator.getDefault().getPreferenceStore();
 		
 		// TODO This is not the final URI
-		store.setDefault(CommandConstants.JMS_URI,          "tcp://ws097.diamond.ac.uk:61616");
+		store.setDefault(CommandConstants.JMS_URI,          "tcp://sci-serv5.diamond.ac.uk:61616");
 
 	}
 

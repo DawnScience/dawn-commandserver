@@ -66,7 +66,7 @@ public abstract class SubmissionConsumer {
 	/**
 	 * Method which configures the submission consumer for the queues and topics required.
 	 * 
-     * uri       activemq URI, e.g. tcp://ws097.diamond.ac.uk:61616 
+     * uri       activemq URI, e.g. tcp://sci-serv5.diamond.ac.uk:61616 
      * submit    queue to submit e.g. scisoft.xia2.SUBMISSION_QUEUE 
      * topic     topic to notify e.g. scisoft.xia2.STATUS_TOPIC 
      * status    queue for status e.g. scisoft.xia2.STATUS_QUEUE 

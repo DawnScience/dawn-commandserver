@@ -46,7 +46,7 @@ public class ActiveMQConsumer {
 
 	public static void main(String[] args) throws Exception {
 		
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory("tcp://ws097.diamond.ac.uk:61616");
+		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory("tcp://sci-serv5.diamond.ac.uk:61616");
 		Connection    connection = connectionFactory.createConnection();
 		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue = session.createQueue("testQ");

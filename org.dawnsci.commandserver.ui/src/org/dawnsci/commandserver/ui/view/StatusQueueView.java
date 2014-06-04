@@ -34,6 +34,7 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
@@ -594,6 +595,20 @@ public class StatusQueueView extends ViewPart {
 				return getSite().getShell().getDisplay().getSystemColor(SWT.COLOR_BLUE);
 			}
 		});
+		
+		final TableViewerColumn host = new TableViewerColumn(viewer, SWT.CENTER);
+		host.getColumn().setText("Host");
+		host.getColumn().setWidth(150);
+		host.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					return ((StatusBean)element).getHostName();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
+			}
+		});
+
 
 	    MouseMoveListener cursorListener = new MouseMoveListener() {		
 			@Override

@@ -253,6 +253,20 @@ public class ConsumerView extends ViewPart {
 			}
 		});
 		
+		final TableViewerColumn host = new TableViewerColumn(viewer, SWT.CENTER);
+		host.getColumn().setText("Host");
+		host.getColumn().setWidth(150);
+		host.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					return ((ConsumerBean)element).getHostName();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
+			}
+		});
+
+		
 		final TableViewerColumn lastAlive = new TableViewerColumn(viewer, SWT.CENTER);
 		lastAlive.getColumn().setText("Last Alive");
 		lastAlive.getColumn().setWidth(150);

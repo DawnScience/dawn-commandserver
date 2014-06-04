@@ -1,6 +1,8 @@
 package org.dawnsci.commandserver.core.producer;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
@@ -321,6 +323,13 @@ public abstract class SubmissionConsumer {
 		cbean.setConsumerId(consumerId);
 		cbean.setVersion(consumerVersion);
 		cbean.setStartTime(System.currentTimeMillis());
+		try {
+			cbean.setHostName(InetAddress.getLocalHost().getHostName());
+		} catch (UnknownHostException e) {
+			// Not fatal but would be nice...
+			e.printStackTrace();
+		}
+
 		
 		JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
 		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");

@@ -6,7 +6,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 import java.util.Enumeration;
 
 import javax.jms.Connection;
@@ -57,6 +59,12 @@ public abstract class ProgressableProcess implements Runnable {
 		this.bean          = bean;
 		
 		bean.setStatus(Status.QUEUED);
+		try {
+			bean.setHostName(InetAddress.getLocalHost().getHostName());
+		} catch (UnknownHostException e) {
+			// Not fatal but would be nice...
+			e.printStackTrace();
+		}
 		broadcast(bean);
 	}
 	

@@ -21,6 +21,7 @@ public class StatusBean {
 	protected String message; // null or the error message if status is FAILED for instance.
 	protected double percentComplete;
 	protected String userName;
+	protected String hostName;
 	
 	/**
 	 * Directory of rerun, may be null
@@ -57,6 +58,7 @@ public class StatusBean {
 		this.name            = with.name;
 		this.percentComplete = with.percentComplete;
         this.userName        = with.userName;
+        this.hostName        = with.hostName;
         this.uniqueId        = with.uniqueId;
         this.submissionTime  = with.submissionTime;
         this.message         = with.message;
@@ -91,6 +93,8 @@ public class StatusBean {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result
+				+ ((hostName == null) ? 0 : hostName.hashCode());
 		result = prime * result + ((message == null) ? 0 : message.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		long temp;
@@ -116,6 +120,11 @@ public class StatusBean {
 		if (getClass() != obj.getClass())
 			return false;
 		StatusBean other = (StatusBean) obj;
+		if (hostName == null) {
+			if (other.hostName != null)
+				return false;
+		} else if (!hostName.equals(other.hostName))
+			return false;
 		if (message == null) {
 			if (other.message != null)
 				return false;
@@ -220,6 +229,16 @@ public class StatusBean {
 
 	public void setRunDirectory(String visitDir) {
 		this.runDirectory = visitDir;
+	}
+
+
+	public String getHostName() {
+		return hostName;
+	}
+
+
+	public void setHostName(String hostName) {
+		this.hostName = hostName;
 	}
 
 }

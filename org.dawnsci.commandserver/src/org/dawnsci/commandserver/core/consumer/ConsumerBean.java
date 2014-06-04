@@ -17,6 +17,7 @@ public class ConsumerBean {
 	private String         consumerId;
 	private long           startTime;
 	private long           lastAlive;
+	private String         hostName;
 	
 	public ConsumerStatus getStatus() {
 		return status;
@@ -48,6 +49,8 @@ public class ConsumerBean {
 		int result = 1;
 		result = prime * result
 				+ ((consumerId == null) ? 0 : consumerId.hashCode());
+		result = prime * result
+				+ ((hostName == null) ? 0 : hostName.hashCode());
 		result = prime * result + (int) (lastAlive ^ (lastAlive >>> 32));
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
 		result = prime * result + (int) (startTime ^ (startTime >>> 32));
@@ -68,6 +71,11 @@ public class ConsumerBean {
 			if (other.consumerId != null)
 				return false;
 		} else if (!consumerId.equals(other.consumerId))
+			return false;
+		if (hostName == null) {
+			if (other.hostName != null)
+				return false;
+		} else if (!hostName.equals(other.hostName))
 			return false;
 		if (lastAlive != other.lastAlive)
 			return false;
@@ -98,6 +106,12 @@ public class ConsumerBean {
 	}
 	public void setLastAlive(long lastAlive) {
 		this.lastAlive = lastAlive;
+	}
+	public String getHostName() {
+		return hostName;
+	}
+	public void setHostName(String hostName) {
+		this.hostName = hostName;
 	}
 	
 }

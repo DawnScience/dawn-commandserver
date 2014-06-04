@@ -17,7 +17,7 @@
 <stringAttribute key="location" value="${workspace_loc}/../consumer-application"/>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -uri tcp://ws097.diamond.ac.uk:61616 -submit scisoft.tomo.SUBMISSION_QUEUE -topic scisoft.tomo.STATUS_TOPIC -status scisoft.tomo.STATUS_QUEUE -bundle org.dawnsci.commandserver.tomo -consumer org.dawnsci.commandserver.tomo.consumer.TomoSubmissionConsumer"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -uri tcp://sci-serv5.diamond.ac.uk:61616 -submit scisoft.tomo.SUBMISSION_QUEUE -topic scisoft.tomo.STATUS_TOPIC -status scisoft.tomo.STATUS_QUEUE -bundle org.dawnsci.commandserver.tomo -consumer org.dawnsci.commandserver.tomo.consumer.TomoSubmissionConsumer"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
 <stringAttribute key="pde.version" value="3.3"/>
 <stringAttribute key="product" value="org.eclipse.platform.ide"/>

@@ -305,34 +305,7 @@ public class StatusQueueView extends ViewPart {
 		
 		final Action rerun = new Action("Rerun", Activator.getDefault().getImageDescriptor("icons/rerun.png")) {
 			public void run() {
-				
-				final StatusBean bean = getSelection();
-				if (bean==null) return;
-				
-				try {
-					
-					final DateFormat format = DateFormat.getDateTimeInstance();
-					boolean ok = MessageDialog.openQuestion(getViewSite().getShell(), "Confirm resubmission "+bean.getName(), 
-							  "Are you sure you want to rerun "+bean.getName()+" submitted on "+format.format(new Date(bean.getSubmissionTime()))+"?");
-					
-					if (!ok) return;
-					
-					final StatusBean copy = bean.getClass().newInstance();
-					copy.merge(bean);
-					copy.setMessage("Rerun of "+bean.getName());
-					
-					IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
-					final URI    uri       = new URI(store.getString("org.dawnsci.commandserver.URI"));
-					
-					final RemoteSubmission factory = new RemoteSubmission(uri);
-					factory.setQueueName(getSubmissionQueueName());
-					
-					factory.submit(copy, true);
-
-				} catch (Exception e) {
-					ErrorDialog.openError(getViewSite().getShell(), "Cannot rerun "+bean.getName(), "Cannot rerun "+bean.getName()+"\n\nPlease contact your support representative.",
-							new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
-				}
+				rerunSelection();
 			}
 		};
 		toolMan.add(rerun);
@@ -367,6 +340,62 @@ public class StatusQueueView extends ViewPart {
 		menuMan.add(configure);
 		
 		viewer.getControl().setMenu(menuMan.createContextMenu(viewer.getControl()));
+	}
+
+	protected void rerunSelection() {
+		
+		final StatusBean bean = getSelection();
+		if (bean==null) return;
+
+		try {
+			final IConfigurationElement[] c = Platform.getExtensionRegistry().getConfigurationElementsFor("org.dawnsci.commandserver.ui.rerunHandler");
+			if (c!=null) {
+				for (IConfigurationElement i : c) {
+					final IRerunHandler handler = (IRerunHandler)i.createExecutableExtension("class");
+					if (handler.isHandled(bean)) {
+						boolean ok = handler.run(bean);
+						if (ok) return;
+					}
+				}
+			}
+		} catch (Exception ne) {
+			ne.printStackTrace();
+			ErrorDialog.openError(getSite().getShell(), "Internal Error", "Cannot rerun "+bean.getRunDirectory()+" normally.\n\nPlease contact your support representative.", 
+					new Status(IStatus.ERROR, Activator.PLUGIN_ID, ne.getMessage()));
+			return;
+		}
+    
+		// If we have not already handled this rerun, it is possible to call a generic one.
+		rerun(bean);
+	}
+
+	private void rerun(StatusBean bean) {
+		
+		try {
+			
+			final DateFormat format = DateFormat.getDateTimeInstance();
+			boolean ok = MessageDialog.openQuestion(getViewSite().getShell(), "Confirm resubmission "+bean.getName(), 
+					  "Are you sure you want to rerun "+bean.getName()+" submitted on "+format.format(new Date(bean.getSubmissionTime()))+"?");
+			
+			if (!ok) return;
+			
+			final StatusBean copy = bean.getClass().newInstance();
+			copy.merge(bean);
+			copy.setMessage("Rerun of "+bean.getName());
+			
+			IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
+			final URI    uri       = new URI(store.getString("org.dawnsci.commandserver.URI"));
+			
+			final RemoteSubmission factory = new RemoteSubmission(uri);
+			factory.setQueueName(getSubmissionQueueName());
+			
+			factory.submit(copy, true);
+
+		} catch (Exception e) {
+			ErrorDialog.openError(getViewSite().getShell(), "Cannot rerun "+bean.getName(), "Cannot rerun "+bean.getName()+"\n\nPlease contact your support representative.",
+					new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
+		}
+		
 	}
 
 	protected void reconnect() {

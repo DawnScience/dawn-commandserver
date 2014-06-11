@@ -11,6 +11,7 @@ package org.dawnsci.commandserver.mx.beans;
 public class SweepBean {
 
 	private String        name;
+	private String        sessionId;
 	private String        dataCollectionId;
 	private String        imageDirectory;
 	private String        firstImageName;
@@ -45,10 +46,12 @@ public class SweepBean {
 				+ ((dataCollectionId == null) ? 0 : dataCollectionId.hashCode());
 		result = prime * result + end;
 		result = prime * result
-				+ ((imageDirectory == null) ? 0 : imageDirectory.hashCode());
-		result = prime * result
 				+ ((firstImageName == null) ? 0 : firstImageName.hashCode());
+		result = prime * result
+				+ ((imageDirectory == null) ? 0 : imageDirectory.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result
+				+ ((sessionId == null) ? 0 : sessionId.hashCode());
 		result = prime * result + start;
 		long temp;
 		temp = Double.doubleToLongBits(wavelength);
@@ -75,20 +78,25 @@ public class SweepBean {
 			return false;
 		if (end != other.end)
 			return false;
-		if (imageDirectory == null) {
-			if (other.imageDirectory != null)
-				return false;
-		} else if (!imageDirectory.equals(other.imageDirectory))
-			return false;
 		if (firstImageName == null) {
 			if (other.firstImageName != null)
 				return false;
 		} else if (!firstImageName.equals(other.firstImageName))
 			return false;
+		if (imageDirectory == null) {
+			if (other.imageDirectory != null)
+				return false;
+		} else if (!imageDirectory.equals(other.imageDirectory))
+			return false;
 		if (name == null) {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
+			return false;
+		if (sessionId == null) {
+			if (other.sessionId != null)
+				return false;
+		} else if (!sessionId.equals(other.sessionId))
 			return false;
 		if (start != other.start)
 			return false;
@@ -158,5 +166,11 @@ public class SweepBean {
 	 */
 	public void setFirstImageName(String imageName) {
 		this.firstImageName = imageName;
+	}
+	public String getSessionId() {
+		return sessionId;
+	}
+	public void setSessionId(String sessionId) {
+		this.sessionId = sessionId;
 	}
 }

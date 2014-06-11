@@ -119,6 +119,8 @@ public abstract class ProgressableProcess implements Runnable {
 		
 		final File beanFile = new File(dir, fileName);
     	ObjectMapper mapper = new ObjectMapper();
+    	beanFile.getParentFile().mkdirs();
+    	if (!beanFile.exists()) beanFile.createNewFile();
     	
     	final FileOutputStream stream = new FileOutputStream(beanFile);
     	try {

@@ -27,12 +27,21 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  */
 public class Xia2Process extends ProgressableProcess{
 	
-	// TODO temporary use of 4599 because it prints the process id.
-	private static String SETUP_COMMAND = "module load xia2/4599"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand
+	private final static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand	
+	private final static String XIA2_NAME     = "xia2";             // Change by setting org.dawnsci.commandserver.mx.xia2Command
 	
-	private static String XIA2_NAME     = "xia2"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
-	private static String XIA2_XINFO    = "-xinfo automatic.xinfo"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
-	private static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
+	// Change by setting environment variable XIA2_FIXEDCMD
+	private final static String XIA2_FIXEDCMD;
+	static {
+		String fixedCmd = System.getenv("XIA2_FIXEDCMD");
+		if (fixedCmd!=null) {
+			XIA2_FIXEDCMD = fixedCmd;
+		} else {
+			XIA2_FIXEDCMD = "-xparallel -1 -blend -ispyb_xml_out ispyb.xml -xinfo automatic.xinfo";
+		}
+	}
+	
+	private final static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
 
@@ -302,7 +311,7 @@ public class Xia2Process extends ProgressableProcess{
 		if (xia2Cmd==null) {
 			String cmd = bean.getCommandLineSwitches();
 			if (cmd==null) cmd = "";
-			xia2Cmd = XIA2_NAME+" "+cmd+" "+XIA2_XINFO;
+			xia2Cmd = XIA2_NAME+" "+cmd+" "+XIA2_FIXEDCMD;
 		}
 	               
 	    return setupCmd+xia2Cmd;

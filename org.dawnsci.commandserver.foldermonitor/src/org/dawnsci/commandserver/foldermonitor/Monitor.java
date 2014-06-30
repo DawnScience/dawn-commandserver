@@ -33,7 +33,6 @@ import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.producer.AliveConsumer;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 
 /**
  * Class which monitors a folder location and publishes a topic and
@@ -48,17 +47,18 @@ import org.dawnsci.commandserver.core.util.JSONUtils;
 public class Monitor extends AliveConsumer {
 	
 	private boolean       stopped;
-	private boolean       recursive;
 	
 	private WatchService  watcher;
 	private Path          dir;
 	private Connection    connection;
 	private String        location;
 	private Broadcaster   broadcaster;
+	private Map<String, String> config;
 
 	@Override
 	public void init(Map<String, String> configuration) throws Exception {
 		
+		this.config = configuration;
 		setUri(new URI(configuration.get("uri")));
 		String queue = configuration.get("status");
 		String topic = configuration.get("topic");
@@ -76,23 +76,32 @@ public class Monitor extends AliveConsumer {
 		this.dir       = Paths.get(location);
 		this.watcher   = FileSystems.getDefault().newWatchService();
 		
-		this.recursive = Boolean.parseBoolean(configuration.get("recursive"));
+		boolean recursive = Boolean.parseBoolean(configuration.get("recursive"));
 		if (recursive) {
 			registerAll(dir);
 		} else {
 			dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 		}
+		
+
 	}
 	
 	@Override
 	public void start() throws Exception {
 		
 		startNotifications(); // Tell the GUI that we are alive
-        startNio();
+		
+		boolean nio = Boolean.parseBoolean(config.get("nio"));
+		if (nio) {
+            startNio();
+		} else {
+			throw new Exception("Polling not implemented!");
+		}
 	}
 
 	private void startNio() throws Exception {
 		
+		boolean recursive = Boolean.parseBoolean(config.get("recursive"));
 		System.out.println("Starting nio folder monitor @ '"+dir+"'. Recursive is "+(recursive?"on":"off"));
 		System.out.println("Folder monitor topic is '"+broadcaster.getTopicName()+"'");
 		System.out.println("Folder monitor queue is '"+broadcaster.getQueueName()+"'");
@@ -145,7 +154,7 @@ public class Monitor extends AliveConsumer {
 		}
 		bean.setUniqueId(System.currentTimeMillis()+"_"+UUID.randomUUID());
 		bean.setUserName(System.getProperty("user.name"));
-		bean.setRunDirectory(child.toAbsolutePath().toString());
+		bean.setRunDirectory(child.getParent().toAbsolutePath().toString());
 		bean.setName(kind.name());
 		bean.setSubmissionTime(System.currentTimeMillis());
 		

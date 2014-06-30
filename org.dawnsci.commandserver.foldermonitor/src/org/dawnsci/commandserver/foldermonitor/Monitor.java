@@ -25,6 +25,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -54,6 +55,7 @@ public class Monitor extends AliveConsumer {
 	private String        location;
 	private Broadcaster   broadcaster;
 	private Map<String, String> config;
+	private Pattern       filePattern;
 
 	@Override
 	public void init(Map<String, String> configuration) throws Exception {
@@ -83,7 +85,10 @@ public class Monitor extends AliveConsumer {
 			dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
 		}
 		
-
+        if (configuration.containsKey("filePattern")) {
+        	filePattern = Pattern.compile(configuration.get("filePattern")); // Might throw exception.
+        	System.out.println("File name matching set to '"+filePattern+"'");
+        }
 	}
 	
 	@Override
@@ -95,7 +100,10 @@ public class Monitor extends AliveConsumer {
 		if (nio) {
             startNio();
 		} else {
-			throw new Exception("Polling not implemented!");
+			boolean recursive = Boolean.parseBoolean(config.get("recursive"));
+            if (recursive) throw new IllegalArgumentException("Cannot use recursive monitoring with nio!");
+			
+            
 		}
 	}
 
@@ -121,6 +129,12 @@ public class Monitor extends AliveConsumer {
                 
                 Path name  = (Path)context;
                 Path child = dir.resolve(name);
+                
+                if (filePattern!=null) {
+                	if (!filePattern.matcher(child.getFileName().toString()).matches()) {
+                		continue;
+                	}
+                }
                 
                 // print out event
                 System.out.format("%s: %s\n", kind, child);

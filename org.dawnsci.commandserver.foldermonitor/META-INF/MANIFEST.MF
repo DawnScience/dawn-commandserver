@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Foldermonitor
+Bundle-SymbolicName: org.dawnsci.commandserver.foldermonitor
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.dawnsci.commandserver.foldermonitor.Activator
+Bundle-Vendor: DLS
+Require-Bundle: org.eclipse.core.runtime,
+ org.dawnsci.commandserver;bundle-version="1.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
+Export-Package: org.dawnsci.commandserver.foldermonitor

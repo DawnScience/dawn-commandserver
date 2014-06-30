@@ -1,14 +1,11 @@
 package org.dawnsci.commandserver.core.producer;
 
-import java.net.InetAddress;
 import java.net.URI;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -25,15 +22,10 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.consumer.Constants;
-import org.dawnsci.commandserver.core.consumer.ConsumerBean;
-import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -49,22 +41,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author fcp94556
  *
  */
-public abstract class SubmissionConsumer implements IConsumerExtension{
+public abstract class SubmissionConsumer extends AliveConsumer {
 	
-	protected final String       consumerId;
-	protected String             consumerVersion;
-	protected Connection         aliveConnection;
 
-	private URI    uri;
 	private String submitQName, statusTName, statusQName;
 	
-	private boolean active = true;
-	
-	
-	public SubmissionConsumer() {
-		this.consumerId      = System.currentTimeMillis()+"_"+UUID.randomUUID().toString();
-		this.consumerVersion = "1.0";
-	}
 
 	/**
 	 * Method which configures the submission consumer for the queues and topics required.
@@ -79,7 +60,7 @@ public abstract class SubmissionConsumer implements IConsumerExtension{
 	 */
 	public void init(Map<String, String> configuration) throws Exception {
 		
-		this.uri         = new URI(configuration.get("uri"));
+		setUri(new URI(configuration.get("uri")));
 		this.submitQName = configuration.get("submit");
 		this.statusTName = configuration.get("topic");
 		this.statusQName = configuration.get("status");
@@ -93,10 +74,10 @@ public abstract class SubmissionConsumer implements IConsumerExtension{
 		
 		startNotifications();
 
-		processStatusQueue(uri, statusQName);
+		processStatusQueue(getUri(), statusQName);
 		
 		// This is the blocker
-		monitorSubmissionQueue(uri, submitQName, statusTName, statusQName);
+		monitorSubmissionQueue(getUri(), submitQName, statusTName, statusQName);
 	}
 	
 	/**
@@ -107,7 +88,7 @@ public abstract class SubmissionConsumer implements IConsumerExtension{
 	public void stop() throws Exception {
 		
 		setActive(false);
-		if (aliveConnection!=null) aliveConnection.close();
+		super.stop();
 	}
 
 	/**
@@ -147,11 +128,6 @@ public abstract class SubmissionConsumer implements IConsumerExtension{
 	 * @return
 	 */
 	protected abstract long getMaximumCompleteAge();
-	/**
-	 * 
-	 * @return the name which the user will see for this consumer.
-	 */
-	public abstract String getName();
 
 	/**
 	 * WARNING - starts infinite loop - you have to kill 
@@ -315,95 +291,5 @@ public abstract class SubmissionConsumer implements IConsumerExtension{
 		
 	}
 
-	
-	private void startNotifications() throws Exception {
-		
-		final ConsumerBean cbean = new ConsumerBean();
-		cbean.setStatus(ConsumerStatus.STARTING);
-		cbean.setName(getName());
-		cbean.setConsumerId(consumerId);
-		cbean.setVersion(consumerVersion);
-		cbean.setStartTime(System.currentTimeMillis());
-		try {
-			cbean.setHostName(InetAddress.getLocalHost().getHostName());
-		} catch (UnknownHostException e) {
-			// Not fatal but would be nice...
-			e.printStackTrace();
-		}
-
-		
-		JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
-		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");
-		
-		cbean.setStatus(ConsumerStatus.RUNNING);
-		
-		final Thread aliveThread = new Thread(new Runnable() {
-			public void run() {
-				
-				try {
-					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
-					aliveConnection = connectionFactory.createConnection();
-					aliveConnection.start();
-	
-					while(isActive()) {
-						try {
-							Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
-							JSONUtils.sendTopic(aliveConnection, cbean, Constants.ALIVE_TOPIC, uri);
-							
-						} catch (InterruptedException ne) {
-							break;
-						} catch (Exception neOther) {
-							neOther.printStackTrace();
-						}
-					}
-				} catch (Exception ne) {
-					ne.printStackTrace();
-				}
-			}
-		});
-		aliveThread.setName("Alive Notification Topic");
-		aliveThread.setDaemon(true);
-		aliveThread.setPriority(Thread.MIN_PRIORITY);
-		aliveThread.start();
-	}
-
-	public boolean isActive() {
-		return active;
-	}
-
-	public void setActive(boolean active) {
-		this.active = active;
-	}
-	
-	protected final static boolean checkArguments(String[] args, String usage) {
-		
-        if (args == null || args.length!=4) {
-        	System.out.println(usage);
-        	return false;
-        }
-        
-        if (!args[0].startsWith("tcp://")) {
-        	System.out.println(usage);
-        	return false;
-        }
-        
-        if ("".equals(args[1])) {
-        	System.out.println(usage);
-        	return false;
-        }
-        
-        if ("".equals(args[2])) {
-        	System.out.println(usage);
-        	return false;
-        }
-        
-        if ("".equals(args[3])) {
-        	System.out.println(usage);
-        	return false;
-        }
-        
-        return true;
-
-	}
 
 }

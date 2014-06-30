@@ -9,19 +9,12 @@ import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
-import java.util.Enumeration;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
-import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.QueueConnection;
-import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
@@ -29,7 +22,7 @@ import javax.jms.Topic;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.util.JSONUtils;
+import org.dawnsci.commandserver.core.producer.Broadcaster;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -51,13 +44,14 @@ public abstract class ProgressableProcess implements Runnable {
 	protected final URI        uri;
 	protected final String     statusTName;
 	protected final String     statusQName;
+	private Broadcaster        broadcaster;
 
-	public ProgressableProcess(final URI uri, final String statusTName, final String   statusQName, StatusBean bean) {
+	public ProgressableProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
 		this.uri           = uri;
 		this.statusTName   = statusTName;
 		this.statusQName   = statusQName;
 		this.bean          = bean;
-		
+		this.broadcaster   = new Broadcaster(uri, statusQName, statusTName);
 		bean.setStatus(Status.QUEUED);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
@@ -153,8 +147,7 @@ public abstract class ProgressableProcess implements Runnable {
 		try {
 			bean.merge(tbean);
 			cancelMonitor();
-			updateQueue(bean); // For clients connecting in future or after a refresh - persistence.
-			sendTopic(bean);   // For topic listeners wait for updates (more efficient than polling queue)
+			broadcaster.broadcast(bean);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -272,64 +265,6 @@ public abstract class ProgressableProcess implements Runnable {
 		}
 	}
 
-
-	/**
-	 * 
-	 * @param bean
-	 * @throws Exception 
-	 */
-	private void updateQueue(StatusBean bean) throws Exception {
-		
-		QueueConnection qCon = null;
-		
-		try {
-	 	    QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			qCon  = connectionFactory.createQueueConnection(); 
-			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-			Queue queue   = qSes.createQueue(statusQName);
-			qCon.start();
-			
-		    QueueBrowser qb = qSes.createBrowser(queue);
-		    
-		    @SuppressWarnings("rawtypes")
-			Enumeration  e  = qb.getEnumeration();
-		    
-			ObjectMapper mapper = new ObjectMapper();
-			String jMSMessageID = null;
-	        while(e.hasMoreElements()) {
-		    	Message m = (Message)e.nextElement();
-		    	if (m==null) continue;
-	        	if (m instanceof TextMessage) {
-	            	TextMessage t = (TextMessage)m;
-	              	
-	            	@SuppressWarnings("unchecked")
-					final StatusBean qbean = mapper.readValue(t.getText(), bean.getClass());
-	            	if (qbean==null)               continue;
-	            	if (qbean.getUniqueId()==null) continue; // Definitely not our bean
-	            	if (qbean.getUniqueId().equals(bean.getUniqueId())) {
-	            		jMSMessageID = t.getJMSMessageID();
-	            		break;
-	            	}
-	        	}
-		    }
-	        
-	        if (jMSMessageID!=null) {
-	        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");
-	        	Message m = consumer.receive(1000);
-	        	if (m!=null && m instanceof TextMessage) {
-	        		MessageProducer producer = qSes.createProducer(queue);
-	        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
-	        	}
-	        }
-		} finally {
-			if (qCon!=null) qCon.close();
-		}
-		
-	}
-
-	private void sendTopic(StatusBean bean) throws Exception {
-		JSONUtils.sendTopic(bean, statusTName, uri);
-	}
 
 	public boolean isCancelled() {
 		return isCancelled;

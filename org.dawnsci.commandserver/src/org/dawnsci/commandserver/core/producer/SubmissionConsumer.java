@@ -25,6 +25,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.Constants;
@@ -48,7 +49,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author fcp94556
  *
  */
-public abstract class SubmissionConsumer {
+public abstract class SubmissionConsumer implements IConsumerExtension{
 	
 	protected final String       consumerId;
 	protected String             consumerVersion;

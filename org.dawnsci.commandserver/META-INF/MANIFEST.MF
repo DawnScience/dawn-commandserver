@@ -16,6 +16,7 @@ Bundle-ClassPath: lib/activemq-all-5.9.0.jar,
  lib/jna-4.1.0.jar
 Export-Package: javax.jms,
  org.dawnsci.commandserver.core,
+ org.dawnsci.commandserver.core.application,
  org.dawnsci.commandserver.core.beans,
  org.dawnsci.commandserver.core.consumer,
  org.dawnsci.commandserver.core.process,

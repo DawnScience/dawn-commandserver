@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.mx.consumer;
 
 import java.net.URI;
+import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -19,6 +20,8 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  */
 public class MXSubmissionConsumer extends SubmissionConsumer {
 
+	private Map<String, String> config;
+
 	@Override
 	public String getName() {
 		return "Multi-crystal Reprocessing Consumer";
@@ -28,7 +31,11 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 	protected Class<? extends StatusBean> getBeanClass() {
 		return ProjectBean.class;
 	}
-
+	
+	public void init(Map<String, String> configuration) throws Exception {
+        this.config = configuration;
+        super.init(configuration);
+	}
 
 	@Override
 	protected ProgressableProcess createProcess(URI uri, 
@@ -36,7 +43,7 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {
 
-		return new Xia2Process(uri, statusTName, statusQName, (ProjectBean)bean);
+		return new Xia2Process(uri, statusTName, statusQName, config, (ProjectBean)bean);
 	}
 
 	

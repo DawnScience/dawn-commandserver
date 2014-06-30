@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -44,13 +45,15 @@ public class Xia2Process extends ProgressableProcess{
 	private final static String XIA2_FILE     = "xia2.txt"; // Change by setting org.dawnsci.commandserver.mx.xia2Command
 
 	private String processingDir;
-
+	private String scriptLocation;
 	private Process process;
 	
-	public Xia2Process(URI     uri, 
+	public Xia2Process(URI        uri, 
 			           String     statusTName, 
 			           String     statusQName,
+			           Map<String,String> arguments,
 			           ProjectBean bean) {
+		
 		super(uri, statusTName, statusQName, bean);
 		
         final String runDir;
@@ -77,7 +80,13 @@ public class Xia2Process extends ProgressableProcess{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-	}
+		
+		// If we have the -scriptLocation argument, use that
+		scriptLocation = "";
+		if (arguments.containsKey("scriptLocation")) {
+			scriptLocation = arguments.get("scriptLocation")+" ";
+		}
+ 	}
 
 	@Override
 	public void execute() throws Exception {
@@ -311,7 +320,7 @@ public class Xia2Process extends ProgressableProcess{
 		if (xia2Cmd==null) {
 			String cmd = bean.getCommandLineSwitches();
 			if (cmd==null) cmd = "";
-			xia2Cmd = XIA2_NAME+" "+cmd+" "+XIA2_FIXEDCMD;
+			xia2Cmd = scriptLocation+XIA2_NAME+" "+cmd+" "+XIA2_FIXEDCMD;
 		}
 	               
 	    return setupCmd+xia2Cmd;

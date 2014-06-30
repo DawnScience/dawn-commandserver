@@ -3,7 +3,6 @@ package org.dawnsci.commandserver.core.application;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
@@ -28,7 +27,7 @@ import org.osgi.framework.Bundle;
  */
 public class Consumer implements IApplication {
 
-	private SubmissionConsumer consumer;
+	private IConsumerExtension consumer;
 
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
@@ -46,7 +45,8 @@ public class Consumer implements IApplication {
 		
 		final Bundle bundle = Platform.getBundle(conf.get("bundle"));
 		
-		final Class<? extends SubmissionConsumer> clazz = (Class<? extends SubmissionConsumer>) bundle.loadClass(conf.get("consumer"));
+		@SuppressWarnings("unchecked")
+		final Class<? extends IConsumerExtension> clazz = (Class<? extends IConsumerExtension>) bundle.loadClass(conf.get("consumer"));
 		
 		this.consumer = clazz.newInstance();
 		consumer.init(conf);

@@ -36,7 +36,7 @@ public class MRCConsumer extends ProcessConsumer {
 		
 		feb.setName((new File(feb.getPath())).getName());
 		
-		MRCProcess process = new MRCProcess(uri, statusTName, statusQName, bean);
+		MRCProcess process = new MRCProcess(uri, statusTName, statusQName,config, bean);
 		if (config.containsKey("blocking")) {
 			process.setBlocking(Boolean.parseBoolean(config.get("blocking")));
 		} else {

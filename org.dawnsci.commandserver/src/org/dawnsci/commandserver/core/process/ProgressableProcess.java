@@ -112,6 +112,17 @@ public abstract class ProgressableProcess implements Runnable {
 	 */
 	protected void writeProjectBean(final String dir, final String fileName) throws Exception {
 		
+		writeProjectBean(new File(dir), fileName);
+	}
+	
+	/**
+	 * 
+	 * @param dir
+	 * @param fileName
+	 * @throws Exception
+	 */
+	protected void writeProjectBean(final File dir, final String fileName) throws Exception {
+		
 		final File beanFile = new File(dir, fileName);
     	ObjectMapper mapper = new ObjectMapper();
     	beanFile.getParentFile().mkdirs();

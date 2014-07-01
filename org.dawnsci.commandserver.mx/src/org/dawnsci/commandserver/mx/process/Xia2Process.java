@@ -92,6 +92,11 @@ public class Xia2Process extends ProgressableProcess{
 	public void execute() throws Exception {
 		
 		writeFile();
+		
+		bean.setStatus(Status.RUNNING);
+		bean.setPercentComplete(1);
+		broadcast(bean);
+		
 		runXia2();
 	}
 
@@ -337,11 +342,7 @@ public class Xia2Process extends ProgressableProcess{
 			
 	        writer = new Xia2Writer(new File(dir, Xia2Writer.DEFAULT_FILENAME));
 	        writer.write(dBean);
-	        
-			dBean.setStatus(Status.RUNNING);
-			dBean.setPercentComplete(1);
-			broadcast(dBean);
-    
+	            
 	        			
 		} finally {
 			if (writer!=null) writer.close();

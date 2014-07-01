@@ -54,6 +54,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class ConsumerView extends ViewPart {
 	
+	public static final String ID = "org.dawnsci.commandserver.ui.consumerView";
+	
 	private static final Logger logger = LoggerFactory.getLogger(ConsumerView.class);
 	
 	// UI

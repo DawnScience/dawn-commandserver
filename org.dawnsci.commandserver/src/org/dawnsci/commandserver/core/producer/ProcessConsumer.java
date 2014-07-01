@@ -2,6 +2,7 @@ package org.dawnsci.commandserver.core.producer;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -41,11 +42,11 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * @author fcp94556
  *
  */
-public abstract class SubmissionConsumer extends AliveConsumer {
+public abstract class ProcessConsumer extends AliveConsumer {
 	
 
 	private String submitQName, statusTName, statusQName;
-	
+	protected Map<String, String> config;
 
 	/**
 	 * Method which configures the submission consumer for the queues and topics required.
@@ -60,10 +61,11 @@ public abstract class SubmissionConsumer extends AliveConsumer {
 	 */
 	public void init(Map<String, String> configuration) throws Exception {
 		
-		setUri(new URI(configuration.get("uri")));
-		this.submitQName = configuration.get("submit");
-		this.statusTName = configuration.get("topic");
-		this.statusQName = configuration.get("status");
+		config = Collections.unmodifiableMap(configuration);
+		setUri(new URI(config.get("uri")));
+		this.submitQName = config.get("submit");
+		this.statusTName = config.get("topic");
+		this.statusQName = config.get("status");
 	}
 
 	/**
@@ -104,10 +106,12 @@ public abstract class SubmissionConsumer extends AliveConsumer {
 	 * @param statusTName
 	 * @param statusQName
 	 * @param bean
-	 * @return
+	 * @return the process or null if the message should be consumed and nothing done.
 	 */
 	protected abstract ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
 
+	protected static final long TWO_DAYS = 48*60*60*1000; // ms
+	protected static final long A_WEEK = 7*24*60*60*1000; // ms
 	/**
 	 * Defines the time in ms that a job may be in the running state
 	 * before the consumer might consider it for deletion. If a consumer
@@ -176,9 +180,11 @@ public abstract class SubmissionConsumer extends AliveConsumer {
                     	factory.submit(bean, false);
                     	
                     	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
-                    	process.start();
+                    	if (process!=null) {
+                    		process.start();
+                        	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    	}
                     	
-                    	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     }
 	            }
         	} catch (Throwable ne) {

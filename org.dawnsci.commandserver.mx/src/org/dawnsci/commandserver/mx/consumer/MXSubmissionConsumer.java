@@ -1,11 +1,10 @@
 package org.dawnsci.commandserver.mx.consumer;
 
 import java.net.URI;
-import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
+import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
 
@@ -18,9 +17,8 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  * @author fcp94556
  *
  */
-public class MXSubmissionConsumer extends SubmissionConsumer {
+public class MXSubmissionConsumer extends ProcessConsumer {
 
-	private Map<String, String> config;
 
 	@Override
 	public String getName() {
@@ -32,11 +30,6 @@ public class MXSubmissionConsumer extends SubmissionConsumer {
 		return ProjectBean.class;
 	}
 	
-	public void init(Map<String, String> configuration) throws Exception {
-        this.config = configuration;
-        super.init(configuration);
-	}
-
 	@Override
 	protected ProgressableProcess createProcess(URI uri, 
 			                                    String statusTName,

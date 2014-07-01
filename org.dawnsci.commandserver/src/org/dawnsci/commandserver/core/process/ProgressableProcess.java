@@ -39,6 +39,7 @@ import com.sun.jna.Platform;
  */
 public abstract class ProgressableProcess implements Runnable {
 
+	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
 	protected final StatusBean bean;
 	protected final URI        uri;
@@ -133,10 +134,14 @@ public abstract class ProgressableProcess implements Runnable {
 	 */
 	public void start() {
 		
-		final Thread thread = new Thread(this);
-		thread.setDaemon(true);
-		thread.setPriority(Thread.MAX_PRIORITY);
-		thread.start();
+		if (isBlocking()) {
+			run(); // Block until process has run.
+		} else {
+			final Thread thread = new Thread(this);
+			thread.setDaemon(true);
+			thread.setPriority(Thread.MAX_PRIORITY);
+			thread.start();
+		}
 	}
 
 	/**
@@ -147,7 +152,7 @@ public abstract class ProgressableProcess implements Runnable {
 		try {
 			bean.merge(tbean);
 			cancelMonitor();
-			broadcaster.broadcast(bean);
+			broadcaster.broadcast(bean, false);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -276,7 +281,10 @@ public abstract class ProgressableProcess implements Runnable {
 	}
 	
 	protected void dryRun() {
-		for (int i = 0; i < 100; i++) {
+		dryRun(100);
+	}
+	protected void dryRun(int size) {
+		for (int i = 0; i < size; i++) {
 			
 			if (bean.getStatus()==Status.REQUEST_TERMINATE ||
 			    bean.getStatus()==Status.TERMINATED) {
@@ -315,6 +323,14 @@ public abstract class ProgressableProcess implements Runnable {
 		}
 
 		return getUnique(dir, template, ext, ++i);
+	}
+
+	public boolean isBlocking() {
+		return blocking;
+	}
+
+	public void setBlocking(boolean blocking) {
+		this.blocking = blocking;
 	}
 
 }

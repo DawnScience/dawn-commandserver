@@ -145,7 +145,7 @@ public class Monitor extends AliveConsumer {
 						
 						if (!oldTime.equals(newTime)) {
 			                System.out.format("%s: %s\n", ENTRY_MODIFY, path);
-							broadcaster.broadcast(bean(ENTRY_MODIFY, path));
+							broadcaster.broadcast(bean(ENTRY_MODIFY, path), true);
 						}
 					}
 				}
@@ -162,7 +162,7 @@ public class Monitor extends AliveConsumer {
 		
 	    for (Path path : fileList.keySet()) {
             System.out.format("%s: %s\n", type, path);
-		    broadcaster.broadcast(bean(type, path));
+		    broadcaster.broadcast(bean(type, path), true);
 	    }
 	}
 
@@ -221,7 +221,7 @@ public class Monitor extends AliveConsumer {
                 System.out.format("%s: %s\n", kind, child);
                 FolderEventBean bean = bean(kind, child);
   
-                broadcaster.broadcast(bean);
+                broadcaster.broadcast(bean, true);
                 
                 if (recursive && (kind == ENTRY_CREATE)) {
                 	if (Files.isDirectory(child, NOFOLLOW_LINKS)) {

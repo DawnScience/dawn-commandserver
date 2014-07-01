@@ -16,6 +16,7 @@ import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,9 +44,14 @@ public class Broadcaster {
 	/**
 	 * Notify any clients of the beans status
 	 * @param bean
+	 * @param add true to add a new message, false to find and update and old one.
 	 */
-	public void broadcast(StatusBean bean) throws Exception {
-		sendQueue(bean);  // For clients connecting in future or after a refresh - persistence.
+	public void broadcast(StatusBean bean, boolean add) throws Exception {
+		if (add) {
+			addQueue(bean);
+		} else {
+		    updateQueue(bean);  // For clients connecting in future or after a refresh - persistence.
+		}
 		sendTopic(bean);  // For topic listeners wait for updates (more efficient than polling queue)
  	}
 
@@ -54,7 +60,21 @@ public class Broadcaster {
 	 * @param bean
 	 * @throws Exception 
 	 */
-	private void sendQueue(StatusBean bean) throws Exception {
+	private void addQueue(StatusBean bean) throws Exception {
+		
+    	RemoteSubmission factory = new RemoteSubmission(uri);
+     	factory.setQueueName(queueName); // Move the message over to a status queue.
+    	
+    	factory.submit(bean, false);
+		
+	}
+
+	/**
+	 * 
+	 * @param bean
+	 * @throws Exception 
+	 */
+	private void updateQueue(StatusBean bean) throws Exception {
 		
 		QueueConnection qCon = null;
 		

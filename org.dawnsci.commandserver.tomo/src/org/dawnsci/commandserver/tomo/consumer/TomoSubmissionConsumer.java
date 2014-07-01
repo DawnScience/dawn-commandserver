@@ -4,7 +4,7 @@ import java.net.URI;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.SubmissionConsumer;
+import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
 import org.dawnsci.commandserver.tomo.process.TomoProcess;
 
@@ -15,7 +15,7 @@ import org.dawnsci.commandserver.tomo.process.TomoProcess;
  * @author fcp94556
  *
  */
-public class TomoSubmissionConsumer extends SubmissionConsumer {
+public class TomoSubmissionConsumer extends ProcessConsumer {
 
 
 	@Override
@@ -37,9 +37,7 @@ public class TomoSubmissionConsumer extends SubmissionConsumer {
 
 		return new TomoProcess(uri, statusTName, statusQName, (TomoBean)bean);
 	}
-	
-	private static final long TWO_DAYS = 48*60*60*1000; // ms
-	
+		
 	@Override
 	protected long getMaximumRunningAge() {
 		if (System.getProperty("org.dawnsci.commandserver.core.maximumTomoRunningAge")!=null) {
@@ -47,9 +45,7 @@ public class TomoSubmissionConsumer extends SubmissionConsumer {
 		}
 		return TWO_DAYS;
 	}
-	
-	private static final long A_WEEK = 7*24*60*60*1000; // ms
-	
+		
 	@Override
 	protected long getMaximumCompleteAge() {
 		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2CompleteAge")!=null) {

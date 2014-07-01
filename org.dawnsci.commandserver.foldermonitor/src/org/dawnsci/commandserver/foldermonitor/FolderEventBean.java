@@ -7,6 +7,10 @@ public class FolderEventBean extends StatusBean {
 	private EventType type;
 	private String    path;
 	
+	public FolderEventBean() {
+		super();
+	}
+	
 	public FolderEventBean(EventType type, String path) {
 		this.type = type;
 		this.path = path;
@@ -20,19 +24,19 @@ public class FolderEventBean extends StatusBean {
 	}
        
 
-	protected EventType getType() {
+	public EventType getType() {
 		return type;
 	}
 
-	protected void setType(EventType type) {
+	public void setType(EventType type) {
 		this.type = type;
 	}
 
-	protected String getPath() {
+	public String getPath() {
 		return path;
 	}
 
-	protected void setPath(String path) {
+	public void setPath(String path) {
 		this.path = path;
 	}
 

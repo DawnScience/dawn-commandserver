@@ -121,6 +121,10 @@ public class MRCProcess extends ProgressableProcess {
 		buf.append(" ");
 		buf.append(momlLocation);
 		
+		// TODO FIXME Real file path!
+		// mrc file is in visit_dir/raw/
+		// We send visitdir as filepath and file name without extension as filename.
+		
 		if (bean.getProperties()!=null) {
 			for(Object name : bean.getProperties().keySet()) {
 				buf.append(" ");

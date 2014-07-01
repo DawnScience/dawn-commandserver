@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.mrc.consumer;
 
+import java.io.File;
 import java.net.URI;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
@@ -24,6 +25,8 @@ public class MRCConsumer extends ProcessConsumer {
 		// We are only interested in new files
 		FolderEventBean feb = (FolderEventBean)bean;
 		if (feb.getType()!=EventType.ENTRY_CREATE) return null; // Only interested in new files.
+		
+		feb.setName((new File(feb.getPath())).getName());
 		
 		MRCProcess process = new MRCProcess(uri, statusTName, statusQName, bean);
 		if (config.containsKey("blocking")) {

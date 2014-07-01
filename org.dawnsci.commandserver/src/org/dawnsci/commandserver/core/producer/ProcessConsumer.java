@@ -183,8 +183,15 @@ public abstract class ProcessConsumer extends AliveConsumer {
                     	
                     	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
                     	if (process!=null) {
+                    		if (process.isBlocking()) {
+                        	    System.out.println("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    		}
                     		process.start();
-                        	System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    		if (process.isBlocking()) {
+                        	    System.out.println("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    		} else {
+                        	    System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    		}
                     	}
                     	
                     }

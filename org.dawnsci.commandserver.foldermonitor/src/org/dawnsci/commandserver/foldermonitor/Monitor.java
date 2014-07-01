@@ -251,7 +251,6 @@ public class Monitor extends AliveConsumer {
 			e.printStackTrace();
 		}
 		bean.setUniqueId(System.currentTimeMillis()+"_"+UUID.randomUUID());
-		bean.setUserName(System.getProperty("user.name"));
 		bean.setRunDirectory(child.getParent().toAbsolutePath().toString());
 		bean.setName(type.name());
 		bean.setSubmissionTime(System.currentTimeMillis());

@@ -430,6 +430,7 @@ public class StatusQueueView extends ViewPart {
 					final String userName = getUserName();
 					for (Iterator it = retained.iterator(); it.hasNext();) {
 						StatusBean statusBean = (StatusBean) it.next();
+						if (statusBean.getUserName()==null) continue;
 						if (!userName.equals(statusBean.getUserName())) it.remove();
 					}
 					// This form of filtering is not at all secure because we

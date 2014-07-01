@@ -1,11 +1,14 @@
 package org.dawnsci.commandserver.foldermonitor;
 
+import java.util.Properties;
+
 import org.dawnsci.commandserver.core.beans.StatusBean;
 
 public class FolderEventBean extends StatusBean {
 
-	private EventType type;
-	private String    path;
+	private EventType  type;
+	private String     path;
+	private Properties properties;
 	
 	public FolderEventBean() {
 		super();
@@ -19,8 +22,9 @@ public class FolderEventBean extends StatusBean {
 
 	public void merge(FolderEventBean with) {
 		super.merge(with);
-		this.type = with.type;
-		this.path = with.path;
+		this.type   = with.type;
+		this.path   = with.path;
+		this.properties = with.properties;
 	}
        
 
@@ -44,6 +48,7 @@ public class FolderEventBean extends StatusBean {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
+		result = prime * result + ((properties == null) ? 0 : properties.hashCode());
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + ((type == null) ? 0 : type.hashCode());
 		return result;
@@ -58,6 +63,11 @@ public class FolderEventBean extends StatusBean {
 		if (getClass() != obj.getClass())
 			return false;
 		FolderEventBean other = (FolderEventBean) obj;
+		if (properties == null) {
+			if (other.properties != null)
+				return false;
+		} else if (!properties.equals(other.properties))
+			return false;
 		if (path == null) {
 			if (other.path != null)
 				return false;
@@ -66,6 +76,14 @@ public class FolderEventBean extends StatusBean {
 		if (type != other.type)
 			return false;
 		return true;
+	}
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+	public void setProperties(Properties config) {
+		this.properties = config;
 	}
 	
 }

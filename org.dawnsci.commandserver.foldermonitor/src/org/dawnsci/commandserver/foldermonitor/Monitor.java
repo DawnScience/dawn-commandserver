@@ -6,8 +6,11 @@ import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
 import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
@@ -26,6 +29,7 @@ import java.nio.file.attribute.FileTime;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
@@ -237,10 +241,11 @@ public class Monitor extends AliveConsumer {
 		System.out.println("Finished folder monitor @ '"+dir+"'");
 	}
 
-	private FolderEventBean bean(Kind kind, Path child) {
+	private FolderEventBean bean(Kind kind, Path child) throws IOException {
 		return bean(EventType.valueOf(kind.name()), child);
 	}
-	private FolderEventBean bean(EventType type, Path child) {
+	
+	private FolderEventBean bean(EventType type, Path child) throws IOException {
 		
 		FolderEventBean bean = new FolderEventBean(type, child.toAbsolutePath().toString());
 		bean.setStatus(Status.NONE);
@@ -255,8 +260,33 @@ public class Monitor extends AliveConsumer {
 		bean.setName(type.name());
 		bean.setSubmissionTime(System.currentTimeMillis());
 		
+		if (config.get("properties")!=null) {
+			bean.setProperties(loadProperties(config.get("properties")));
+		}
+		
 		return bean;
 	}
+	
+	private final static Properties loadProperties(final String path) throws IOException {
+		return loadProperties(new File(path));
+	}
+	private final static Properties loadProperties(final File file) throws IOException {   	
+		if (!file.exists()) return new Properties();
+		return loadProperties(new FileInputStream(file));
+	}
+
+	public final static Properties loadProperties(final InputStream stream) throws IOException {   	
+		
+		final Properties fileProps       = new Properties();
+		try {
+			final BufferedInputStream in = new BufferedInputStream(stream);
+			fileProps.load(in);
+		} finally {
+			stream.close();
+		}
+		return fileProps;
+	}
+
 
 	@Override
 	public void stop() throws Exception {

@@ -20,6 +20,14 @@ public class MRCConsumer extends ProcessConsumer {
 	}
 
 	@Override
+	protected boolean isHandled(StatusBean bean) {
+		
+		FolderEventBean feb = (FolderEventBean)bean;
+		if (feb.getType()!=EventType.ENTRY_CREATE) return false; // Only interested in new files.
+		return true;
+	}
+	
+	@Override
 	protected ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception {
 		
 		// We are only interested in new files

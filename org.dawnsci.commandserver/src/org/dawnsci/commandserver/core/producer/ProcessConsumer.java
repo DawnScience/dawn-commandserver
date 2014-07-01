@@ -169,6 +169,8 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	            	
                     if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
                     	
+                    	if (!isHandled(bean)) continue; // Consume it and move on
+                    	
                     	// Now we put the bean in the status queue and we 
                     	// start the process
                     	RemoteSubmission factory = new RemoteSubmission(uri);
@@ -195,6 +197,16 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 	}
 	
+	
+	/**
+	 * Override to stop handling certain events in the queue.
+	 * @param bean
+	 * @return
+	 */
+	protected boolean isHandled(StatusBean bean) {
+		return true;
+	}
+
 	/**
 	 * Parse the queue for stale jobs and things that should be rerun.
 	 * @param bean
@@ -238,6 +250,10 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		            	
 		            	// If it has failed, we clear it up
 		            	if (qbean.getStatus()==Status.FAILED) {
+		            		removeIds.add(t.getJMSMessageID());
+		            		continue;
+		            	}
+		            	if (qbean.getStatus()==Status.NONE) {
 		            		removeIds.add(t.getJMSMessageID());
 		            		continue;
 		            	}

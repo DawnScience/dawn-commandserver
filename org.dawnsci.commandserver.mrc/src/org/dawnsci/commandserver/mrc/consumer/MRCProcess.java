@@ -20,7 +20,7 @@ public class MRCProcess extends ProgressableProcess {
 	@Override
 	protected void execute() throws Exception {
 		
-        dryRun(20); // Notifies events over 2s
+        dryRun(100); // Notifies events over 10s
 	}
 
 	@Override

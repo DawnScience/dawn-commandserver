@@ -22,6 +22,8 @@ import java.nio.file.WatchEvent.Kind;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.attribute.FileTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -66,6 +68,8 @@ public class Monitor extends AliveConsumer {
 		String topic = configuration.get("topic");
 		
 		this.broadcaster   = new Broadcaster(getUri(), queue, topic);
+		System.out.println("Folder monitor topic is '"+broadcaster.getTopicName()+"'");
+		System.out.println("Folder monitor queue is '"+broadcaster.getQueueName()+"'");
 
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(getUri());		
 		connection = connectionFactory.createConnection();
@@ -103,16 +107,88 @@ public class Monitor extends AliveConsumer {
 			boolean recursive = Boolean.parseBoolean(config.get("recursive"));
             if (recursive) throw new IllegalArgumentException("Cannot use recursive monitoring with nio!");
 			
-            
+            startPolling();
 		}
+	}
+	
+	private void startPolling() throws Exception {
+		
+		final long sleepTime = config.get("sleepTime") != null ? Long.parseLong(config.get("sleepTime")) : 1000L;
+		System.out.println("Starting polling folder monitor @ '"+dir+"' with sleepTime of "+sleepTime+" ms");
+
+		// We initiate the file list and last modified times.
+		Map<Path, FileTime> fileList = readFileList(dir);
+		
+		while(!stopped) {
+			
+			Thread.sleep(sleepTime); // Can be interrupted
+			
+			Map<Path, FileTime> currentList = readFileList(dir);
+			
+			if (currentList.equals(fileList)) continue;
+			
+			// Otherwise we notify of new, modified and deleted files
+			
+			Map<Path, FileTime> tmp = 	new HashMap<Path, FileTime>(fileList);
+		    tmp.keySet().removeAll(currentList.keySet());
+		    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_DELETE);
+
+		    tmp = 	new HashMap<Path, FileTime>(currentList);
+		    tmp.keySet().removeAll(fileList.keySet());		    
+		    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_CREATE);
+		    		    
+		    for (Path path : currentList.keySet()) {
+				if (fileList.containsKey(path)) {
+					final FileTime oldTime = fileList.get(path);
+					final FileTime newTime = currentList.get(path);
+					
+					if (!oldTime.equals(newTime)) {
+		                System.out.format("%s: %s\n", ENTRY_MODIFY, path);
+						broadcaster.broadcast(bean(ENTRY_MODIFY, path));
+					}
+				}
+			}
+		    
+		    fileList = currentList;
+		}
+	}
+	
+	private void broadcast(Map<Path, FileTime> fileList, EventType type) throws Exception {
+		
+	    for (Path path : fileList.keySet()) {
+            System.out.format("%s: %s\n", type, path);
+		    broadcaster.broadcast(bean(type, path));
+	    }
+	}
+
+	private Map<Path, FileTime> readFileList(final Path dir) throws IOException {
+		
+		final Map<Path, FileTime> ret = new HashMap<Path, FileTime>(31);
+		
+        Files.walkFileTree(dir, new SimpleFileVisitor<Path>()  {
+            @Override
+            public FileVisitResult preVisitDirectory(Path file, BasicFileAttributes attrs) throws IOException {
+            	if (file.equals(dir)) return FileVisitResult.CONTINUE;
+            	return FileVisitResult.SKIP_SUBTREE;
+            }
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+                if (filePattern!=null) {
+                	if (!filePattern.matcher(file.getFileName().toString()).matches()) {
+                		return FileVisitResult.CONTINUE;
+                	}
+                }
+            	ret.put(file, attrs.lastModifiedTime());
+            	return FileVisitResult.CONTINUE;
+            }       
+        });
+
+		return ret;
 	}
 
 	private void startNio() throws Exception {
 		
 		boolean recursive = Boolean.parseBoolean(config.get("recursive"));
 		System.out.println("Starting nio folder monitor @ '"+dir+"'. Recursive is "+(recursive?"on":"off"));
-		System.out.println("Folder monitor topic is '"+broadcaster.getTopicName()+"'");
-		System.out.println("Folder monitor queue is '"+broadcaster.getQueueName()+"'");
 		while(!stopped) {
 			
 			WatchKey key = watcher.take();
@@ -157,8 +233,11 @@ public class Monitor extends AliveConsumer {
 	}
 
 	private FolderEventBean bean(Kind kind, Path child) {
+		return bean(EventType.valueOf(kind.name()), child);
+	}
+	private FolderEventBean bean(EventType type, Path child) {
 		
-		FolderEventBean bean = new FolderEventBean(EventType.valueOf(kind.name()), child.toAbsolutePath().toString());
+		FolderEventBean bean = new FolderEventBean(type, child.toAbsolutePath().toString());
 		bean.setStatus(Status.NONE);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
@@ -169,7 +248,7 @@ public class Monitor extends AliveConsumer {
 		bean.setUniqueId(System.currentTimeMillis()+"_"+UUID.randomUUID());
 		bean.setUserName(System.getProperty("user.name"));
 		bean.setRunDirectory(child.getParent().toAbsolutePath().toString());
-		bean.setName(kind.name());
+		bean.setName(type.name());
 		bean.setSubmissionTime(System.currentTimeMillis());
 		
 		return bean;

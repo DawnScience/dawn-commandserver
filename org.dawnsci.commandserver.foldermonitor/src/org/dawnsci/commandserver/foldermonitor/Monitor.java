@@ -123,33 +123,38 @@ public class Monitor extends AliveConsumer {
 			
 			Thread.sleep(sleepTime); // Can be interrupted
 			
-			Map<Path, FileTime> currentList = readFileList(dir);
-			
-			if (currentList.equals(fileList)) continue;
-			
-			// Otherwise we notify of new, modified and deleted files
-			
-			Map<Path, FileTime> tmp = 	new HashMap<Path, FileTime>(fileList);
-		    tmp.keySet().removeAll(currentList.keySet());
-		    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_DELETE);
-
-		    tmp = 	new HashMap<Path, FileTime>(currentList);
-		    tmp.keySet().removeAll(fileList.keySet());		    
-		    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_CREATE);
-		    		    
-		    for (Path path : currentList.keySet()) {
-				if (fileList.containsKey(path)) {
-					final FileTime oldTime = fileList.get(path);
-					final FileTime newTime = currentList.get(path);
-					
-					if (!oldTime.equals(newTime)) {
-		                System.out.format("%s: %s\n", ENTRY_MODIFY, path);
-						broadcaster.broadcast(bean(ENTRY_MODIFY, path));
+			try {
+				Map<Path, FileTime> currentList = readFileList(dir);
+				
+				if (currentList.equals(fileList)) continue;
+				
+				// Otherwise we notify of new, modified and deleted files
+				
+				Map<Path, FileTime> tmp = 	new HashMap<Path, FileTime>(fileList);
+			    tmp.keySet().removeAll(currentList.keySet());
+			    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_DELETE);
+	
+			    tmp = 	new HashMap<Path, FileTime>(currentList);
+			    tmp.keySet().removeAll(fileList.keySet());		    
+			    if (tmp.size()>0)  broadcast(tmp, EventType.ENTRY_CREATE);
+			    		    
+			    for (Path path : currentList.keySet()) {
+					if (fileList.containsKey(path)) {
+						final FileTime oldTime = fileList.get(path);
+						final FileTime newTime = currentList.get(path);
+						
+						if (!oldTime.equals(newTime)) {
+			                System.out.format("%s: %s\n", ENTRY_MODIFY, path);
+							broadcaster.broadcast(bean(ENTRY_MODIFY, path));
+						}
 					}
 				}
+			    
+			    fileList = currentList;
+			} catch (java.nio.file.NoSuchFileException nfe) {
+				// Files can be deleted and not walked.
+				continue;
 			}
-		    
-		    fileList = currentList;
 		}
 	}
 	

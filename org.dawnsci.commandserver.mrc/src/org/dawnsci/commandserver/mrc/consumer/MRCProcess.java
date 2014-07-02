@@ -12,6 +12,7 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.POSIX;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
+import org.eclipse.core.resources.ResourcesPlugin;
 
 /**
  * A process which blocks until done.
@@ -21,7 +22,6 @@ import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
 public class MRCProcess extends ProgressableProcess {
 
 	private File    tmpDir;
-	private String  scriptLocation;
 	private String  momlLocation;
 	private Process process;
 
@@ -51,10 +51,7 @@ public class MRCProcess extends ProgressableProcess {
 			e.printStackTrace();
 		}
 		
-		// If we have the -scriptLocation argument, use that
-		scriptLocation = arguments.get("scriptLocation");
-		if (scriptLocation==null || "null".equals(scriptLocation)) throw new IOException("-scriptLocation argument must be set");
-		
+		// If we have the -scriptLocation argument, use that		
 		momlLocation = arguments.get("momlLocation");
 		if (momlLocation==null || "null".equals(momlLocation)) throw new IOException("-momlLocation argument must be set");
 
@@ -92,7 +89,7 @@ public class MRCProcess extends ProgressableProcess {
 		} else {
 			pb.command("bash", "-c", cmd);
 		}
-
+		
 		System.out.println("Executing EM pipeline in '"+tmpDir.getAbsolutePath()+"'");
 		this.process = pb.start();
 		assert pb.redirectInput() == Redirect.PIPE;
@@ -123,9 +120,9 @@ public class MRCProcess extends ProgressableProcess {
 	private String createMRCCommand(FolderEventBean bean) throws Exception {
 		
 		final StringBuilder buf = new StringBuilder();
-		buf.append(scriptLocation);
+		buf.append(createModuleLoadCommand());
 		buf.append(" ");
-		buf.append(momlLocation);
+		buf.append(createWorkflowCommand(momlLocation));
 
 		// We send visitdir as filepath and file name without extension as filename.
 		final File newFile = new File(bean.getPath());
@@ -135,13 +132,18 @@ public class MRCProcess extends ProgressableProcess {
 		buf.append(" ");
 		buf.append("-Dfilepath"); // should be called visitDir?
 		buf.append("=");
-		buf.append(visitDir.getAbsolutePath());
+		final String visitDirPath = visitDir.getAbsolutePath();
+		if (visitDirPath.contains(" ")) buf.append("\"");
+		buf.append(visitDirPath);
+		if (visitDirPath.contains(" ")) buf.append("\"");
 		
 		final String fileName = getFileNameNoExtension(newFile);
 		buf.append(" ");
 		buf.append("-Dfileroot"); // should be called fileNameNoExtension?
 		buf.append("=");
+		if (fileName.contains(" ")) buf.append("\"");
 		buf.append(fileName);
+		if (fileName.contains(" ")) buf.append("\"");
 		
 		if (bean.getProperties()!=null) {
 			for(Object name : bean.getProperties().keySet()) {
@@ -150,13 +152,36 @@ public class MRCProcess extends ProgressableProcess {
 				buf.append(name);
 				buf.append("=");
 				String value = bean.getProperties().get(name).toString().trim();
-				if (value.contains(" ")) value = value.replace(" ", "\\ ");
+				if (value.contains(" ")) buf.append("\"");
 				buf.append(value);
+				if (value.contains(" ")) buf.append("\"");
 			}
 		}
 		return buf.toString();
 	}
 	
+	private String createWorkflowCommand(String momlLocation) {
+		
+		final StringBuilder buf = new StringBuilder();
+		buf.append("$DAWN_RELEASE_DIRECTORY/dawn -noSplash -application com.isencia.passerelle.workbench.model.launch -data \"");
+		final String location = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
+		buf.append(location);
+		buf.append("\" -consolelog -os linux -ws gtk -arch x86_64 -vmargs -Dorg.dawb.workbench.jmx.headless=true -Dcom.isencia.jmx.service.terminate=true -Dmodel=\"");
+		buf.append(momlLocation);
+		buf.append("\" ");
+		return buf.toString();
+	}
+
+	private String createModuleLoadCommand() {
+		
+		// TODO System property?
+		final StringBuilder buf = new StringBuilder();
+		// TODO Way to set module load command...
+		buf.append("module load dawn/snapshot");
+		buf.append(" ; ");
+		return buf.toString();
+	}
+
 	public static String getFileNameNoExtension(File file) {
 		return getFileNameNoExtension(file.getName());
 	}

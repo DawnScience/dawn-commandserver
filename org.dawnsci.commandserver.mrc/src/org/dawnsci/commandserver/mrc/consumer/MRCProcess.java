@@ -93,7 +93,7 @@ public class MRCProcess extends ProgressableProcess {
 			pb.command("bash", "-c", cmd);
 		}
 
-		System.out.println("Executing MRC pipeline in '"+tmpDir.getAbsolutePath()+"'");
+		System.out.println("Executing EM pipeline in '"+tmpDir.getAbsolutePath()+"'");
 		this.process = pb.start();
 		assert pb.redirectInput() == Redirect.PIPE;
 		assert process.getInputStream().read() == -1;	

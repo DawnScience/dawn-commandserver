@@ -49,7 +49,7 @@ public class MRCConsumer extends ProcessConsumer {
 
 	@Override
 	public String getName() {
-		return "MRC Pipeline";
+		return "EM Pipeline";
 	}
 
 	

@@ -41,7 +41,7 @@ public class MRCProcess extends ProgressableProcess {
 		final File visitDir = newFile.getParentFile().getParentFile();
 
 		// We run the commands in a temporary directory for this consumer
-		tmpDir = getUnique(new File(visitDir, "tmp"), "mrcprocessing_", null, 1);
+		tmpDir = getUnique(new File(visitDir, "tmp"), "emprocessing_", null, 1);
  		bean.setRunDirectory(tmpDir.getAbsolutePath());
 		
 		// We record the bean so that reruns of reruns are possible.
@@ -82,7 +82,7 @@ public class MRCProcess extends ProgressableProcess {
 		// Map<String, String> env = pb.environment();
 		pb.directory(tmpDir);
 
-		File log = new File(tmpDir, "mrc_output.txt");
+		File log = new File(tmpDir, "em_output.txt");
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(Redirect.appendTo(log));
 
@@ -150,9 +150,8 @@ public class MRCProcess extends ProgressableProcess {
 				buf.append(name);
 				buf.append("=");
 				String value = bean.getProperties().get(name).toString().trim();
-				if (value.contains(" ")) buf.append("\"");
+				if (value.contains(" ")) value = value.replace(" ", "\\ ");
 				buf.append(value);
-				if (value.contains(" ")) buf.append("\"");
 			}
 		}
 		return buf.toString();

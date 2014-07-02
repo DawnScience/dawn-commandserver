@@ -132,6 +132,9 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 * @return
 	 */
 	protected abstract long getMaximumCompleteAge();
+	
+	// TODO FIXME
+	protected volatile int processCount;
 
 	/**
 	 * WARNING - starts infinite loop - you have to kill 
@@ -162,10 +165,16 @@ public abstract class ProcessConsumer extends AliveConsumer {
         		// Consumes messages from the queue.
 	        	Message m = consumer.receive(1000);
 	            if (m!=null) {
+	            	
+	            	// TODO FIXME Check if we have the max number of processes
+	            	// exceeded and wait until we dont...
+	            	
 	            	TextMessage t = (TextMessage)m;
 	            	ObjectMapper mapper = new ObjectMapper();
 	            	
 	            	final StatusBean bean = mapper.readValue(t.getText(), getBeanClass());
+	            	
+	            	
 	            	
                     if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
                     	
@@ -186,6 +195,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
                     		if (process.isBlocking()) {
                         	    System.out.println("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     		}
+                    		processCount++;
                     		process.start();
                     		if (process.isBlocking()) {
                         	    System.out.println("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");

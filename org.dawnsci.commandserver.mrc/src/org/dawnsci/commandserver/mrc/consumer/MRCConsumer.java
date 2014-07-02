@@ -40,7 +40,7 @@ public class MRCConsumer extends ProcessConsumer {
 		if (config.containsKey("blocking")) {
 			process.setBlocking(Boolean.parseBoolean(config.get("blocking")));
 		} else {
-			process.setBlocking(true); // One at a time
+			process.setBlocking(false); // No blocking
 		}
 		
 		return process;

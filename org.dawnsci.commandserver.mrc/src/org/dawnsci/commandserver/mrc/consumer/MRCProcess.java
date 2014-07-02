@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.mrc.consumer;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
@@ -19,7 +20,7 @@ import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
  */
 public class MRCProcess extends ProgressableProcess {
 
-	private File    runDir;
+	private File    tmpDir;
 	private String  scriptLocation;
 	private String  momlLocation;
 	private Process process;
@@ -28,19 +29,24 @@ public class MRCProcess extends ProgressableProcess {
 			          String             statusTName, 
 			          String             statusQName, 			           
 			          Map<String,String> arguments,
-                      StatusBean         bean) throws IOException {
+                      StatusBean         sbean) throws IOException {
 		
-		super(uri, statusTName, statusQName, bean);
+		super(uri, statusTName, statusQName, sbean);
 		
-		// We run the commands in a temporary directory for this consumer
-		// See Mark Basham as to why...
-        runDir = File.createTempFile("MRC_", null);
+		final FolderEventBean bean = (FolderEventBean)sbean;
+		
+		final File newFile = new File(bean.getPath());
+		if (!newFile.exists()) throw new FileNotFoundException("Cannot find "+bean.getPath());
+		
+		final File visitDir = newFile.getParentFile().getParentFile();
 
-		bean.setRunDirectory(runDir.getAbsolutePath());
+		// We run the commands in a temporary directory for this consumer
+		tmpDir = getUnique(new File(visitDir, "tmp"), "mrcprocessing_", null, 1);
+ 		bean.setRunDirectory(tmpDir.getAbsolutePath());
 		
 		// We record the bean so that reruns of reruns are possible.
 		try {
-			writeProjectBean(runDir, "projectBean.json");
+			writeProjectBean(tmpDir, "emBean.json");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -74,9 +80,9 @@ public class MRCProcess extends ProgressableProcess {
 
 		// Can adjust env if needed:
 		// Map<String, String> env = pb.environment();
-		pb.directory(runDir);
+		pb.directory(tmpDir);
 
-		File log = new File(runDir, "mrc_output.txt");
+		File log = new File(tmpDir, "mrc_output.txt");
 		pb.redirectErrorStream(true);
 		pb.redirectOutput(Redirect.appendTo(log));
 
@@ -87,7 +93,7 @@ public class MRCProcess extends ProgressableProcess {
 			pb.command("bash", "-c", cmd);
 		}
 
-		System.out.println("Executing MRC pipeline in '"+runDir.getAbsolutePath()+"'");
+		System.out.println("Executing MRC pipeline in '"+tmpDir.getAbsolutePath()+"'");
 		this.process = pb.start();
 		assert pb.redirectInput() == Redirect.PIPE;
 		assert process.getInputStream().read() == -1;	
@@ -114,16 +120,28 @@ public class MRCProcess extends ProgressableProcess {
 
 	}
 	
-	private String createMRCCommand(FolderEventBean bean) {
+	private String createMRCCommand(FolderEventBean bean) throws Exception {
 		
 		final StringBuilder buf = new StringBuilder();
 		buf.append(scriptLocation);
 		buf.append(" ");
 		buf.append(momlLocation);
-		
-		// TODO FIXME Real file path!
-		// mrc file is in visit_dir/raw/
+
 		// We send visitdir as filepath and file name without extension as filename.
+		final File newFile = new File(bean.getPath());
+		if (!newFile.exists()) throw new FileNotFoundException("Cannot find "+bean.getPath());
+		
+		final File visitDir = newFile.getParentFile().getParentFile();
+		buf.append(" ");
+		buf.append("-Dfilepath"); // should be called visitDir?
+		buf.append("=");
+		buf.append(visitDir.getAbsolutePath());
+		
+		final String fileName = getFileNameNoExtension(newFile);
+		buf.append(" ");
+		buf.append("-Dfileroot"); // should be called fileNameNoExtension?
+		buf.append("=");
+		buf.append(fileName);
 		
 		if (bean.getProperties()!=null) {
 			for(Object name : bean.getProperties().keySet()) {
@@ -131,12 +149,33 @@ public class MRCProcess extends ProgressableProcess {
 				buf.append("-D");
 				buf.append(name);
 				buf.append("=");
-				buf.append(bean.getProperties().get(name));
+				String value = bean.getProperties().get(name).toString().trim();
+				if (value.contains(" ")) buf.append("\"");
+				buf.append(value);
+				if (value.contains(" ")) buf.append("\"");
 			}
 		}
 		return buf.toString();
 	}
 	
+	public static String getFileNameNoExtension(File file) {
+		return getFileNameNoExtension(file.getName());
+	}
+
+	/**
+	 * Get Filename minus it's extension if present
+	 * 
+	 * @param file
+	 *            File to get filename from
+	 * @return String filename minus its extension
+	 */
+	public static String getFileNameNoExtension(String fileName) {
+		int posExt = fileName.lastIndexOf(".");
+		// No File Extension
+		return posExt == -1 ? fileName : fileName.substring(0, posExt);
+
+	}
+
 
 	private void checkMRCErrors() throws Exception {
 		// TODO Auto-generated method stub

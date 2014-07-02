@@ -18,7 +18,7 @@
 <stringAttribute key="location" value="${workspace_loc}/../consumer-application"/>
 <booleanAttribute key="org.eclipse.jdt.launching.ATTR_USE_START_ON_FIRST_THREAD" value="true"/>
 <stringAttribute key="org.eclipse.jdt.launching.JRE_CONTAINER" value="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.7"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -uri tcp://sci-serv5.diamond.ac.uk:61616 -submit scisoft.mrc.FOLDER_QUEUE -topic scisoft.mrc.STATUS_TOPIC -status scisoft.mrc.STATUS_QUEUE -bundle org.dawnsci.commandserver.mrc -consumer org.dawnsci.commandserver.mrc.consumer.MRCConsumer   -scriptLocation /dls_sw/apps/momlrunner/cluster_runner_gpu.sh -momlLocation /home/cxc21780/DAWN_stable/EMpipeline/EMpipeline.moml"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROGRAM_ARGUMENTS" value="-os ${target.os} -ws ${target.ws} -arch ${target.arch} -nl ${target.nl} -consoleLog -uri tcp://sci-serv5.diamond.ac.uk:61616 -submit scisoft.mrc.FOLDER_QUEUE -topic scisoft.mrc.STATUS_TOPIC -status scisoft.mrc.STATUS_QUEUE -bundle org.dawnsci.commandserver.mrc -consumer org.dawnsci.commandserver.mrc.consumer.MRCConsumer   -scriptLocation /dls_sw/apps/momlrunner/batch.sh -momlLocation /dls_sw/apps/EM/moml/EMpipeline.moml"/>
 <stringAttribute key="org.eclipse.jdt.launching.SOURCE_PATH_PROVIDER" value="org.eclipse.pde.ui.workbenchClasspathProvider"/>
 <stringAttribute key="pde.version" value="3.3"/>
 <stringAttribute key="product" value="org.eclipse.platform.ide"/>

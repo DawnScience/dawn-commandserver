@@ -113,7 +113,7 @@ public class MRCProcess extends ProgressableProcess {
 
 		if (!bean.getStatus().isFinal()) {
 			bean.setStatus(Status.COMPLETE);
-			bean.setMessage("MRC pipeline completed normally");
+			bean.setMessage("EM pipeline completed normally");
 			bean.setPercentComplete(100);
 			broadcast(bean);
 		}

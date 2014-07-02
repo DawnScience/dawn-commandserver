@@ -34,7 +34,6 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
@@ -390,6 +389,8 @@ public class StatusQueueView extends ViewPart {
 			factory.setQueueName(getSubmissionQueueName());
 			
 			factory.submit(copy, true);
+			
+			reconnect();
 
 		} catch (Exception e) {
 			ErrorDialog.openError(getViewSite().getShell(), "Cannot rerun "+bean.getName(), "Cannot rerun "+bean.getName()+"\n\nPlease contact your support representative.",
@@ -467,47 +468,21 @@ public class StatusQueueView extends ViewPart {
 				try {
 					monitor.beginTask("Connect to command server", 10);
 					monitor.worked(1);
-					QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-					monitor.worked(1);
-					QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
-					QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-					Queue queue   = qSes.createQueue(getQueueName());
-					qCon.start();
 					
-				    QueueBrowser qb = qSes.createBrowser(queue);
-					monitor.worked(1);
-			    
-				    @SuppressWarnings("rawtypes")
-					Enumeration  e  = qb.getEnumeration();
-				    
-			        Class        clazz  = getBeanClass();
-					ObjectMapper mapper = new ObjectMapper();
-					
-					final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
-						@Override
-						public int compare(StatusBean o1, StatusBean o2) {
-							// Newest first!
-					        long t1 = o2.getSubmissionTime();
-					        long t2 = o1.getSubmissionTime();
-					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
-						}
-					});
-
-			        while(e.hasMoreElements()) {
-				    	Message m = (Message)e.nextElement();
-				    	if (m==null) continue;
-			        	if (m instanceof TextMessage) {
-			            	TextMessage t = (TextMessage)m;
-							final StatusBean bean = mapper.readValue(t.getText(), clazz);
-			              	list.add(bean);
-			        	}
-				    }
+					Collection<StatusBean> runningList = getStatusBeans(uri, getQueueName(), monitor);
 					monitor.worked(1);
 			        
-			        // We reverse the queue because it comes out date ascending and we
+					Collection<StatusBean> submittedList = getStatusBeans(uri, getSubmissionQueueName(), monitor);
+					monitor.worked(1);
+
+					// We reverse the queue because it comes out date ascending and we
 			        // want newest submissions first.
 					final Map<String,StatusBean> ret = new LinkedHashMap<String,StatusBean>();
-			        for (StatusBean bean : list) {
+					for (StatusBean bean : submittedList) {
+			        	ret.put(bean.getUniqueId(), bean);
+					}
+					monitor.worked(1);
+			        for (StatusBean bean : runningList) {
 			        	ret.put(bean.getUniqueId(), bean);
 					}
 					monitor.worked(1);
@@ -543,6 +518,46 @@ public class StatusQueueView extends ViewPart {
 		queueJob.schedule();
 
 
+	}
+
+	protected Collection<StatusBean> getStatusBeans(final URI uri, final String queueName, final IProgressMonitor monitor) throws Exception {
+		
+		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+		monitor.worked(1);
+		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
+		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+		Queue queue   = qSes.createQueue(queueName);
+		qCon.start();
+		
+	    QueueBrowser qb = qSes.createBrowser(queue);
+		monitor.worked(1);
+    
+	    @SuppressWarnings("rawtypes")
+		Enumeration  e  = qb.getEnumeration();
+	    
+        Class        clazz  = getBeanClass();
+		ObjectMapper mapper = new ObjectMapper();
+		
+		final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
+			@Override
+			public int compare(StatusBean o1, StatusBean o2) {
+				// Newest first!
+		        long t1 = o2.getSubmissionTime();
+		        long t2 = o1.getSubmissionTime();
+		        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
+			}
+		});
+
+        while(e.hasMoreElements()) {
+	    	Message m = (Message)e.nextElement();
+	    	if (m==null) continue;
+        	if (m instanceof TextMessage) {
+            	TextMessage t = (TextMessage)m;
+				final StatusBean bean = mapper.readValue(t.getText(), clazz);
+              	list.add(bean);
+        	}
+	    }
+        return list;
 	}
 
 	private Class getBeanClass() throws ClassNotFoundException {

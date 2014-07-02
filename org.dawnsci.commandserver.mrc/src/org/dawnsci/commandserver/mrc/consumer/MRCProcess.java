@@ -55,10 +55,6 @@ public class MRCProcess extends ProgressableProcess {
 		momlLocation = arguments.get("momlLocation");
 		if (momlLocation==null || "null".equals(momlLocation)) throw new IOException("-momlLocation argument must be set");
 
-		bean.setStatus(Status.QUEUED);
-		bean.setPercentComplete(0);
-		broadcast(bean);
-
 	}
 
 	@Override

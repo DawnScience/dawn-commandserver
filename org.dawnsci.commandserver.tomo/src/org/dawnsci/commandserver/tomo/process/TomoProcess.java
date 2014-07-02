@@ -121,7 +121,7 @@ public class TomoProcess extends ProgressableProcess{
 	
 
 	@Override
-	protected void terminate() throws Exception {
+	public void terminate() throws Exception {
 		// Please implement to clean up on the cluster.
 	}
 

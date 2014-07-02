@@ -45,7 +45,7 @@ public class DummyProcess extends ProgressableProcess {
 
 
 	@Override
-	protected void terminate() throws Exception {
+	public void terminate() throws Exception {
 		// We do nothing here, normally the dryRun() will now exist because
 		// the status changed.
 	}

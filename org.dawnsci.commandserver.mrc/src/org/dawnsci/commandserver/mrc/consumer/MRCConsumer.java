@@ -2,6 +2,8 @@ package org.dawnsci.commandserver.mrc.consumer;
 
 import java.io.File;
 import java.net.URI;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -11,6 +13,32 @@ import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
 
 public class MRCConsumer extends ProcessConsumer {
 
+	private BlockingQueue<ProgressableProcess> blockingProcesses;
+	
+	public MRCConsumer() {
+		
+		blockingProcesses = new LinkedBlockingQueue<ProgressableProcess>();
+		final Thread runner = new Thread(new Runnable() {
+			public void run() {
+
+				System.out.println("Creating blocking queue");
+				try {
+					while(isActive()) {
+
+						ProgressableProcess process = blockingProcesses.take();
+						process.execute();
+					}
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}, "Blocking process runner.");
+		runner.setDaemon(true);
+		runner.setPriority(Thread.NORM_PRIORITY);
+		runner.start();
+	}
+	
 	@Override
 	protected Class<? extends StatusBean> getBeanClass() {
 		// TODO Currently we must have a FolderEventBean to start this process
@@ -43,7 +71,13 @@ public class MRCConsumer extends ProcessConsumer {
 			process.setBlocking(true); // One at a time
 		}
 		
-		return process;
+		if (process.isBlocking()) {
+			blockingProcesses.add(process);
+			return null; // We have our own queue, this allows processes to show up in the UI.
+		} else {
+			return process;
+		}
+		
 	}
 
 

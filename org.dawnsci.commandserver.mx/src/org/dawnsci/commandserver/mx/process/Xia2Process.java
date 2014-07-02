@@ -110,7 +110,7 @@ public class Xia2Process extends ProgressableProcess{
 	 * @param p
 	 * @throws Exception
 	 */
-	protected void terminate() throws Exception {
+	public void terminate() throws Exception {
 
 	    final int pid = getPid(process);
 	    

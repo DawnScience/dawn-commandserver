@@ -82,7 +82,7 @@ public abstract class ProgressableProcess implements Runnable {
 	 * 
 	 * @throws Exception
 	 */
-	protected abstract void execute() throws Exception;
+	public abstract void execute() throws Exception;
 	
 	/**
 	 * Please provide a termination for the process by implementing this method.
@@ -91,7 +91,7 @@ public abstract class ProgressableProcess implements Runnable {
 	 * 
 	 * @throws Exception
 	 */
-	protected abstract void terminate() throws Exception;
+	public abstract void terminate() throws Exception;
 	
 	/**
 	 * @return true if windows

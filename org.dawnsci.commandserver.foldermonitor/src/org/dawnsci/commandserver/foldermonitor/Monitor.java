@@ -228,7 +228,7 @@ public class Monitor extends AliveConsumer {
                 broadcaster.broadcast(bean, true);
                 
                 if (recursive && (kind == ENTRY_CREATE)) {
-                	if (Files.isDirectory(child, NOFOLLOW_LINKS)) {
+                	if (Files.isDirectory(child)) {
                 		registerAll(child);
                 	}
                 }

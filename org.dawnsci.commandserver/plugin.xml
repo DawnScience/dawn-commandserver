@@ -5,7 +5,7 @@
          id="consumer"
          point="org.eclipse.core.runtime.applications">
       <application
-            cardinality="singleton-scoped"
+            cardinality="*"
             thread="any"
             visible="true">
          <run

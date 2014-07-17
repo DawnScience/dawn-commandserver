@@ -125,8 +125,6 @@ public class Xia2Writer extends BufferedWriter {
 			newLine();
 			write("START_END "+sweep.getStart()+" "+sweep.getEnd());
 			newLine();
-			write("BEAM "+sweep.getxBeam()+" "+sweep.getyBeam());
-			newLine();
 			write("END SWEEP SWEEP"+iSweep);
 			newLine();
 			newLine();

@@ -215,7 +215,7 @@ public class Xia2Process extends ProgressableProcess{
 									processedSweeps.add(sweepName); // They are not in order!
 									
 									ProjectBean pbean = (ProjectBean)bean;
-									final double complete = (processedSweeps.size()/(double)pbean.getSweeps().size())*100d;
+									final double complete = (processedSweeps.size()/(double)pbean.getSweeps().size())*50d;
 									System.out.println("XIA2 % commplete>> "+complete);
 									
 									bean.setMessage("Integrating "+sweepName);

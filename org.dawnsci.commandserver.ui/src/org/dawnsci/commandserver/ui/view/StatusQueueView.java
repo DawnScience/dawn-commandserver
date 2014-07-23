@@ -48,6 +48,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.MenuManager;
 import org.eclipse.jface.action.Separator;
@@ -122,6 +123,7 @@ public class StatusQueueView extends ViewPart {
 	// Data
 	private Properties                        idProperties;
 	private Map<String, StatusBean>           queue;
+	private boolean                           showEntireQueue = false;
 
 	private Connection topicConnection;
 
@@ -313,6 +315,21 @@ public class StatusQueueView extends ViewPart {
 		toolMan.add(new Separator());
 		menuMan.add(new Separator());
 		
+		final Action showAll = new Action("Show all reruns", IAction.AS_CHECK_BOX) {
+			public void run() {
+				showEntireQueue = isChecked();
+				viewer.refresh();
+			}
+		};
+		showAll.setImageDescriptor(Activator.getDefault().getImageDescriptor("icons/spectacle-lorgnette.png"));
+		
+		toolMan.add(showAll);
+		menuMan.add(showAll);
+		
+		toolMan.add(new Separator());
+		menuMan.add(new Separator());
+
+		
 		final Action refresh = new Action("Refresh", Activator.getDefault().getImageDescriptor("icons/arrow-circle-double-135.png")) {
 			public void run() {
 				reconnect();
@@ -432,7 +449,9 @@ public class StatusQueueView extends ViewPart {
 					for (Iterator it = retained.iterator(); it.hasNext();) {
 						StatusBean statusBean = (StatusBean) it.next();
 						if (statusBean.getUserName()==null) continue;
-						if (!userName.equals(statusBean.getUserName())) it.remove();
+						if (!showEntireQueue) {
+							if (!userName.equals(statusBean.getUserName())) it.remove();
+						}
 					}
 					// This form of filtering is not at all secure because we
 					// give the full list of the queue to the clients.
@@ -654,6 +673,18 @@ public class StatusQueueView extends ViewPart {
 			}
 		});
 
+		final TableViewerColumn user = new TableViewerColumn(viewer, SWT.CENTER);
+		user.getColumn().setText("User Name");
+		user.getColumn().setWidth(150);
+		user.setLabelProvider(new ColumnLabelProvider() {
+			public String getText(Object element) {
+				try {
+					return ((StatusBean)element).getUserName();
+				} catch (Exception e) {
+					return e.getMessage();
+				}
+			}
+		});
 
 	    MouseMoveListener cursorListener = new MouseMoveListener() {		
 			@Override

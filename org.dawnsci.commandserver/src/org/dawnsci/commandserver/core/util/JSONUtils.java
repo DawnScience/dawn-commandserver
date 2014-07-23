@@ -4,8 +4,10 @@ import java.net.URI;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
+import javax.jms.TextMessage;
 import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
@@ -52,7 +54,8 @@ public class JSONUtils {
 		final ObjectMapper mapper = new ObjectMapper();
 
 		// Here we are sending the message out to the topic
-		producer.send(session.createTextMessage(mapper.writeValueAsString(message)));
+		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(message));
+		producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
 	}
 
 }

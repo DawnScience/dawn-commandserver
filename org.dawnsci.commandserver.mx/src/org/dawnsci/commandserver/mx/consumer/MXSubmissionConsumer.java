@@ -19,6 +19,9 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  */
 public class MXSubmissionConsumer extends ProcessConsumer {
 
+	public MXSubmissionConsumer() {
+		consumerVersion = "1.1";
+	}
 
 	@Override
 	public String getName() {

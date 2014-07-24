@@ -2,6 +2,7 @@ package org.dawnsci.commandserver.ui.view;
 
 import java.net.URI;
 import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
@@ -289,7 +290,7 @@ public class ConsumerView extends ViewPart {
 			public String getText(Object element) {
 				try {
 					final ConsumerBean cbean = (ConsumerBean)element;
-					return DateFormat.getTimeInstance().format(new Date(cbean.getLastAlive()-cbean.getStartTime()));
+					return (new SimpleDateFormat("dd'd' mm'm' ss's'")).format(new Date(cbean.getLastAlive()-cbean.getStartTime()));
 				} catch (Exception e) {
 					return e.getMessage();
 				}

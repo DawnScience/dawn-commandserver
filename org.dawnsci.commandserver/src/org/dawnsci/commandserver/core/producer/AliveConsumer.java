@@ -79,6 +79,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 					}
 				} catch (Exception ne) {
 					ne.printStackTrace();
+					setActive(false);
 				}
 			}
 		});

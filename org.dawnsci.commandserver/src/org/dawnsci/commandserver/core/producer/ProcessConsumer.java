@@ -206,9 +206,11 @@ public abstract class ProcessConsumer extends AliveConsumer {
                     	
                     }
 	            }
+       		
         	} catch (Throwable ne) {
         		// Really basic error reporting, they have to pipe to file.
         		ne.printStackTrace();
+        		setActive(false);
         	}
 		}
 		

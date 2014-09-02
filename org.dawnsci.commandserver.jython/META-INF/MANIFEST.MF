@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Jython
+Bundle-SymbolicName: org.dawnsci.commandserver.jython
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: org.dawnsci.commandserver.jython.Activator
+Bundle-Vendor: DLS
+Require-Bundle: org.eclipse.core.runtime,
+ org.dawnsci.commandserver;bundle-version="1.0.0"
+Bundle-ActivationPolicy: lazy

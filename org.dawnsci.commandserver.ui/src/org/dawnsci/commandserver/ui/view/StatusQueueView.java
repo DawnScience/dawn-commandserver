@@ -3,6 +3,7 @@ package org.dawnsci.commandserver.ui.view;
 import java.io.File;
 import java.net.URI;
 import java.text.DateFormat;
+import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
@@ -613,7 +614,7 @@ public class StatusQueueView extends ViewPart {
 		pc.getColumn().setWidth(120);
 		pc.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return String.valueOf(((StatusBean)element).getPercentComplete());
+				return NumberFormat.getPercentInstance().format(((StatusBean)element).getPercentComplete());
 			}
 		});
 

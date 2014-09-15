@@ -7,6 +7,11 @@ import java.util.UUID;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.DeliveryMode;
+import javax.jms.MessageProducer;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
@@ -14,6 +19,8 @@ import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
 import org.dawnsci.commandserver.core.util.JSONUtils;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AliveConsumer implements IConsumerExtension {
 
@@ -52,11 +59,8 @@ public abstract class AliveConsumer implements IConsumerExtension {
 			e.printStackTrace();
 		}
 
-		
-		JSONUtils.sendTopic(cbean, Constants.ALIVE_TOPIC, uri);
 		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");
 		
-		cbean.setStatus(ConsumerStatus.RUNNING);
 		
 		final Thread aliveThread = new Thread(new Runnable() {
 			public void run() {
@@ -66,11 +70,24 @@ public abstract class AliveConsumer implements IConsumerExtension {
 					aliveConnection = connectionFactory.createConnection();
 					aliveConnection.start();
 	
+					final Session         session  = aliveConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+					final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
+					final MessageProducer producer = session.createProducer(topic);
+
+					final ObjectMapper mapper = new ObjectMapper();
+
+					// Here we are sending the message out to the topic
 					while(isActive()) {
 						try {
 							Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
-							JSONUtils.sendTopic(aliveConnection, cbean, Constants.ALIVE_TOPIC, uri);
 							
+							TextMessage temp = session.createTextMessage(mapper.writeValueAsString(cbean));
+							producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
+							
+							if (ConsumerStatus.STARTING.equals(cbean.getStatus())) {
+								cbean.setStatus(ConsumerStatus.RUNNING);
+							}
+
 						} catch (InterruptedException ne) {
 							break;
 						} catch (Exception neOther) {

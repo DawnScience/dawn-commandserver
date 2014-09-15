@@ -39,7 +39,7 @@ public class JSONUtils {
 	 * @param uri
 	 * @throws Exception
 	 */
-	public static final void sendTopic(Connection connection, Object message, String topicName, URI uri) throws Exception {
+	private static final void sendTopic(Connection connection, Object message, String topicName, URI uri) throws Exception {
 
 
 		// JMS messages are sent and received using a Session. We will

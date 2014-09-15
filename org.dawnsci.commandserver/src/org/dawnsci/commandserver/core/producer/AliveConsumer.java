@@ -18,7 +18,6 @@ import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

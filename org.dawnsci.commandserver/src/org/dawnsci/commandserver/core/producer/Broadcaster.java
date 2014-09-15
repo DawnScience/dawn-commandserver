@@ -3,6 +3,8 @@ package org.dawnsci.commandserver.core.producer;
 import java.net.URI;
 import java.util.Enumeration;
 
+import javax.jms.DeliveryMode;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageProducer;
@@ -13,11 +15,11 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
+import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -34,6 +36,11 @@ public class Broadcaster {
 	private final URI uri;
 	private final String queueName;
 	private final String topicName;
+	private QueueConnection connection;
+	private QueueSession qSes;
+	private Queue queue;
+	private MessageProducer topicProducer;
+	private Session session;
 
 	public Broadcaster(URI uri, String queueName, String topicName) {
 		this.uri       = uri;
@@ -47,13 +54,30 @@ public class Broadcaster {
 	 * @param add true to add a new message, false to find and update and old one.
 	 */
 	public void broadcast(StatusBean bean, boolean add) throws Exception {
-		if (add) {
+
+		if (connection==null) createConnection();
+        if (add) {
 			addQueue(bean);
 		} else {
 		    updateQueue(bean);  // For clients connecting in future or after a refresh - persistence.
 		}
-		sendTopic(bean);  // For topic listeners wait for updates (more efficient than polling queue)
+        
+		final ObjectMapper mapper = new ObjectMapper();
+
+		// Here we are sending the message out to the topic
+		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(bean));
+		topicProducer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
+
+		
+		if (bean.getStatus().isFinal()) { // No more updates!
+			dispose();
+		}
+
  	}
+	
+	public void dispose() throws JMSException {
+		connection.close();
+	}
 
 	/**
 	 * 
@@ -68,6 +92,21 @@ public class Broadcaster {
     	factory.submit(bean, false);
 		
 	}
+	
+	private void createConnection() throws Exception {
+		
+ 	    QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+ 	    this.connection  = connectionFactory.createQueueConnection(); 
+		this.qSes        = connection.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+		this.queue       = qSes.createQueue(queueName);
+
+		this.session       = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		final Topic topic  = session.createTopic(topicName);
+		this.topicProducer = session.createProducer(topic);
+		
+		connection.start();
+
+	}
 
 	/**
 	 * 
@@ -75,15 +114,10 @@ public class Broadcaster {
 	 * @throws Exception 
 	 */
 	private void updateQueue(StatusBean bean) throws Exception {
-		
+				
 		QueueConnection qCon = null;
 		
 		try {
-	 	    QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			qCon  = connectionFactory.createQueueConnection(); 
-			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-			Queue queue   = qSes.createQueue(queueName);
-			qCon.start();
 			
 		    QueueBrowser qb = qSes.createBrowser(queue);
 		    
@@ -121,10 +155,6 @@ public class Broadcaster {
 			if (qCon!=null) qCon.close();
 		}
 		
-	}
-
-	private void sendTopic(StatusBean bean) throws Exception {
-		JSONUtils.sendTopic(bean, topicName, uri);
 	}
 
 	public URI getUri() {

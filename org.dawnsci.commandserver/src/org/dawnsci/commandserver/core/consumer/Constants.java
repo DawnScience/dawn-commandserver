@@ -20,5 +20,5 @@ public class Constants {
 	/**
 	 * Rate at which consumers tell the world that they are still alive.
 	 */
-	public static final long   NOTIFICATION_FREQUENCY = 1000; // ms 
+	public static final long   NOTIFICATION_FREQUENCY = 2000; // ms 
 }

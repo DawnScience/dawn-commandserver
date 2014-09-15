@@ -97,7 +97,7 @@ public class ConsumerView extends ViewPart {
 				
                 while(!viewer.getTable().isDisposed()) {
                 	try {
-						Thread.sleep(2*Constants.NOTIFICATION_FREQUENCY);
+						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
 						if (viewer.getControl().isDisposed()) return;
 						
 						viewer.getControl().getDisplay().syncExec(new Runnable() {

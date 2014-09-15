@@ -41,21 +41,25 @@ public class JSONUtils {
 	 */
 	private static final void sendTopic(Connection connection, Object message, String topicName, URI uri) throws Exception {
 
-
 		// JMS messages are sent and received using a Session. We will
 		// create here a non-transactional session object. If you want
 		// to use transactions you should set the first parameter to 'true'
 		Session session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 
-		Topic topic = session.createTopic(topicName);
-
-		MessageProducer producer = session.createProducer(topic);
-
-		final ObjectMapper mapper = new ObjectMapper();
-
-		// Here we are sending the message out to the topic
-		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(message));
-		producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
+		try {
+			Topic topic = session.createTopic(topicName);
+	
+			MessageProducer producer = session.createProducer(topic);
+	
+			final ObjectMapper mapper = new ObjectMapper();
+	
+			// Here we are sending the message out to the topic
+			TextMessage temp = session.createTextMessage(mapper.writeValueAsString(message));
+			producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
+			
+		} finally {
+			session.close();
+		}
 	}
 
 }

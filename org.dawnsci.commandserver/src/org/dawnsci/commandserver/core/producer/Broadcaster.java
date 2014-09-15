@@ -36,11 +36,6 @@ public class Broadcaster {
 	private final URI uri;
 	private final String queueName;
 	private final String topicName;
-	private QueueConnection connection;
-	private QueueSession qSes;
-	private Queue queue;
-	private MessageProducer topicProducer;
-	private Session session;
 
 	public Broadcaster(URI uri, String queueName, String topicName) {
 		this.uri       = uri;
@@ -75,8 +70,25 @@ public class Broadcaster {
 
  	}
 	
+	private QueueConnection connection;
+	private QueueSession    qSes;
+	private Queue           queue;
+	private MessageProducer topicProducer;
+	private Session         session;
+
 	public void dispose() throws JMSException {
-		connection.close();
+		try {
+			qSes.close();
+			session.close();
+			connection.close();
+
+		} finally {
+			connection = null;
+			qSes = null;
+			queue = null;
+			topicProducer = null;
+			session = null;
+		}
 	}
 
 	/**
@@ -142,6 +154,8 @@ public class Broadcaster {
 	            	}
 	        	}
 		    }
+	        
+	        qb.close();
 	        
 	        if (jMSMessageID!=null) {
 	        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");

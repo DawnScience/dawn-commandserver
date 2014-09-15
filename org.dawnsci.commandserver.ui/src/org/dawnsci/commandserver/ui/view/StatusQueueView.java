@@ -615,7 +615,7 @@ public class StatusQueueView extends ViewPart {
 		pc.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-				    return NumberFormat.getPercentInstance().format(((StatusBean)element).getPercentComplete());
+				    return NumberFormat.getPercentInstance().format(((StatusBean)element).getPercentComplete()/100d);
 				} catch (Exception ne) {
 					return "-";
 				}

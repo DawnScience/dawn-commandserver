@@ -66,8 +66,10 @@ public class Broadcaster {
 		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(bean));
 		topicProducer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
 
-		out.println(bean.toString());
-		out.flush();
+		if (out!=null) {
+			out.println(bean.toString());
+			out.flush();
+		}
 		
 		if (bean.getStatus().isFinal()) { // No more updates!
 			dispose();
@@ -83,6 +85,11 @@ public class Broadcaster {
 
 	public void dispose() throws JMSException {
 		try {
+        	if (out!=null && out!=System.out) {
+        		out.close();
+        		out = null;
+        	}
+
 			qSes.close();
 			session.close();
 			connection.close();

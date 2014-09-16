@@ -1,9 +1,11 @@
 package org.dawnsci.commandserver.core.process;
 
+import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
@@ -46,8 +48,11 @@ public abstract class ProgressableProcess implements Runnable {
 	protected final String     statusTName;
 	protected final String     statusQName;
 	private Broadcaster        broadcaster;
+	
+	protected PrintStream out = System.out;
 
 	public ProgressableProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
+		
 		this.uri           = uri;
 		this.statusTName   = statusTName;
 		this.statusQName   = statusQName;
@@ -63,10 +68,27 @@ public abstract class ProgressableProcess implements Runnable {
 		broadcast(bean);
 	}
 	
+	/**
+	 * Calling this method redirects the logging of this Java object
+	 * which is available through the field 'out' to a known file.
+	 * 
+	 * @param logFile
+	 * @throws IOException 
+	 */
+	protected void setLoggingFile(File logFile) throws IOException {
+		if (!logFile.exists()) logFile.createNewFile();
+		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile)), true, "UTF-8");
+		broadcaster.setLoggingStream(out);
+	}
+	
 	@Override
 	public final void run() {
         try {
         	execute();
+        	if (out!=System.out) {
+        		out.close();
+        		out = System.out;
+        	}
         } catch (Exception ne) {
         	
 			bean.setStatus(Status.FAILED);
@@ -219,7 +241,7 @@ public abstract class ProgressableProcess implements Runnable {
     					if (bean.getUniqueId().equals(tbean.getUniqueId())) {
     						if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
     							bean.merge(tbean);
-    							System.out.println("Terminating job '"+tbean.getName()+"'");
+    							out.println("Terminating job '"+tbean.getName()+"'");
 
     							terminate();
     							topicConnection.close();

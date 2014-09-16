@@ -216,10 +216,8 @@ public class StatusBean {
 
 	@Override
 	public String toString() {
-		return "StatusBean [status=" + status + ", name=" + name + ", message="
-				+ message + ", percentComplete=" + percentComplete
-				+ ", userName=" + userName + ", uniqueId=" + uniqueId
-				+ ", submissionTime=" + submissionTime + "]";
+		return "StatusBean [status=" + status + ", name=" + name + ", percentComplete=" + percentComplete
+				+ ", userName=" + userName + ", submissionTime=" + submissionTime + ", message=" + message + "]";
 	}
 	
 

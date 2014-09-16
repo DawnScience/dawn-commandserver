@@ -48,7 +48,7 @@ public class MRCProcess extends ProgressableProcess {
 		try {
 			writeProjectBean(tmpDir, "emBean.json");
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(out);
 		}
 		
 		// If we have the -scriptLocation argument, use that		
@@ -90,7 +90,7 @@ public class MRCProcess extends ProgressableProcess {
 			pb.command("bash", "-c", cmd);
 		}
 		
-		System.out.println("Executing EM pipeline in '"+tmpDir.getAbsolutePath()+"'");
+		out.println("Executing EM pipeline in '"+tmpDir.getAbsolutePath()+"'");
 		this.process = pb.start();
 		assert pb.redirectInput() == Redirect.PIPE;
 		assert process.getInputStream().read() == -1;	
@@ -216,7 +216,7 @@ public class MRCProcess extends ProgressableProcess {
 		
 	    final int pid = getPid(process);
 	    
-	    System.out.println("killing pid "+pid);
+	    out.println("killing pid "+pid);
 	    // Not sure if this works
 	    POSIX.INSTANCE.kill(pid, 9);
 	}

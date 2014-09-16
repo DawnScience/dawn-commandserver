@@ -75,7 +75,8 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	public void start() throws Exception {
 		
 		startNotifications();
-
+		createTerminateListener();
+		
 		processStatusQueue(getUri(), statusQName);
 		
 		// This is the blocker

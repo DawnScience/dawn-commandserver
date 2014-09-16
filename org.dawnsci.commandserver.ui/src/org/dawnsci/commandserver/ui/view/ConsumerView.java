@@ -228,7 +228,6 @@ public class ConsumerView extends ViewPart {
 					}
                 }
 
-			    
 				bean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
 				bean.setMessage("Requesting a termination of "+bean.getName());
 				try {

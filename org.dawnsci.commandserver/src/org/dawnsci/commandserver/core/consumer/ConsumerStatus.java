@@ -7,5 +7,9 @@ package org.dawnsci.commandserver.core.consumer;
  */
 public enum ConsumerStatus {
 
-	STARTING, STOPPING, RUNNING, NOT_AVAILABLE, STOPPED;
+	STARTING, STOPPING, RUNNING, NOT_AVAILABLE, STOPPED, REQUEST_TERMINATE;
+
+	public boolean isFinal() {
+		return this==NOT_AVAILABLE || this==STOPPED;
+	}
 }

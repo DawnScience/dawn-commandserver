@@ -208,8 +208,7 @@ public class ConsumerView extends ViewPart {
 						                                                                      + "Are you sure that you want to do this?\n\n"
 						                                                                      + "(NOTE: Long running jobs can be terminated without stopping the consumer!)");
 			    if (!ok) return;
-			    
-			    
+			    			    
 			    boolean notify = MessageDialog.openQuestion(getSite().getShell(), "Warn Users", "Would you like to warn users before stopping the consumer?\n\n"
 								                        + "If you say yes, a popup will open on users clients to warn about the imminent stop.");
                 if (notify) {

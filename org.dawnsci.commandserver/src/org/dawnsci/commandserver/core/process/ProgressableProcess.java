@@ -90,6 +90,7 @@ public abstract class ProgressableProcess implements Runnable {
         		out = System.out;
         	}
         } catch (Exception ne) {
+        	ne.printStackTrace(out);
         	
 			bean.setStatus(Status.FAILED);
 			bean.setMessage(ne.getMessage());

@@ -68,6 +68,9 @@ public abstract class ProgressableProcess implements Runnable {
 		broadcast(bean);
 	}
 	
+	protected void setLoggingFile(File logFile) throws IOException {
+		setLoggingFile(logFile, false);
+	}
 	/**
 	 * Calling this method redirects the logging of this Java object
 	 * which is available through the field 'out' to a known file.
@@ -75,9 +78,9 @@ public abstract class ProgressableProcess implements Runnable {
 	 * @param logFile
 	 * @throws IOException 
 	 */
-	protected void setLoggingFile(File logFile) throws IOException {
+	protected void setLoggingFile(File logFile, boolean append) throws IOException {
 		if (!logFile.exists()) logFile.createNewFile();
-		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile)), true, "UTF-8");
+		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile, append)), true, "UTF-8");
 		broadcaster.setLoggingStream(out);
 	}
 	

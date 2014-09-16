@@ -19,6 +19,8 @@ public class JythonProcess extends ProgressableProcess {
 		
 		this.args  = args;
 		this.jbean = bean;
+		
+		// We only run one script at a time.
 		setBlocking(true);
 		
         final String runDir;
@@ -34,7 +36,7 @@ public class JythonProcess extends ProgressableProcess {
  		jythonDir.mkdirs();
  		
  		try {
-			setLoggingFile(new File(jythonDir, "jythonProcessLog.txt"));
+			setLoggingFile(new File(jythonDir, "jythonProcessLog.txt"), true);
 		} catch (IOException e1) {
 			e1.printStackTrace();
 		}

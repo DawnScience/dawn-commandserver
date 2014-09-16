@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.core.producer;
 
+import java.io.PrintStream;
 import java.net.URI;
 import java.util.Enumeration;
 
@@ -36,6 +37,8 @@ public class Broadcaster {
 	private final URI uri;
 	private final String queueName;
 	private final String topicName;
+	
+	private PrintStream out  = System.out;
 
 	public Broadcaster(URI uri, String queueName, String topicName) {
 		this.uri       = uri;
@@ -63,6 +66,8 @@ public class Broadcaster {
 		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(bean));
 		topicProducer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
 
+		out.println(bean.toString());
+		out.flush();
 		
 		if (bean.getStatus().isFinal()) { // No more updates!
 			dispose();
@@ -181,6 +186,10 @@ public class Broadcaster {
 
 	public String getTopicName() {
 		return topicName;
+	}
+
+	public void setLoggingStream(PrintStream out) {
+		this.out = out;
 	}
 
 }

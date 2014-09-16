@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.jython;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
@@ -31,6 +32,12 @@ public class JythonProcess extends ProgressableProcess {
 
  		final File   jythonDir = getUnique(new File(runDir), "Run_", null, 1);
  		jythonDir.mkdirs();
+ 		
+ 		try {
+			setLoggingFile(new File(jythonDir, "jythonProcessLog.txt"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
 				
 		bean.setRunDirectory(jythonDir.getAbsolutePath());
 		
@@ -38,7 +45,7 @@ public class JythonProcess extends ProgressableProcess {
 		try {
 			writeProjectBean(jythonDir, "jythonRun.json");
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(out);
 		}
 
 	}
@@ -51,7 +58,7 @@ public class JythonProcess extends ProgressableProcess {
 		broadcast(bean);
 
 		// TODO Michael run Jython
-        System.out.println("Run Jython! "+jbean);
+        out.println("Run Jython! "+jbean);
         
 		bean.setStatus(Status.COMPLETE);
 		bean.setMessage("Finished running Jython "+jbean.getJythonClass());
@@ -63,7 +70,7 @@ public class JythonProcess extends ProgressableProcess {
 	@Override
 	public void terminate() throws Exception {
 		// TODO Auto-generated method stub
-	    System.out.println("terminate Jython!");
+	    out.println("terminate Jython!");
 	}
 
 }

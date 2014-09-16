@@ -1,6 +1,7 @@
 package org.dawnsci.commandserver.tomo.process;
 
 import java.io.File;
+import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 
@@ -47,11 +48,17 @@ public class TomoProcess extends ProgressableProcess{
 	    processingDir = tomoDir.getAbsolutePath();
 		bean.setRunDirectory(processingDir);
 		
+ 		try {
+			setLoggingFile(new File(tomoDir, "tomoJavaProcessLog.txt"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+		
 		// We record the bean so that reruns of reruns are possible.
 		try {
 			writeProjectBean(processingDir, "tomoBean.json");
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(out);
 		}
 	}
 
@@ -67,6 +74,7 @@ public class TomoProcess extends ProgressableProcess{
 		writeFile();
 		
 		// TODO Remove this, it is just to give an idea of how something can report progress to the UI.
+		createTerminateListener();
 		dryRun();
 		
 		// TODO Actually run something?

@@ -3,6 +3,7 @@ package org.dawnsci.commandserver.mx.process;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 import java.util.HashSet;
@@ -68,7 +69,13 @@ public class Xia2Process extends ProgressableProcess{
  		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
 		xia2Dir.mkdirs();
 		
-		// Example:
+ 		try {
+			setLoggingFile(new File(xia2Dir, "xia2JavaProcessLog.txt"));
+		} catch (IOException e1) {
+			e1.printStackTrace();
+		}
+ 		
+ 		// Example:
 		//   /dls/i03/data/2014/cm4950-2/20140425/gw/processing/thau1/MultiCrystal_12
 		
 	    processingDir = xia2Dir.getAbsolutePath();
@@ -78,7 +85,7 @@ public class Xia2Process extends ProgressableProcess{
 		try {
 			writeProjectBean(processingDir, "projectBean.json");
 		} catch (Exception e) {
-			e.printStackTrace();
+			e.printStackTrace(out);
 		}
 		
 		// If we have the -scriptLocation argument, use that
@@ -114,7 +121,7 @@ public class Xia2Process extends ProgressableProcess{
 
 	    final int pid = getPid(process);
 	    
-	    System.out.println("killing pid "+pid);
+	    out.println("killing pid "+pid);
 	    // Not sure if this works
 	    POSIX.INSTANCE.kill(pid, 9);
 	    
@@ -234,12 +241,12 @@ public class Xia2Process extends ProgressableProcess{
 									
 									ProjectBean pbean = (ProjectBean)bean;
 									final double complete = (processedSweeps.size()/(double)pbean.getSweeps().size())*50d;
-									System.out.println("XIA2 % commplete>> "+complete);
+									out.println("XIA2 % commplete>> "+complete);
 									
 									bean.setMessage("Integrating "+sweepName);
 									bean.setPercentComplete(complete);
 									broadcast(bean);
-									System.out.println("XIA2>> "+line);
+									out.println("XIA2>> "+line);
 									continue;
 								}
 								
@@ -251,7 +258,7 @@ public class Xia2Process extends ProgressableProcess{
 								
 								// TODO parse the lines when we have them
 								// broadcast any %-complete that we think we have found.
-								System.out.println("XIA2>> "+line);
+								out.println("XIA2>> "+line);
 								
 								
 							} 
@@ -263,7 +270,7 @@ public class Xia2Process extends ProgressableProcess{
 				} catch (Exception ne) {
 					// Should we send the failure to monitor the file as an error?
 					// NOPE because xia2 writes an error file, that info is more useful.
-					ne.printStackTrace();
+					ne.printStackTrace(out);
 				}
 			}
 		});

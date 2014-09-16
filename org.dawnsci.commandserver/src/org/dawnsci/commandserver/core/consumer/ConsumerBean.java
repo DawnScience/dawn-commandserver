@@ -18,6 +18,7 @@ public class ConsumerBean {
 	private long           startTime;
 	private long           lastAlive;
 	private String         hostName;
+	private String         message;
 	
 	public ConsumerStatus getStatus() {
 		return status;
@@ -112,6 +113,12 @@ public class ConsumerBean {
 	}
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
+	}
+	public String getMessage() {
+		return message;
+	}
+	public void setMessage(String message) {
+		this.message = message;
 	}
 	
 }

@@ -8,6 +8,9 @@ import java.util.UUID;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
+import javax.jms.Message;
+import javax.jms.MessageConsumer;
+import javax.jms.MessageListener;
 import javax.jms.MessageProducer;
 import javax.jms.Session;
 import javax.jms.TextMessage;
@@ -31,6 +34,9 @@ public abstract class AliveConsumer implements IConsumerExtension {
 
 	private boolean active = true;
 
+	private Connection terminateConnection;
+	private ConsumerBean cbean;
+
 	protected AliveConsumer() {
 		this.consumerId      = System.currentTimeMillis()+"_"+UUID.randomUUID().toString();
 		this.consumerVersion = "1.0";
@@ -45,7 +51,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 	protected void startNotifications() throws Exception {
 		
 		if (uri==null) throw new NullPointerException("Please set the URI before starting notifications!");
-		final ConsumerBean cbean = new ConsumerBean();
+		this.cbean = new ConsumerBean();
 		cbean.setStatus(ConsumerStatus.STARTING);
 		cbean.setName(getName());
 		cbean.setConsumerId(consumerId);
@@ -105,9 +111,55 @@ public abstract class AliveConsumer implements IConsumerExtension {
 		aliveThread.start();
 	}
 
+    protected void createTerminateListener() throws Exception {
+		
+    	ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+    	this.terminateConnection = connectionFactory.createConnection();
+    	terminateConnection.start();
+
+    	Session session = terminateConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+
+    	final Topic           topic    = session.createTopic(Constants.TERMINATE_CONSUMER_TOPIC);
+    	final MessageConsumer consumer = session.createConsumer(topic);
+
+    	final ObjectMapper mapper = new ObjectMapper();
+
+    	MessageListener listener = new MessageListener() {
+    		public void onMessage(Message message) {		            	
+    			try {
+    				if (message instanceof TextMessage) {
+    					TextMessage t = (TextMessage) message;
+    					final ConsumerBean bean = mapper.readValue(t.getText(), ConsumerBean.class);
+
+    					if (bean.getStatus().isFinal()) { // Something else already happened
+    						terminateConnection.close();
+    						return;
+    					}
+
+    					if (consumerId.equals(bean.getConsumerId())) {
+    						if (bean.getStatus() == ConsumerStatus.REQUEST_TERMINATE) {
+    							System.out.println(getName()+" has been requested to terminate and will exit.");
+    							cbean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
+    							Thread.currentThread().sleep(2500);
+    							System.exit(0);
+    						}
+    					}
+
+    				}
+    			} catch (Exception e) {
+    				e.printStackTrace();
+    			}
+    		}
+
+    	};
+    	consumer.setMessageListener(listener);
+
+    }
+
 	
 	public void stop() throws Exception {
-		if (aliveConnection!=null) aliveConnection.close();
+		if (aliveConnection!=null)     aliveConnection.close();
+		if (terminateConnection!=null) terminateConnection.close();
 	}
 
 	public boolean isActive() {

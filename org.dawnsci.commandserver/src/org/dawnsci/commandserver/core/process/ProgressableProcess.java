@@ -44,7 +44,7 @@ import com.sun.jna.Platform;
  * Extend to provide a connection between a running process 
  * and its 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public abstract class ProgressableProcess implements Runnable {

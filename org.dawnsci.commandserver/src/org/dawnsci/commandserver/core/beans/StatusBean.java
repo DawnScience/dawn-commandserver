@@ -13,7 +13,7 @@ package org.dawnsci.commandserver.core.beans;
  * A bean whose JSON value can sit in a queue on the JMS server and 
  * provide information about state.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class StatusBean {

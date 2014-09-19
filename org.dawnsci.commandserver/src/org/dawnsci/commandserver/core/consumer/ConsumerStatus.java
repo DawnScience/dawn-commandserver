@@ -10,7 +10,7 @@ package org.dawnsci.commandserver.core.consumer;
 
 /**
  * Status for consumers such that a client may connect to activemq and see diamond consumers
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public enum ConsumerStatus {

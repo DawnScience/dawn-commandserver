@@ -47,7 +47,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * You must have the no argument constructor because the org.dawnsci.commandserver.core.application.Consumer
  * application requires this to start and stop the consumer.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public abstract class ProcessConsumer extends AliveConsumer {

@@ -32,7 +32,7 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  * o Progress reported by stating xia2.txt
  * o Runs xia2 html to generate report.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Xia2Process extends ProgressableProcess{

@@ -20,7 +20,7 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
  * 
  * It sends %-complete for the process back to the status queue.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class DummyProcess extends ProgressableProcess {

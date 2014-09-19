@@ -36,7 +36,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * Class which can broadcast a status bean to a queue and a topic
  * when the broadcast method is called.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Broadcaster {

@@ -17,7 +17,7 @@ import org.eclipse.ui.IWorkbenchPreferencePage;
 
 /**
  * Advanced configuration for connecting to ActiveMQ
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ActiveMQPage extends FieldEditorPreferencePage implements IWorkbenchPreferencePage{

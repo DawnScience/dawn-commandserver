@@ -15,7 +15,7 @@ import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 /**
  * Class to test that we can run 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class TestJythonRun {

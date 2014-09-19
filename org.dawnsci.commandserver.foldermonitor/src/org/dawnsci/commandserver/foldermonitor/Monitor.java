@@ -56,7 +56,7 @@ import org.dawnsci.commandserver.core.producer.Broadcaster;
  * 
  * The command line parameter "location" must be set when starting the consumer.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Monitor extends AliveConsumer {

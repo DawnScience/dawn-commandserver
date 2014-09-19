@@ -22,7 +22,7 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
  * 
  * Example commissioning run: /dls/i03/data/2014/cm4950-2/20140425/gw/processing/thau1
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class MXSubmissionConsumer extends ProcessConsumer {

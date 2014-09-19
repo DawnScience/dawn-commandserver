@@ -38,7 +38,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
    4. As producer runs it sends message events back to provide progress.
    
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ActiveMQConsumer {

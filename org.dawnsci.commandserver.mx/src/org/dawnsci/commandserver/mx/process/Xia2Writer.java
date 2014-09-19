@@ -54,7 +54,7 @@ Example of data which could be processed for testing:
 /dls/i03/data/2014/cm4950-2/processed/20140425/gw/thau1
  * 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Xia2Writer extends BufferedWriter {

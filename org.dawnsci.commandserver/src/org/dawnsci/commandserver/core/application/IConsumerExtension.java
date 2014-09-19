@@ -14,7 +14,7 @@ import java.util.Map;
  * Interface to encapsulate something which can be created and started 
  * and will then send activemq messages when it is going.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public interface IConsumerExtension {

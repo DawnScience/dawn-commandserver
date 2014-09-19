@@ -24,7 +24,7 @@ import org.eclipse.core.resources.ResourcesPlugin;
 
 /**
  * A process which blocks until done.
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class MRCProcess extends ProgressableProcess {

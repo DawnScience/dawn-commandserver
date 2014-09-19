@@ -19,7 +19,7 @@ import org.apache.activemq.ActiveMQConnectionFactory;
  * Class exists to avoid dependency on org.apache.activemq leaking around the code
  * base. Please use this facade to keep things modular.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ConnectionFactoryFacade {

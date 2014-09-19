@@ -13,7 +13,7 @@ package org.dawnsci.commandserver.mx.beans;
  * Bean holds information about a given data collections participation in
  * the auto-processing rerun.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class SweepBean {

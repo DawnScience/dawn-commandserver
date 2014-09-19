@@ -16,7 +16,7 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
  * JSON is used rather than the direct object because we may want to have
  * a python server.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class TomoBean extends StatusBean {

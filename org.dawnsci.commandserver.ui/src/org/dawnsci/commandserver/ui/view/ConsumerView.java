@@ -63,7 +63,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * A view which shows the active consumers available to process commands.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ConsumerView extends ViewPart {

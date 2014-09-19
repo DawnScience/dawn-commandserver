@@ -20,7 +20,7 @@ import org.dawnsci.commandserver.tomo.process.TomoProcess;
  * This consumer monitors a queue and starts runs based
  * on what is submitted.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class TomoSubmissionConsumer extends ProcessConsumer {

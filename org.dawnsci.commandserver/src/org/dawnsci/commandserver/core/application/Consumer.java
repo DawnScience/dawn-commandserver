@@ -30,7 +30,7 @@ import org.osgi.framework.Bundle;
  * -consumer  consumer class e.g. org.dawnsci.commandserver.mx.consumer.MXSubmissionConsumer
  * 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Consumer implements IApplication {

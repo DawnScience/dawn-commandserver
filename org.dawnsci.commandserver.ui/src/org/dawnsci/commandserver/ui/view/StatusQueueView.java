@@ -119,7 +119,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * queue of custom objects. For instance for a queue showing xia2 reruns, the 
  * extra columns for this could be defined. However by default the 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class StatusQueueView extends ViewPart {

@@ -24,7 +24,7 @@ import org.dawnsci.commandserver.tomo.beans.TomoBean;
  * o Progress reported by stating xia2.txt
  * o Runs xia2 html to generate report.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class TomoProcess extends ProgressableProcess{

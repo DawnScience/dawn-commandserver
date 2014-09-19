@@ -11,7 +11,7 @@ package org.dawnsci.commandserver.core.beans;
 /**
  * States of jobs on the cluster.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public enum Status {

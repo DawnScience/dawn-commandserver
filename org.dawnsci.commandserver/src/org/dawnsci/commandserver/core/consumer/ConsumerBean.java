@@ -13,7 +13,7 @@ package org.dawnsci.commandserver.core.consumer;
  * Bean send on the Constants.ALIVE_TOPIC to notify every now and then
  * 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  */
 public class ConsumerBean {
 

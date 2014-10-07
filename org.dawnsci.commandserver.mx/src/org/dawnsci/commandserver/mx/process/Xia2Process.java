@@ -175,7 +175,7 @@ public class Xia2Process extends ProgressableProcess{
 		if (!bean.getStatus().isFinal()) {
 			
 			String line = getLine(new File(processingDir, "xia2.txt"), "Status:");
-			
+
 			if (line!=null && line.toLowerCase().contains("normal")) {
 				bean.setStatus(Status.COMPLETE);
 				bean.setMessage("Xia2 run completed normally");

@@ -173,16 +173,28 @@ public class Xia2Process extends ProgressableProcess{
 		checkXia2Errors();						
 
 		if (!bean.getStatus().isFinal()) {
-			bean.setStatus(Status.COMPLETE);
-			bean.setMessage("Xia2 run completed normally");
-			bean.setPercentComplete(100);
-			broadcast(bean);
+			
+			String line = getLine(new File(processingDir, "xia2.txt"), "Status:");
+			
+			if (line!=null && line.toLowerCase().contains("normal termination")) {
+				bean.setStatus(Status.COMPLETE);
+				bean.setMessage("Xia2 run completed normally");
+				bean.setPercentComplete(100);
+				broadcast(bean);
+			} else {
+				bean.setStatus(Status.UNFINISHED);
+				if (line!=null) {
+					bean.setMessage("Xia2 run ended with "+line);
+				} else {
+					bean.setMessage("Xia2 ended without the line 'normal termination'.");
+				}
+				broadcast(bean);
+			}
 		}
 
 	}
 
-
-    private static final Pattern STATUS_LINE = Pattern.compile("\\-+ Integrating ([a-zA-Z0-9_]+) \\-+");
+	private static final Pattern STATUS_LINE = Pattern.compile("\\-+ Integrating ([a-zA-Z0-9_]+) \\-+");
 	/**
      * Starts file polling on the output file, stops when bean reaches a final state.
      */
@@ -279,7 +291,7 @@ public class Xia2Process extends ProgressableProcess{
 		final File dir = new File(processingDir);
 		for (File c : dir.listFiles()) {
 			if (c.isFile() && c.getName().toLowerCase().endsWith(".error")) {
-				checkErrorFile(c);
+				checkFile(c, "Error:");
 			}
 			
 			if (c.isFile() && c.getName().toLowerCase().contains("xia2_output.txt")) {
@@ -305,21 +317,31 @@ public class Xia2Process extends ProgressableProcess{
 		
 	}
 
-	private void checkErrorFile(File c) throws Exception {
+	private void checkFile(File c, String string) throws Exception {
+		
+		String line = getLine(c, string);
+		if (line==null) return;
+		
+		final String[] split = line.split(":");
+		throw new Exception(split[1]);
+	}
+	
+	private String getLine(File c, String string) throws Exception {
+
 		BufferedReader br = null;
 		try {
 			br = new BufferedReader(new FileReader(c));
 			
 			String line = null;
 			while((line = br.readLine())!=null) {
-				if (line.contains("Error:")) {
-					final String[] split = line.split(":");
-					throw new Exception(split[1]);
+				if (line.contains(string)) {
+					return line;
 				}
 			}
 		} finally {
 			if (br!=null) br.close();
 		}
+		return null;
 	}
 
 	private String createXai2Command(ProjectBean bean) {

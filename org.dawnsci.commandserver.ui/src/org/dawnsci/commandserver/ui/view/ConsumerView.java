@@ -27,6 +27,7 @@ import javax.jms.Topic;
 
 import org.dawb.common.ui.util.GridUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
@@ -40,7 +41,6 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
 import org.eclipse.jface.action.MenuManager;
-import org.eclipse.jface.dialogs.DialogMessageArea;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
@@ -216,6 +216,26 @@ public class ConsumerView extends ViewPart {
 						                                                                      + "Are you sure that you want to do this?\n\n"
 						                                                                      + "(NOTE: Long running jobs can be terminated without stopping the consumer!)");
 			    if (!ok) return;
+			    
+			    
+			    boolean notify = MessageDialog.openQuestion(getSite().getShell(), "Warn Users", "Would you like to warn users before stopping the consumer?\n\n"
+								                        + "If you say yes, a popup will open on users clients to warn about the imminent stop.");
+                if (notify) {
+                	
+                	final AdministratorMessage msg = new AdministratorMessage();
+                	msg.setTitle("'"+bean.getName()+"' will shutdown.");
+                	msg.setMessage("'"+bean.getName()+"' is about to shutdown.\n\n"+
+                	               "Any runs corrently running may loose progress notification,\n"+
+                			       "however they should complete.\n\n"+
+                	               "Runs yet to be started will be picked up when\n"+
+                	               "'"+bean.getName()+"' restarts.");
+                	try {
+						JSONUtils.sendTopic(msg, Constants.ADMIN_MESSAGE_TOPIC, getUri());
+					} catch (Exception e) {
+						logger.error("Cannot notify of shutdown!", e);
+					}
+                }
+
 			    
 				bean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
 				bean.setMessage("Requesting a termination of "+bean.getName());

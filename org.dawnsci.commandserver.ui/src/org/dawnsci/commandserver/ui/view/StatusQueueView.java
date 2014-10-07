@@ -42,7 +42,9 @@ import org.dawb.common.ui.util.EclipseUtils;
 import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
@@ -198,8 +200,8 @@ public class StatusQueueView extends ViewPart {
 	
 			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 	
-			        final Topic           topic    = session.createTopic(getTopicName());
-			        final MessageConsumer consumer = session.createConsumer(topic);
+			        Topic           topic    = session.createTopic(getTopicName());
+			        MessageConsumer consumer = session.createConsumer(topic);
 	
 			        final Class        clazz  = getBeanClass();
 			        final ObjectMapper mapper = new ObjectMapper();
@@ -218,6 +220,38 @@ public class StatusQueueView extends ViewPart {
 			            }
 			        };
 			        consumer.setMessageListener(listener);
+			        
+
+			        // Create a listener for administrator broadcast messages.
+			        topic    = session.createTopic(Constants.ADMIN_MESSAGE_TOPIC);
+			        consumer = session.createConsumer(topic);
+			        listener = new MessageListener() {
+			            public void onMessage(Message message) {		            	
+			                try {
+			                    if (message instanceof TextMessage) {
+			    			        // AdministratorMessage shows a message to the user.
+			    			        final Class        msgClass  = AdministratorMessage.class;
+
+			    			        TextMessage t = (TextMessage) message;
+			        				final AdministratorMessage bean = mapper.readValue(t.getText(), msgClass);
+			                        
+			        				getSite().getShell().getDisplay().syncExec(new Runnable() {
+			        					public void run() {
+			                                   MessageDialog.openError(getViewSite().getShell(), 
+			                                		                   bean.getTitle(), 
+			                                		                   bean.getMessage());
+			                                   
+			                                   viewer.refresh();
+			        					}
+			        				});
+ 			                    }
+			                } catch (Exception e) {
+			                    // Not a big deal if they do not get admin messages.
+			                }
+			            }
+			        };
+			        consumer.setMessageListener(listener);
+
 			        return Status.OK_STATUS;
 			        
 				} catch (Exception ne) {

@@ -19,9 +19,11 @@ import javax.jms.Topic;
 
 import org.dawb.common.ui.util.GridUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
+import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -30,10 +32,13 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IContributionManager;
+import org.eclipse.jface.action.MenuManager;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.preference.IPreferenceStore;
 import org.eclipse.jface.viewers.ColumnLabelProvider;
 import org.eclipse.jface.viewers.IContentProvider;
 import org.eclipse.jface.viewers.IStructuredContentProvider;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
@@ -192,6 +197,57 @@ public class ConsumerView extends ViewPart {
 		
 		man.add(refresh);
 
+		final Action stop = new Action("Stop consumer", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
+			public void run() {
+				
+				if (  viewer.getSelection() == null || viewer.getSelection().isEmpty()) return;
+				
+			    ConsumerBean bean = (ConsumerBean)((IStructuredSelection)viewer.getSelection()).getFirstElement();
+
+			    boolean ok = MessageDialog.openConfirm(getSite().getShell(), "Confirm Stop", "If you stop this consumer it will have to be restarted by an administrator.\n\n"
+						                                                                      + "Are you sure that you want to do this?\n\n"
+						                                                                      + "(NOTE: Long running jobs can be terminated without stopping the consumer!)");
+			    if (!ok) return;
+			    
+			    
+			    boolean notify = MessageDialog.openQuestion(getSite().getShell(), "Warn Users", "Would you like to warn users before stopping the consumer?\n\n"
+								                        + "If you say yes, a popup will open on users clients to warn about the imminent stop.");
+                if (notify) {
+                	
+                	final AdministratorMessage msg = new AdministratorMessage();
+                	msg.setTitle("'"+bean.getName()+"' will shutdown.");
+                	msg.setMessage("'"+bean.getName()+"' is about to shutdown.\n\n"+
+                	               "Any runs corrently running may loose progress notification,\n"+
+                			       "however they should complete.\n\n"+
+                	               "Runs yet to be started will be picked up when\n"+
+                	               "'"+bean.getName()+"' restarts.");
+                	try {
+						JSONUtils.sendTopic(msg, Constants.ADMIN_MESSAGE_TOPIC, getUri());
+					} catch (Exception e) {
+						logger.error("Cannot notify of shutdown!", e);
+					}
+                }
+
+			    
+				bean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
+				bean.setMessage("Requesting a termination of "+bean.getName());
+				try {
+					JSONUtils.sendTopic(bean, Constants.TERMINATE_CONSUMER_TOPIC, getUri());
+				} catch (Exception e) {
+					logger.error("Cannot terminate consumer "+bean.getName(), e);
+				}
+
+			}
+		};
+		
+		man.add(stop);
+
+		final MenuManager menuMan = new MenuManager();
+		menuMan.add(refresh);
+		menuMan.add(stop);
+		
+		viewer.getControl().setMenu(menuMan.createContextMenu(viewer.getControl()));
+		
 	}
 	
 	private IContentProvider createContentProvider() {

@@ -111,6 +111,17 @@ public class Xia2Writer extends BufferedWriter {
 		newLine();
 		newLine();
 		
+		if (bean.getSpaceGroup()!=null) {
+			write("USER_SPACEGROUP "+bean.getSpaceGroup());
+			newLine();
+		}
+		if (bean.getSpaceGroup()!=null && bean.getUnitCell()!=null) {
+			write("USER_CELL "+bean.getUnitCell());
+			newLine();
+		}
+		newLine();
+
+		
 		write("BEGIN WAVELENGTH NATIVE");
 		newLine();
 		if (bean.isAnomalous()) {

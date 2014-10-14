@@ -30,7 +30,9 @@ public class ProjectBean extends StatusBean {
 	private double      wavelength = Double.NaN;
 	private String      commandLineSwitches;              
 	private boolean     anomalous;              
-
+    private String      spaceGroup;
+	private String      unitCell;
+    
 	
 	public String getCommandLineSwitches() {
 		return commandLineSwitches;
@@ -59,6 +61,8 @@ public class ProjectBean extends StatusBean {
         this.cystalName   = db.cystalName;
         this.sweeps       = db.sweeps;
         this.wavelength   = db.wavelength;
+        this.spaceGroup   = db.spaceGroup;
+        this.unitCell     = db.unitCell;
         this.anomalous    = db.anomalous;
         this.commandLineSwitches  = db.commandLineSwitches;
 	}
@@ -74,13 +78,19 @@ public class ProjectBean extends StatusBean {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result + (anomalous ? 1231 : 1237);
-		result = prime * result
-				+ ((commandLineSwitches == null) ? 0 : commandLineSwitches.hashCode());
+		result = prime
+				* result
+				+ ((commandLineSwitches == null) ? 0 : commandLineSwitches
+						.hashCode());
 		result = prime * result
 				+ ((cystalName == null) ? 0 : cystalName.hashCode());
 		result = prime * result
 				+ ((projectName == null) ? 0 : projectName.hashCode());
+		result = prime * result
+				+ ((spaceGroup == null) ? 0 : spaceGroup.hashCode());
 		result = prime * result + ((sweeps == null) ? 0 : sweeps.hashCode());
+		result = prime * result
+				+ ((unitCell == null) ? 0 : unitCell.hashCode());
 		long temp;
 		temp = Double.doubleToLongBits(wavelength);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
@@ -113,10 +123,20 @@ public class ProjectBean extends StatusBean {
 				return false;
 		} else if (!projectName.equals(other.projectName))
 			return false;
+		if (spaceGroup == null) {
+			if (other.spaceGroup != null)
+				return false;
+		} else if (!spaceGroup.equals(other.spaceGroup))
+			return false;
 		if (sweeps == null) {
 			if (other.sweeps != null)
 				return false;
 		} else if (!sweeps.equals(other.sweeps))
+			return false;
+		if (unitCell == null) {
+			if (other.unitCell != null)
+				return false;
+		} else if (!unitCell.equals(other.unitCell))
 			return false;
 		if (Double.doubleToLongBits(wavelength) != Double
 				.doubleToLongBits(other.wavelength))
@@ -163,5 +183,21 @@ public class ProjectBean extends StatusBean {
 
 	public void setWavelength(double wavelength) {
 		this.wavelength = wavelength;
+	}
+
+	public String getSpaceGroup() {
+		return spaceGroup;
+	}
+
+	public void setSpaceGroup(String spaceGroup) {
+		this.spaceGroup = spaceGroup;
+	}
+
+	public String getUnitCell() {
+		return unitCell;
+	}
+
+	public void setUnitCell(String unitCell) {
+		this.unitCell = unitCell;
 	}
 }

@@ -149,9 +149,9 @@ public class Xia2Process extends ProgressableProcess{
 		pb.redirectOutput(Redirect.appendTo(log));
 
 		if (isWindowsOS()) {
-			pb.command("cmd", "/C", createXai2Command((ProjectBean)bean));
+			pb.command("cmd", "/C", createXai2Command(scriptLocation, (ProjectBean)bean));
 		} else {
-			pb.command("bash", "-c", createXai2Command((ProjectBean)bean));
+			pb.command("bash", "-c", createXai2Command(scriptLocation, (ProjectBean)bean));
 		}
 
 		this.process = pb.start();
@@ -350,7 +350,7 @@ public class Xia2Process extends ProgressableProcess{
 		return null;
 	}
 
-	private String createXai2Command(ProjectBean bean) {
+	public static String createXai2Command(final String scriptLocation, ProjectBean bean) {
 		
 		String setupCmd = "";
 		if (!isWindowsOS()) { // We use module load xia2

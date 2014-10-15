@@ -124,6 +124,11 @@ public class Xia2Writer extends BufferedWriter {
 		
 		write("BEGIN WAVELENGTH NATIVE");
 		newLine();
+		if (bean.getResolution()!=null && !"".equals(bean.getResolution().trim())) {
+			write("RESOLUTION ");
+            write(bean.getResolution());
+            newLine();
+		}
 		if (bean.isAnomalous()) {
 			write("ATOM X");
 			newLine();			

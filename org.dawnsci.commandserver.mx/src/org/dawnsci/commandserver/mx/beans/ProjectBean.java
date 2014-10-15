@@ -32,6 +32,7 @@ public class ProjectBean extends StatusBean {
 	private boolean     anomalous;              
     private String      spaceGroup;
 	private String      unitCell;
+	private String      resolution;
     
 	
 	public String getCommandLineSwitches() {
@@ -65,6 +66,7 @@ public class ProjectBean extends StatusBean {
         this.unitCell     = db.unitCell;
         this.anomalous    = db.anomalous;
         this.commandLineSwitches  = db.commandLineSwitches;
+        this.resolution   = db.resolution;
 	}
 	
 
@@ -86,6 +88,8 @@ public class ProjectBean extends StatusBean {
 				+ ((cystalName == null) ? 0 : cystalName.hashCode());
 		result = prime * result
 				+ ((projectName == null) ? 0 : projectName.hashCode());
+		result = prime * result
+				+ ((resolution == null) ? 0 : resolution.hashCode());
 		result = prime * result
 				+ ((spaceGroup == null) ? 0 : spaceGroup.hashCode());
 		result = prime * result + ((sweeps == null) ? 0 : sweeps.hashCode());
@@ -122,6 +126,11 @@ public class ProjectBean extends StatusBean {
 			if (other.projectName != null)
 				return false;
 		} else if (!projectName.equals(other.projectName))
+			return false;
+		if (resolution == null) {
+			if (other.resolution != null)
+				return false;
+		} else if (!resolution.equals(other.resolution))
 			return false;
 		if (spaceGroup == null) {
 			if (other.spaceGroup != null)
@@ -199,5 +208,13 @@ public class ProjectBean extends StatusBean {
 
 	public void setUnitCell(String unitCell) {
 		this.unitCell = unitCell;
+	}
+
+	public String getResolution() {
+		return resolution;
+	}
+
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
 	}
 }

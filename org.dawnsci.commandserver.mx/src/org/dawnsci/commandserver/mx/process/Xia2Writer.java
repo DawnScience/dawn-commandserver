@@ -130,12 +130,18 @@ public class Xia2Writer extends BufferedWriter {
 		}
 		write("END WAVELENGTH NATIVE");
 		newLine();
+		newLine();
 
 		int iSweep = 1;
 		for (SweepBean sweep : bean.getSweeps()) {
 			
 			write("BEGIN SWEEP SWEEP"+iSweep);
 			newLine();
+			if (sweep.getResolution()!=null) {
+				write("RESOLUTION ");
+                write(sweep.getResolution());
+                newLine();
+			}
 			write("WAVELENGTH NATIVE");
 			newLine();
 			write("DIRECTORY "+CmdUtils.getSanitizedPath(sweep.getImageDirectory()));

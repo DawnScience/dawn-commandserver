@@ -29,6 +29,12 @@ public class SweepBean {
 	private double        xBeam;
 	private double        yBeam;
 	
+	/**
+	 * The 'resolution' is a string which should 
+	 * appear after the keyword RESOLUTION in the xinfo file.
+	 */
+	private String        resolution;
+	
 	public SweepBean() {
 		
 	}
@@ -58,6 +64,8 @@ public class SweepBean {
 		result = prime * result
 				+ ((imageDirectory == null) ? 0 : imageDirectory.hashCode());
 		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result
+				+ ((resolution == null) ? 0 : resolution.hashCode());
 		result = prime * result
 				+ ((sessionId == null) ? 0 : sessionId.hashCode());
 		result = prime * result + start;
@@ -100,6 +108,11 @@ public class SweepBean {
 			if (other.name != null)
 				return false;
 		} else if (!name.equals(other.name))
+			return false;
+		if (resolution == null) {
+			if (other.resolution != null)
+				return false;
+		} else if (!resolution.equals(other.resolution))
 			return false;
 		if (sessionId == null) {
 			if (other.sessionId != null)
@@ -180,5 +193,11 @@ public class SweepBean {
 	}
 	public void setSessionId(String sessionId) {
 		this.sessionId = sessionId;
+	}
+	public String getResolution() {
+		return resolution;
+	}
+	public void setResolution(String resolution) {
+		this.resolution = resolution;
 	}
 }

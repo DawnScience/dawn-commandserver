@@ -13,17 +13,43 @@ import java.net.URI;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.python.util.PythonInterpreter;
+
+import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;
 
 public class JythonConsumer extends ProcessConsumer {
+	
+	protected PythonInterpreter interpreter;
 
 	@Override
 	protected Class<? extends StatusBean> getBeanClass() {
 		return JythonBean.class;
 	}
+	
+	@Override
+	public void start() throws Exception {
+		//This starts the interpreter for script submission
+		//(Borrowed from org.dawb.passerelle.actors.scripts.PythonScript)
+		interpreter = JythonInterpreterUtils.getInterpreter();
+		System.out.println("Jython interpreter started.");
+		
+		//This after other setup as this just sits and sits and...
+		super.start();
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		//Need to kill the interpreter when stopping the Consumer
+		interpreter.eval("exit()");
+		System.out.println("Jython interpreter stopped.");
+		
+		super.stop();
+	}
+
 
 	@Override
 	protected ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception {
-		return new JythonProcess(uri, statusTName, statusQName, config, (JythonBean)bean);
+		return new JythonProcess(uri, statusTName, statusQName, config, (JythonBean)bean, interpreter);
 	}
 
 	private static final long TWO_DAYS = 48*60*60*1000; // ms

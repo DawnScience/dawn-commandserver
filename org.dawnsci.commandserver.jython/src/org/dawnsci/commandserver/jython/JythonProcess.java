@@ -15,18 +15,24 @@ import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.python.util.PythonInterpreter;
+
+//import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;
 
 public class JythonProcess extends ProgressableProcess {
 
 	private Map<String, String> args;
 	private JythonBean          jbean;
+	private PythonInterpreter jythonInterpreter;
 
-	public JythonProcess(URI uri, String statusTName, String statusQName, Map<String, String> args, JythonBean bean) {
+
+	public JythonProcess(URI uri, String statusTName, String statusQName, Map<String, String> args, JythonBean bean, PythonInterpreter interpreter) {
 		
 		super(uri, statusTName, statusQName, bean);
 		
 		this.args  = args;
 		this.jbean = bean;
+		this.jythonInterpreter = interpreter;
 		
 		// We only run one script at a time.
 		setBlocking(true);
@@ -67,9 +73,10 @@ public class JythonProcess extends ProgressableProcess {
 		bean.setPercentComplete(1);
 		broadcast(bean);
 
-		// TODO Michael run Jython
-        out.println("Run Jython! "+jbean);
-        
+		//File inputScript = new File(args.get("script"));
+		jythonInterpreter.exec("print 'Hello World'");
+		//jythonInterpreter.execfile(new FileInputStream(inputScript.getAbsolutePath()));
+
 		bean.setStatus(Status.COMPLETE);
 		bean.setMessage("Finished running Jython "+jbean.getJythonClass());
 		bean.setPercentComplete(100);

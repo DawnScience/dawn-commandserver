@@ -30,6 +30,7 @@ public class TestJythonRun {
 		jbean.setMessage("A test jython execution");
 		jbean.setJythonClass("org.dawnsci.some.jython.Class");
 		jbean.setRunDirectory("C:/tmp/");
+		jbean.setJythonCode("print'Hello cruel world'");
 
 		final RemoteSubmission factory = new RemoteSubmission(uri);
 		factory.setQueueName("scisoft.jython.SUBMISSION_QUEUE");

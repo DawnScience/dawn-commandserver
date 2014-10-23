@@ -22,7 +22,7 @@ import org.python.util.PythonInterpreter;
 public class JythonProcess extends ProgressableProcess {
 
 	private Map<String, String> args;
-	private JythonBean          jbean;
+	private JythonBean          jybean;
 	private PythonInterpreter jythonInterpreter;
 
 
@@ -31,7 +31,7 @@ public class JythonProcess extends ProgressableProcess {
 		super(uri, statusTName, statusQName, bean);
 		
 		this.args  = args;
-		this.jbean = bean;
+		this.jybean = bean;
 		this.jythonInterpreter = interpreter;
 		
 		// We only run one script at a time.
@@ -69,18 +69,26 @@ public class JythonProcess extends ProgressableProcess {
 	@Override
 	public void execute() throws Exception {
 		
-		bean.setStatus(Status.RUNNING);
-		bean.setPercentComplete(1);
-		broadcast(bean);
+		jybean.setStatus(Status.RUNNING);
+		jybean.setPercentComplete(1);
+		broadcast(jybean);
+		
+		//Check whether we're running a script (should be in production!) or raw code
+		if (jybean.getRunScript() == true) {
+			String jyScriptPath = new File(jybean.getJythonCode()).getAbsolutePath();
+			jythonInterpreter.execfile(jyScriptPath);
+		}
+		else {
+			jythonInterpreter.exec(jybean.getJythonCode());
+		}
+		
+		//What happens if the user includes a exit() call to jython???
+		//TODO Check interpreter is still alive before running, if not, call it up.
 
-		//File inputScript = new File(args.get("script"));
-		jythonInterpreter.exec("print 'Hello World'");
-		//jythonInterpreter.execfile(new FileInputStream(inputScript.getAbsolutePath()));
-
-		bean.setStatus(Status.COMPLETE);
-		bean.setMessage("Finished running Jython "+jbean.getJythonClass());
-		bean.setPercentComplete(100);
-		broadcast(bean);
+		jybean.setStatus(Status.COMPLETE);
+		jybean.setMessage("Finished running Jython "+jybean.getJythonClass());
+		jybean.setPercentComplete(100);
+		broadcast(jybean);
 
 	}
 

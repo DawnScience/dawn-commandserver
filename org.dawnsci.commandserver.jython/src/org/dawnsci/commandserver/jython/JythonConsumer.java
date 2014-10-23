@@ -30,7 +30,7 @@ public class JythonConsumer extends ProcessConsumer {
 	public void start() throws Exception {
 		//This starts the interpreter for script submission
 		//(Borrowed from org.dawb.passerelle.actors.scripts.PythonScript)
-		interpreter = JythonInterpreterUtils.getInterpreter();
+		interpreter = JythonInterpreterUtils.getBasicInterpreter();
 		System.out.println("Jython interpreter started.");
 		
 		//This after other setup as this just sits and sits and...

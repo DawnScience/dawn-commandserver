@@ -13,6 +13,21 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
 public class JythonBean extends StatusBean {
 
 	private String jythonClass;
+	private String jythonCode;
+	// This determines whether we're running scripts or raw code (should be true in production)
+	private final boolean runScript = false; 
+
+	public boolean getRunScript() {
+		return runScript;
+	}
+	
+	public String getJythonCode() {
+		return jythonCode;
+	}
+
+	public void setJythonCode(String jythonCode) {
+		this.jythonCode = jythonCode;
+	}
 
 	public String getJythonClass() {
 		return jythonClass;

@@ -392,6 +392,7 @@ public class Xia2Process extends ProgressableProcess{
 			if (writer!=null) writer.close();
 		}
 		
+		Thread.sleep(1000); // Seems to sometimes take a while for lustre to believe the file is there...
 	}
 
 	public String getProcessingDir() {

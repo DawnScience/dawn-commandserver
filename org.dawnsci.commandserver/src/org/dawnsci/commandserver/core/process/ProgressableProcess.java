@@ -360,14 +360,14 @@ public abstract class ProgressableProcess implements Runnable {
 	 * @param i
 	 * @return file
 	 */
-	protected final static File getUnique(final File dir, final String template, final String ext, int i) {
-		final String extension = ext != null ? (ext.startsWith(".")) ? ext : "." + ext : null;
-		final File file = ext != null ? new File(dir, template + i + extension) : new File(dir, template + i);
+	protected final static File getUnique(final File dir, final String template, int i) {
+		
+		final File file = new File(dir, template + i );
 		if (!file.exists()) {
 			return file;
 		}
 
-		return getUnique(dir, template, ext, ++i);
+		return getUnique(dir, template, ++i);
 	}
 
 	public boolean isBlocking() {

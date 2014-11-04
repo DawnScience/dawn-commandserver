@@ -49,7 +49,7 @@ public class MRCProcess extends ProgressableProcess {
 		final File visitDir = newFile.getParentFile().getParentFile();
 
 		// We run the commands in a temporary directory for this consumer
-		tmpDir = getUnique(new File(visitDir, "tmp"), "emprocessing_", null, 1);
+		tmpDir = getUnique(new File(visitDir, "tmp"), "emprocessing_", 1);
  		bean.setRunDirectory(tmpDir.getAbsolutePath());
 		
 		// We record the bean so that reruns of reruns are possible.

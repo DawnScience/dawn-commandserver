@@ -46,7 +46,7 @@ public class JythonProcess extends ProgressableProcess {
 			runDir  = bean.getRunDirectory();
 		}
 
- 		final File   jythonDir = getUnique(new File(runDir), "Run_", null, 1);
+ 		final File   jythonDir = getUnique(new File(runDir), "Run_", 1);
  		jythonDir.mkdirs();
  		
  		try {

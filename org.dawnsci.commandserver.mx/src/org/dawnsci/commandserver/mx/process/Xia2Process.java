@@ -74,7 +74,7 @@ public class Xia2Process extends ProgressableProcess{
 			runDir  = bean.getRunDirectory();
 		}
 
- 		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", null, 1);
+ 		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", 1);
 		xia2Dir.mkdirs();
 		
  		try {
@@ -295,6 +295,7 @@ public class Xia2Process extends ProgressableProcess{
 	private void checkXia2Errors() throws Exception {
 		
 		final File dir = new File(processingDir);
+		if (!dir.exists()) return;
 		for (File c : dir.listFiles()) {
 			if (c.isFile() && c.getName().toLowerCase().endsWith(".error")) {
 				checkFile(c, "Error:");

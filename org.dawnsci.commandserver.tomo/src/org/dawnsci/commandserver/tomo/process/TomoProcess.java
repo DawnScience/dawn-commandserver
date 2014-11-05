@@ -50,7 +50,7 @@ public class TomoProcess extends ProgressableProcess{
 			runDir  = bean.getRunDirectory();
 		}
 
- 		final File   tomoDir = getUnique(new File(runDir), "Reconstruction_", null, 1);
+ 		final File   tomoDir = getUnique(new File(runDir), "Reconstruction_", 1);
 		tomoDir.mkdirs();
 		
 	    processingDir = tomoDir.getAbsolutePath();

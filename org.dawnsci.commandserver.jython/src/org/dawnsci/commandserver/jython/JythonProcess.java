@@ -82,7 +82,7 @@ public class JythonProcess extends ProgressableProcess {
 			jythonInterpreter.exec(jybean.getJythonCode());
 		}
 		
-		//What happens if the user includes a exit() call to jython???
+		//What happens if the user includes a exit() call to jython??? - Looks ok...
 		//TODO Check interpreter is still alive before running, if not, call it up.
 
 		jybean.setStatus(Status.COMPLETE);

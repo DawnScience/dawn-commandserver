@@ -15,7 +15,7 @@ public class JythonBean extends StatusBean {
 	private String jythonClass;
 	private String jythonCode;
 	// This determines whether we're running scripts or raw code (should be true in production)
-	private final boolean runScript = false; 
+	private final boolean runScript = true; 
 
 	public boolean getRunScript() {
 		return runScript;

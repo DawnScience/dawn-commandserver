@@ -340,6 +340,7 @@ public abstract class ProgressableProcess implements Runnable {
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+			System.out.println("Dry run : "+bean.getPercentComplete());
 			bean.setPercentComplete(i);
 			broadcast(bean);
 		}

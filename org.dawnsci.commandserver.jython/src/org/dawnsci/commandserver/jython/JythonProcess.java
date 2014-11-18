@@ -49,11 +49,11 @@ public class JythonProcess extends ProgressableProcess {
  		final File   jythonDir = getUnique(new File(runDir), "Run_", 1);
  		jythonDir.mkdirs();
  		
- 		try {
-			setLoggingFile(new File(jythonDir, "jythonProcessLog.txt"), true);
-		} catch (IOException e1) {
-			e1.printStackTrace();
-		}
+// 		try {
+//			setLoggingFile(new File(jythonDir, "jythonProcessLog.txt"), true);
+//		} catch (IOException e1) {
+//			e1.printStackTrace();
+//		}
 				
 		bean.setRunDirectory(jythonDir.getAbsolutePath());
 		
@@ -73,6 +73,9 @@ public class JythonProcess extends ProgressableProcess {
 		jybean.setPercentComplete(1);
 		broadcast(jybean);
 		
+//		out.println(System.getProperty("java.class.path"));
+//		out.println(System.getProperty("java.home"));
+	
 		//Check whether we're running a script (should be in production!) or raw code
 		if (jybean.getRunScript() == true) {
 			String jyScriptPath = new File(jybean.getJythonCode()).getAbsolutePath();

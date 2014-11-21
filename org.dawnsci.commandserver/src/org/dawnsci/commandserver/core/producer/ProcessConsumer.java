@@ -118,29 +118,6 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 * @return the process or null if the message should be consumed and nothing done.
 	 */
 	protected abstract ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
-
-	protected static final long TWO_DAYS = 48*60*60*1000; // ms
-	protected static final long A_WEEK = 7*24*60*60*1000; // ms
-	/**
-	 * Defines the time in ms that a job may be in the running state
-	 * before the consumer might consider it for deletion. If a consumer
-	 * is restarted it will normally delete old running jobs older than 
-	 * this age.
-	 * 
-	 * @return
-	 */
-	protected abstract long getMaximumRunningAge();
-	
-
-	/**
-	 * Defines the time in ms that a job may be in the complete (or other final) state
-	 * before the consumer might consider it for deletion. If a consumer
-	 * is restarted it will normally delete old complete jobs older than 
-	 * this age.
-	 * 
-	 * @return
-	 */
-	protected abstract long getMaximumCompleteAge();
 	
 	// TODO FIXME
 	protected volatile int processCount;
@@ -341,5 +318,38 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 	}
 
+		
+	protected static final long TWO_DAYS = 48*60*60*1000; // ms
+	protected static final long A_WEEK   = 7*24*60*60*1000; // ms
+
+	/**
+	 * Defines the time in ms that a job may be in the running state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old running jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected long getMaximumRunningAge() {
+		if (System.getProperty("org.dawnsci.commandserver.core.maximumRunningAge")!=null) {
+			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumRunningAge"));
+		}
+		return TWO_DAYS;
+	}
+		
+	/**
+	 * Defines the time in ms that a job may be in the complete (or other final) state
+	 * before the consumer might consider it for deletion. If a consumer
+	 * is restarted it will normally delete old complete jobs older than 
+	 * this age.
+	 * 
+	 * @return
+	 */
+	protected long getMaximumCompleteAge() {
+		if (System.getProperty("org.dawnsci.commandserver.core.maximumCompleteAge")!=null) {
+			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumCompleteAge"));
+		}
+		return A_WEEK;
+	}
 
 }

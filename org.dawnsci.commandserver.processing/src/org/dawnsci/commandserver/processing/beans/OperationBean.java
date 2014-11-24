@@ -8,9 +8,12 @@
  */
 package org.dawnsci.commandserver.processing.beans;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
+
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Bean to serialise with JSON and be sent to the server.
@@ -76,6 +79,15 @@ public class OperationBean extends StatusBean {
 
 	public void setSlicing(Map<Integer, String> slicing) {
 		this.slicing = slicing;
+	}
+	
+	@JsonIgnore
+	public void setSlicing(String... slices) {
+    	if (slicing==null) slicing= new HashMap<Integer, String>(slices.length);
+    	slicing.clear();
+    	for (int i = 0; i < slices.length; i++) {
+    		slicing.put(i, slices[i]);
+		}
 	}
 
 	public String getPersistencePath() {

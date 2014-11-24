@@ -9,6 +9,7 @@ Require-Bundle: org.dawnsci.commandserver;bundle-version="1.0.0",
  org.eclipse.dawnsci.analysis.api;bundle-version="1.0.0",
  org.eclipse.dawnsci.hdf5;bundle-version="1.2.0",
  org.eclipse.dawnsci.analysis.dataset;bundle-version="1.0.0"
-Import-Package: org.junit;version="4.10.0"
+Import-Package: com.fasterxml.jackson.annotation;version="2.2.0",
+ org.junit;version="4.10.0"
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy

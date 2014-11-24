@@ -32,7 +32,22 @@ public class OperationProcess extends ProgressableProcess{
 	
 	private static IOperationService   oservice;
 	private static IPersistenceService pservice;
+	
+	// Set by OSGI
+	public static void setOperationService(IOperationService s) {
+		oservice = s;
+	}
+	// Set by OSGI
+	public static void setPersistenceService(IPersistenceService s) {
+		pservice = s;
+	}
+	// Used so that a no-argument constructor exists but is not useful.
+	public OperationProcess() {
+		super();
+	}
 
+	
+	
 	private String              processingDir;
 	
 	public OperationProcess(URI        uri, 
@@ -71,15 +86,6 @@ public class OperationProcess extends ProgressableProcess{
 		} catch (Exception e) {
 			e.printStackTrace(out);
 		}
-	}
-	
-	// Set by OSGI
-	public static void setOperationService(IOperationService s) {
-		oservice = s;
-	}
-	// Set by OSGI
-	public static void setPersistenceService(IPersistenceService s) {
-		pservice = s;
 	}
 
 	@Override

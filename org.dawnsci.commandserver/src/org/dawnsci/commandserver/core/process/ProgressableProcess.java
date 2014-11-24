@@ -51,14 +51,18 @@ public abstract class ProgressableProcess implements Runnable {
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
-	protected final StatusBean bean;
-	protected final URI        uri;
-	protected final String     statusTName;
-	protected final String     statusQName;
+	protected StatusBean       bean;
+	protected URI              uri;
+	protected String           statusTName;
+	protected String           statusQName;
 	private Broadcaster        broadcaster;
 	
 	protected PrintStream out = System.out;
 
+	protected ProgressableProcess() {
+		super();
+	}
+	
 	public ProgressableProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
 		
 		this.uri           = uri;

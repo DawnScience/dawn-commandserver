@@ -144,7 +144,7 @@ public class OperationProcess extends ProgressableProcess{
 		    context.setParallelTimeout(obean.getParallelTimeout());
 		    
 		    final IDataHolder holder = lservice.getData(obean.getFileName(), new IMonitor.Stub());
-		    final ILazyDataset lz    = holder.getDataset(obean.getDatasetPath());
+		    final ILazyDataset lz    = holder.getLazyDataset(obean.getDatasetPath());
 		    context.setData(lz);
 		    context.setSlicing(obean.getSlicing());
 		    

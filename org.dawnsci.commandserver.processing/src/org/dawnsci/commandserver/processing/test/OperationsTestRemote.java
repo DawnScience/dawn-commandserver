@@ -6,11 +6,13 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver.processing;
+package org.dawnsci.commandserver.processing.test;
 
 import java.io.File;
 import java.net.URI;
 
+import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -22,17 +24,25 @@ import org.eclipse.dawnsci.analysis.api.processing.model.AbstractOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
+import org.junit.Before;
 import org.junit.Test;
 
 /**
  * Class to test that we can run an operation pipeline remotely.
  * 
- * Run this as a plugin test
+ * To Run:
+ * 1. Make sure a consumer is started either using 
+ *   a) module load consumer and consumer start operations or 
+ *   b) starting the debug run CommandServer-OperationConsumer
+ *   
+ * 2. Edit the paths in 
+ * 2. Run this test s a plugin test. It will submit to the 
+ *    consumer some test pipelines.
  * 
  * @author Matthew Gerring
  *
  */
-public class TestOperationRun {
+public class OperationsTestRemote {
 
 	private static IOperationService    oservice;
 	private static IPersistenceService  pservice;
@@ -46,31 +56,31 @@ public class TestOperationRun {
 		pservice = s;
 	}
 
-	@Test
-	public void executeOperation() throws Exception {
-		
-		URI uri = new URI("tcp://sci-serv5.diamond.ac.uk:61616");
-		
-		OperationBean obean = new OperationBean();
+	private OperationBean obean;
+	
+	@Before
+	public void setup() throws Exception {
+				
+		// TODO Wrap bean in a class that extends RemoteSubmission
+		// and recieves an operation context.
+		obean = new OperationBean();
 		obean.setName("Test operation pipeline");
+		obean.setPipelineName(getClass().getSimpleName());
 		obean.setMessage("A test operation pipeline execution");
-		obean.setRunDirectory("C:/tmp/operationPipelineTest");
+		if (System.getProperty("os.name").toLowerCase().contains(("windows"))) {
+		    obean.setRunDirectory("C:/tmp/operationPipelineTest");
+		} else {
+			obean.setRunDirectory("/scratch/operationPipelineTest");
+		}
 		
 		// Some random data, the real execution will have dataset path
 		createSomeRandomData(obean);
 		
-		// A Test pipeline
-		createTestPipeline(obean);
-	
-		final RemoteSubmission factory = new RemoteSubmission(uri);
-		factory.setQueueName("scisoft.operation.SUBMISSION_QUEUE");
-		
-		factory.submit(obean, true);
-
 	}
 
-	private void createTestPipeline(OperationBean obean) throws Exception {
-
+	@Test
+	public void testSimpleAddAndSubtractUsingFind() throws Exception {
+		
 		final File persFile = new File(obean.getRunDirectory()+"/pipeline.nxs");
 		persFile.getParentFile().mkdirs();
 		if (persFile.exists()) persFile.delete();
@@ -99,8 +109,20 @@ public class TestOperationRun {
 		} finally {
 			file.close();
 		}
+
+		// 
+		final RemoteSubmission factory = new RemoteSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"));
+		factory.setQueueName("scisoft.operation.SUBMISSION_QUEUE");
+		factory.submit(obean, true);
+
+		// Blocks until a final state is reached
+		Thread.sleep(100); 
+		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
+		final StatusBean bean = factory.monitor(obean);
+		
+		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
 	}
-	
+
 	private static void createSomeRandomData(OperationBean obean) throws Exception {
 		
 		final File output = new File(obean.getRunDirectory()+"/data.nxs");

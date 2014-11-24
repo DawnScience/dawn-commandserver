@@ -15,7 +15,15 @@ import java.net.URI;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
+import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
+import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
+import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
+import org.eclipse.dawnsci.analysis.api.processing.IOperation;
+import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 
 /**
@@ -32,6 +40,7 @@ public class OperationProcess extends ProgressableProcess{
 	
 	private static IOperationService   oservice;
 	private static IPersistenceService pservice;
+	private static ILoaderService      lservice;
 	
 	// Set by OSGI
 	public static void setOperationService(IOperationService s) {
@@ -40,6 +49,10 @@ public class OperationProcess extends ProgressableProcess{
 	// Set by OSGI
 	public static void setPersistenceService(IPersistenceService s) {
 		pservice = s;
+	}
+	// Set by OSGI
+	public static void setLoaderService(ILoaderService s) {
+		lservice = s;
 	}
 	// Used so that a no-argument constructor exists but is not useful.
 	public OperationProcess() {
@@ -63,7 +76,7 @@ public class OperationProcess extends ProgressableProcess{
 		if (isWindowsOS()) {
 			// We are likely to be a test consumer, anyway the unix paths
 			// from ISPyB will certainly not work, so we process in C:/tmp/
-			runDir  = "C:/tmp/"+bean.getRunDirectory();
+			runDir  = bean.getRunDirectory();
 		} else {
 			runDir  = bean.getRunDirectory();
 		}
@@ -98,14 +111,54 @@ public class OperationProcess extends ProgressableProcess{
 		
 		createTerminateListener();
 		
-		// TODO remote this
-		dryRun();
+		try {
+			runPipeline();
+			
+			// TODO Actually run something?
+			bean.setStatus(Status.COMPLETE);
+			bean.setMessage(((OperationBean)bean).getPipelineName()+" completed normally");
+			bean.setPercentComplete(100);
+			broadcast(bean);
+			
+		} catch (Throwable ne) {
+			ne.printStackTrace();
+			bean.setStatus(Status.FAILED);
+			bean.setMessage(ne.getMessage());
+			bean.setPercentComplete(0);
+			broadcast(bean);
+		}
+	}
+
+	private void runPipeline() throws Throwable {
 		
-		// TODO Actually run something?
-		bean.setStatus(Status.COMPLETE);
-		bean.setMessage(((OperationBean)bean).getPipelineName()+" completed normally");
-		bean.setPercentComplete(100);
-		broadcast(bean);
+		OperationBean obean = (OperationBean)bean;
+		IPersistentFile file = pservice.createPersistentFile(obean.getPersistencePath());
+		try {
+			// We should get these back exactly as they were defined.
+		    final IOperation[] ops = file.getOperations();
+		    
+		    // Create a context and run the pipeline
+		    final IOperationContext context = oservice.createContext();
+		    context.setSeries(ops);
+		    context.setExecutionType(obean.getExecutionType());
+		    context.setParallelTimeout(obean.getParallelTimeout());
+		    
+		    final IDataHolder holder = lservice.getData(obean.getFileName(), new IMonitor.Stub());
+		    final ILazyDataset lz    = holder.getDataset(obean.getDatasetPath());
+		    context.setData(lz);
+		    context.setSlicing(obean.getSlicing());
+		    
+		    // We create a visitor which publishes information about what
+		    // operation was completed.
+		    final IExecutionVisitor visitor = new OperationVisitor(lz, obean, this);
+		    context.setVisitor(visitor);
+		    
+		    oservice.execute(context);
+		    
+		} finally {
+			file.close();
+		}
+
 	}
 
 	@Override

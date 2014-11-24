@@ -45,22 +45,5 @@ public class TomoSubmissionConsumer extends ProcessConsumer {
 
 		return new TomoProcess(uri, statusTName, statusQName, (TomoBean)bean);
 	}
-		
-	@Override
-	protected long getMaximumRunningAge() {
-		if (System.getProperty("org.dawnsci.commandserver.core.maximumTomoRunningAge")!=null) {
-			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumTomoRunningAge"));
-		}
-		return TWO_DAYS;
-	}
-		
-	@Override
-	protected long getMaximumCompleteAge() {
-		if (System.getProperty("org.dawnsci.commandserver.core.maximumXia2CompleteAge")!=null) {
-			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumTomoCompleteAge"));
-		}
-		return A_WEEK;
-	}
-
 
 }

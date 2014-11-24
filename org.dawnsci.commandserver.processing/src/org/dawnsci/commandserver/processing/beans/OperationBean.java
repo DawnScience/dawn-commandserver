@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
@@ -40,6 +41,8 @@ public class OperationBean extends StatusBean {
 	// This is not ideal because if the consumer 
 	// and client do not share disk, it will not work.
 	private String               persistencePath;
+	private ExecutionType        executionType;
+	private long                 parallelTimeout=5000;
 	
 	public OperationBean(){
 		
@@ -113,7 +116,12 @@ public class OperationBean extends StatusBean {
 		result = prime * result
 				+ ((datasetPath == null) ? 0 : datasetPath.hashCode());
 		result = prime * result
+				+ ((executionType == null) ? 0 : executionType.hashCode());
+		result = prime * result
 				+ ((fileName == null) ? 0 : fileName.hashCode());
+		long temp;
+		temp = Double.doubleToLongBits(parallelTimeout);
+		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
 				+ ((persistencePath == null) ? 0 : persistencePath.hashCode());
 		result = prime * result
@@ -136,10 +144,15 @@ public class OperationBean extends StatusBean {
 				return false;
 		} else if (!datasetPath.equals(other.datasetPath))
 			return false;
+		if (executionType != other.executionType)
+			return false;
 		if (fileName == null) {
 			if (other.fileName != null)
 				return false;
 		} else if (!fileName.equals(other.fileName))
+			return false;
+		if (Double.doubleToLongBits(parallelTimeout) != Double
+				.doubleToLongBits(other.parallelTimeout))
 			return false;
 		if (persistencePath == null) {
 			if (other.persistencePath != null)
@@ -157,5 +170,21 @@ public class OperationBean extends StatusBean {
 		} else if (!slicing.equals(other.slicing))
 			return false;
 		return true;
+	}
+
+	public ExecutionType getExecutionType() {
+		return executionType;
+	}
+
+	public void setExecutionType(ExecutionType executionType) {
+		this.executionType = executionType;
+	}
+
+	public long getParallelTimeout() {
+		return parallelTimeout;
+	}
+
+	public void setParallelTimeout(long parallelTimeout) {
+		this.parallelTimeout = parallelTimeout;
 	}
 }

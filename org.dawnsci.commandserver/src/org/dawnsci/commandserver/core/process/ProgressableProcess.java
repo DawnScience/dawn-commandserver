@@ -47,7 +47,7 @@ import com.sun.jna.Platform;
  * @author Matthew Gerring
  *
  */
-public abstract class ProgressableProcess implements Runnable {
+public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
@@ -197,7 +197,8 @@ public abstract class ProgressableProcess implements Runnable {
 	 * Notify any clients of the beans status
 	 * @param bean
 	 */
-	protected void broadcast(StatusBean tbean) {
+	@Override
+	public void broadcast(StatusBean tbean) {
 		try {
 			bean.merge(tbean);
 			cancelMonitor();

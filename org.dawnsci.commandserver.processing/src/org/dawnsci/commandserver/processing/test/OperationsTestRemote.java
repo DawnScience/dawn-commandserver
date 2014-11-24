@@ -87,15 +87,15 @@ public class OperationsTestRemote {
 		if (persFile.exists()) persFile.delete();
 		
         // Now we create a test array of operations and submit their data.
-		final IOperation add      = oservice.findFirst("add");
 		final IOperation subtract = oservice.findFirst("subtractOperation");
+		final IOperation add      = oservice.findFirst("add");
 			
 		subtract.setModel(new ValueModel(100));
 		add.setModel(new ValueModel(101));
 		
 		IPersistentFile file = pservice.createPersistentFile(persFile.getAbsolutePath());
 		try {
-		    file.setOperations(add, subtract);
+		    file.setOperations(subtract, add);
 		    obean.setPersistencePath(persFile.getAbsolutePath());
 		} finally {
 			file.close();
@@ -107,11 +107,12 @@ public class OperationsTestRemote {
 		factory.submit(obean, true);
 
 		// Blocks until a final state is reached
-		Thread.sleep(100); 
+		Thread.sleep(1000); 
 		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
 		final StatusBean bean = factory.monitor(obean);
 		
 		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
+		System.out.println(bean);
 	}
 
 	private static void createSomeRandomData(OperationBean obean) throws Exception {
@@ -128,7 +129,7 @@ public class OperationsTestRemote {
 			
 			obean.setFileName(file.getPath());
 			obean.setDatasetPath(dataset);
-			obean.setSlicing("all");
+			obean.setSlicingByString("all");
 			
 		} finally {
 			file.close();

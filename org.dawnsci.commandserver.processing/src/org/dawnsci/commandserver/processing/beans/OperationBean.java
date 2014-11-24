@@ -41,7 +41,7 @@ public class OperationBean extends StatusBean {
 	// This is not ideal because if the consumer 
 	// and client do not share disk, it will not work.
 	private String               persistencePath;
-	private ExecutionType        executionType;
+	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
 	
 	public OperationBean(){
@@ -84,9 +84,8 @@ public class OperationBean extends StatusBean {
 		this.slicing = slicing;
 	}
 	
-	@JsonIgnore
-	public void setSlicing(String... slices) {
-    	if (slicing==null) slicing= new HashMap<Integer, String>(slices.length);
+	public void setSlicingByString(String... slices) {
+    	if (slicing==null) slicing = new HashMap<Integer, String>(slices.length);
     	slicing.clear();
     	for (int i = 0; i < slices.length; i++) {
     		slicing.put(i, slices[i]);

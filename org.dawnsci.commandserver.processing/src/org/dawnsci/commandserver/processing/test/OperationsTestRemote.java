@@ -20,12 +20,13 @@ import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
-import org.eclipse.dawnsci.analysis.api.processing.model.AbstractOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.junit.Before;
 import org.junit.Test;
+
+import uk.ac.diamond.scisoft.analysis.processing.operations.ValueModel;
 
 /**
  * Class to test that we can run an operation pipeline remotely.
@@ -89,18 +90,8 @@ public class OperationsTestRemote {
 		final IOperation add      = oservice.findFirst("add");
 		final IOperation subtract = oservice.findFirst("subtractOperation");
 			
-		subtract.setModel(new AbstractOperationModel() {
-			@SuppressWarnings("unused")
-			public double getValue() {
-				return 100;
-			}
-		});
-		add.setModel(new AbstractOperationModel() {
-			@SuppressWarnings("unused")
-			public double getValue() {
-				return 101;
-			}
-		});
+		subtract.setModel(new ValueModel(100));
+		add.setModel(new ValueModel(101));
 		
 		IPersistentFile file = pservice.createPersistentFile(persFile.getAbsolutePath());
 		try {

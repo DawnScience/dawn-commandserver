@@ -131,7 +131,7 @@ public class OperationsTestRemote {
 		OperationBean obean = factory.submit(context);
 
 		// Blocks until a final state is reached
-		Thread.sleep(1000); 
+		Thread.sleep(2000); 
 		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
 		final StatusBean bean = factory.monitor(obean);
 

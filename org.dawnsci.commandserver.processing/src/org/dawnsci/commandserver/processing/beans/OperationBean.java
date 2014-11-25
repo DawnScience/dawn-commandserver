@@ -38,6 +38,9 @@ public class OperationBean extends StatusBean {
 	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
 	
+	// Tidying stuff
+	private boolean deletePersistenceFile = true;
+	
 	public OperationBean(){
 		
 	}
@@ -50,6 +53,9 @@ public class OperationBean extends StatusBean {
         this.datasetPath     = db.datasetPath;
         this.slicing         = db.slicing;
         this.persistencePath = db.persistencePath;
+        this.executionType   = db.executionType;
+        this.parallelTimeout = db.parallelTimeout;
+        this.deletePersistenceFile = db.deletePersistenceFile;
 	}
 	
 
@@ -91,6 +97,7 @@ public class OperationBean extends StatusBean {
 		int result = super.hashCode();
 		result = prime * result
 				+ ((datasetPath == null) ? 0 : datasetPath.hashCode());
+		result = prime * result + (deletePersistenceFile ? 1231 : 1237);
 		result = prime * result
 				+ ((executionType == null) ? 0 : executionType.hashCode());
 		result = prime * result
@@ -116,6 +123,8 @@ public class OperationBean extends StatusBean {
 			if (other.datasetPath != null)
 				return false;
 		} else if (!datasetPath.equals(other.datasetPath))
+			return false;
+		if (deletePersistenceFile != other.deletePersistenceFile)
 			return false;
 		if (executionType != other.executionType)
 			return false;
@@ -153,5 +162,13 @@ public class OperationBean extends StatusBean {
 
 	public void setParallelTimeout(long parallelTimeout) {
 		this.parallelTimeout = parallelTimeout;
+	}
+
+	public boolean isDeletePersistenceFile() {
+		return deletePersistenceFile;
+	}
+
+	public void setDeletePersistenceFile(boolean deletePersistenceFile) {
+		this.deletePersistenceFile = deletePersistenceFile;
 	}
 }

@@ -73,6 +73,7 @@ public class OperationSubmission extends RemoteSubmission {
 		
 		OperationBean obean = prepare(context);
 		super.submit(obean, true);
+		
 		return obean;
 	}
 	
@@ -102,7 +103,7 @@ public class OperationSubmission extends RemoteSubmission {
 		obean.setDatasetPath(context.getDatasetPath());
 		
 		// Series stuff
-		final File persFile = new File(runDirectory+"/pipeline.nxs");
+		final File persFile = getUnique(new File(runDirectory), "pipeline", "nxs", 1);
 		persFile.getParentFile().mkdirs();
 		if (persFile.exists()) persFile.delete();
 		
@@ -119,6 +120,24 @@ public class OperationSubmission extends RemoteSubmission {
 		obean.setParallelTimeout(context.getParallelTimeout());
 
 		return obean;
+	}
+
+
+	/**
+	 * @param dir
+	 * @param template
+	 * @param ext
+	 * @param i
+	 * @return file
+	 */
+	private static File getUnique(final File dir, final String template, final String ext, int i) {
+		final String extension = ext != null ? (ext.startsWith(".")) ? ext : "." + ext : null;
+		final File file = ext != null ? new File(dir, template + i + extension) : new File(dir, template + i);
+		if (!file.exists()) {
+			return file;
+		}
+
+		return getUnique(dir, template, ext, ++i);
 	}
 
 	public String getRunDirectory() {

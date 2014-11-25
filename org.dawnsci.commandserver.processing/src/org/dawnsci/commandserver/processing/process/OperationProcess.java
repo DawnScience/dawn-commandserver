@@ -157,6 +157,11 @@ public class OperationProcess extends ProgressableProcess{
 		    
 		} finally {
 			file.close();
+			
+			if (obean.isDeletePersistenceFile()) {
+			    final File persFile = new File(obean.getPersistencePath());
+			    persFile.delete();
+			}
 		}
 
 	}

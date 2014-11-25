@@ -384,4 +384,13 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		this.blocking = blocking;
 	}
 
+	
+	
+	public static final String getLegalFileName(String name) {
+		name = name.replace(" ", "_");
+		name = name.replaceAll("[^a-zA-Z0-9_]", "");
+        return name;
+	}
+
+
 }

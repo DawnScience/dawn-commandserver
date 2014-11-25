@@ -81,7 +81,7 @@ public class OperationProcess extends ProgressableProcess{
 			runDir  = bean.getRunDirectory();
 		}
 
- 		final File   dir = getUnique(new File(runDir), bean.getPipelineName()+"_", 1);
+ 		final File   dir = getUnique(new File(runDir), getLegalFileName(bean.getName())+"_", 1);
  		dir.mkdirs();
 		
 	    processingDir = dir.getAbsolutePath();
@@ -116,7 +116,7 @@ public class OperationProcess extends ProgressableProcess{
 			
 			// TODO Actually run something?
 			bean.setStatus(Status.COMPLETE);
-			bean.setMessage(((OperationBean)bean).getPipelineName()+" completed normally");
+			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
 			bean.setPercentComplete(100);
 			broadcast(bean);
 			
@@ -143,7 +143,7 @@ public class OperationProcess extends ProgressableProcess{
 		    context.setExecutionType(obean.getExecutionType());
 		    context.setParallelTimeout(obean.getParallelTimeout());
 		    
-		    final IDataHolder holder = lservice.getData(obean.getFileName(), new IMonitor.Stub());
+		    final IDataHolder holder = lservice.getData(obean.getFilePath(), new IMonitor.Stub());
 		    final ILazyDataset lz    = holder.getLazyDataset(obean.getDatasetPath());
 		    context.setData(lz);
 		    context.setSlicing(obean.getSlicing());

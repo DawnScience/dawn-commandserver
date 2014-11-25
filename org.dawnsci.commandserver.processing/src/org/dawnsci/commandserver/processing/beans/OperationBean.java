@@ -8,13 +8,10 @@
  */
 package org.dawnsci.commandserver.processing.beans;
 
-import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
-
-import com.fasterxml.jackson.annotation.JsonIgnore;
 
 /**
  * Bean to serialise with JSON and be sent to the server.
@@ -26,12 +23,9 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
  *
  */
 public class OperationBean extends StatusBean {
-
-	// The name of the pipeline to run (used in the run directory)
-	private String               pipelineName;
 	
 	// The data
-	private String               fileName;              
+	private String               filePath;              
 	private String               datasetPath;
 	private Map<Integer, String> slicing;
 	
@@ -52,20 +46,19 @@ public class OperationBean extends StatusBean {
 	public void merge(StatusBean with) {
         super.merge(with);
         OperationBean db = (OperationBean)with;
-        this.pipelineName    = db.pipelineName;
-        this.fileName        = db.fileName;
+        this.filePath        = db.filePath;
         this.datasetPath     = db.datasetPath;
         this.slicing         = db.slicing;
         this.persistencePath = db.persistencePath;
 	}
 	
 
-	public String getFileName() {
-		return fileName;
+	public String getFilePath() {
+		return filePath;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setFilePath(String fileName) {
+		this.filePath = fileName;
 	}
 
 	public String getDatasetPath() {
@@ -83,14 +76,6 @@ public class OperationBean extends StatusBean {
 	public void setSlicing(Map<Integer, String> slicing) {
 		this.slicing = slicing;
 	}
-	
-	public void setSlicingByString(String... slices) {
-    	if (slicing==null) slicing = new HashMap<Integer, String>(slices.length);
-    	slicing.clear();
-    	for (int i = 0; i < slices.length; i++) {
-    		slicing.put(i, slices[i]);
-		}
-	}
 
 	public String getPersistencePath() {
 		return persistencePath;
@@ -98,14 +83,6 @@ public class OperationBean extends StatusBean {
 
 	public void setPersistencePath(String persistencePath) {
 		this.persistencePath = persistencePath;
-	}
-
-	public String getPipelineName() {
-		return pipelineName;
-	}
-
-	public void setPipelineName(String pipelineName) {
-		this.pipelineName = pipelineName;
 	}
 
 	@Override
@@ -117,14 +94,11 @@ public class OperationBean extends StatusBean {
 		result = prime * result
 				+ ((executionType == null) ? 0 : executionType.hashCode());
 		result = prime * result
-				+ ((fileName == null) ? 0 : fileName.hashCode());
-		long temp;
-		temp = Double.doubleToLongBits(parallelTimeout);
-		result = prime * result + (int) (temp ^ (temp >>> 32));
+				+ ((filePath == null) ? 0 : filePath.hashCode());
+		result = prime * result
+				+ (int) (parallelTimeout ^ (parallelTimeout >>> 32));
 		result = prime * result
 				+ ((persistencePath == null) ? 0 : persistencePath.hashCode());
-		result = prime * result
-				+ ((pipelineName == null) ? 0 : pipelineName.hashCode());
 		result = prime * result + ((slicing == null) ? 0 : slicing.hashCode());
 		return result;
 	}
@@ -145,23 +119,17 @@ public class OperationBean extends StatusBean {
 			return false;
 		if (executionType != other.executionType)
 			return false;
-		if (fileName == null) {
-			if (other.fileName != null)
+		if (filePath == null) {
+			if (other.filePath != null)
 				return false;
-		} else if (!fileName.equals(other.fileName))
+		} else if (!filePath.equals(other.filePath))
 			return false;
-		if (Double.doubleToLongBits(parallelTimeout) != Double
-				.doubleToLongBits(other.parallelTimeout))
+		if (parallelTimeout != other.parallelTimeout)
 			return false;
 		if (persistencePath == null) {
 			if (other.persistencePath != null)
 				return false;
 		} else if (!persistencePath.equals(other.persistencePath))
-			return false;
-		if (pipelineName == null) {
-			if (other.pipelineName != null)
-				return false;
-		} else if (!pipelineName.equals(other.pipelineName))
 			return false;
 		if (slicing == null) {
 			if (other.slicing != null)

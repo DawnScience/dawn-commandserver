@@ -41,6 +41,10 @@ public class RemoteSubmission {
 	private long   lifeTime;
 	private long   timestamp;
 	
+	RemoteSubmission() {
+		
+	}
+	
 	public RemoteSubmission(URI uri) {
 	    this.uri       = uri;
 	    this.uniqueId = System.currentTimeMillis()+"_"+UUID.randomUUID();

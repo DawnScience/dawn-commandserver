@@ -32,33 +32,33 @@ public class OperationVisitor implements IExecutionVisitor {
 		this.total       = Slicer.getSize(lz, obean.getSlicing());
 	}
 
-	@Override
-	public void init(IOperation<? extends IOperationModel, ? extends OperationData>[] series,
-			         OriginMetadata                                                   origin) throws Exception {		
-		this.count = 0;
-	}
 
 	@Override
 	public void close() throws Exception {
 		
 	}
 
+
 	@Override
-	public void notify(IOperation<? extends IOperationModel, ? extends OperationData> intermediateData,
-			           OperationData data, Slice[] slices, int[] shape, int[] dataDims) {
-		
+	public void init(IOperation<? extends IOperationModel, ? extends OperationData>[] series,
+			         ILazyDataset dataset) throws Exception {
+		this.count = 0;
+	
+	}
+
+	@Override
+	public void notify(IOperation<? extends IOperationModel, ? extends OperationData> intermediateData,  OperationData data) {
+		// TODO Auto-generated method stub
 		
 	}
 
 	@Override
-	public void executed(OperationData result, IMonitor monitor,
-			             Slice[] slices, int[] shape, int[] dataDims) throws Exception {
-		
+	public void executed(OperationData result, IMonitor monitor) throws Exception {
 		++count;
 		double done = (double)count / (double)total;
 		System.out.println(obean);
 		obean.setPercentComplete(done);
-		broadcaster.broadcast(obean);
+		broadcaster.broadcast(obean);	
 	}
 
 }

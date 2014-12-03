@@ -47,18 +47,22 @@ import com.sun.jna.Platform;
  * @author Matthew Gerring
  *
  */
-public abstract class ProgressableProcess implements Runnable {
+public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
-	protected final StatusBean bean;
-	protected final URI        uri;
-	protected final String     statusTName;
-	protected final String     statusQName;
+	protected StatusBean       bean;
+	protected URI              uri;
+	protected String           statusTName;
+	protected String           statusQName;
 	private Broadcaster        broadcaster;
 	
 	protected PrintStream out = System.out;
 
+	protected ProgressableProcess() {
+		super();
+	}
+	
 	public ProgressableProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
 		
 		this.uri           = uri;
@@ -193,7 +197,8 @@ public abstract class ProgressableProcess implements Runnable {
 	 * Notify any clients of the beans status
 	 * @param bean
 	 */
-	protected void broadcast(StatusBean tbean) {
+	@Override
+	public void broadcast(StatusBean tbean) {
 		try {
 			bean.merge(tbean);
 			cancelMonitor();
@@ -378,5 +383,14 @@ public abstract class ProgressableProcess implements Runnable {
 	public void setBlocking(boolean blocking) {
 		this.blocking = blocking;
 	}
+
+	
+	
+	public static final String getLegalFileName(String name) {
+		name = name.replace(" ", "_");
+		name = name.replaceAll("[^a-zA-Z0-9_]", "");
+        return name;
+	}
+
 
 }

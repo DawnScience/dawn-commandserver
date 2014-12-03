@@ -11,6 +11,7 @@ package org.dawnsci.commandserver.processing.beans;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 
 /**
  * Bean to serialise with JSON and be sent to the server.
@@ -22,12 +23,9 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
  *
  */
 public class OperationBean extends StatusBean {
-
-	// The name of the pipeline to run (used in the run directory)
-	private String               pipelineName;
 	
 	// The data
-	private String               fileName;              
+	private String               filePath;              
 	private String               datasetPath;
 	private Map<Integer, String> slicing;
 	
@@ -37,6 +35,11 @@ public class OperationBean extends StatusBean {
 	// This is not ideal because if the consumer 
 	// and client do not share disk, it will not work.
 	private String               persistencePath;
+	private ExecutionType        executionType=ExecutionType.SERIES;
+	private long                 parallelTimeout=5000;
+	
+	// Tidying stuff
+	private boolean deletePersistenceFile = true;
 	
 	public OperationBean(){
 		
@@ -46,20 +49,22 @@ public class OperationBean extends StatusBean {
 	public void merge(StatusBean with) {
         super.merge(with);
         OperationBean db = (OperationBean)with;
-        this.pipelineName    = db.pipelineName;
-        this.fileName        = db.fileName;
+        this.filePath        = db.filePath;
         this.datasetPath     = db.datasetPath;
         this.slicing         = db.slicing;
         this.persistencePath = db.persistencePath;
+        this.executionType   = db.executionType;
+        this.parallelTimeout = db.parallelTimeout;
+        this.deletePersistenceFile = db.deletePersistenceFile;
 	}
 	
 
-	public String getFileName() {
-		return fileName;
+	public String getFilePath() {
+		return filePath;
 	}
 
-	public void setFileName(String fileName) {
-		this.fileName = fileName;
+	public void setFilePath(String fileName) {
+		this.filePath = fileName;
 	}
 
 	public String getDatasetPath() {
@@ -86,26 +91,21 @@ public class OperationBean extends StatusBean {
 		this.persistencePath = persistencePath;
 	}
 
-	public String getPipelineName() {
-		return pipelineName;
-	}
-
-	public void setPipelineName(String pipelineName) {
-		this.pipelineName = pipelineName;
-	}
-
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
 		result = prime * result
 				+ ((datasetPath == null) ? 0 : datasetPath.hashCode());
+		result = prime * result + (deletePersistenceFile ? 1231 : 1237);
 		result = prime * result
-				+ ((fileName == null) ? 0 : fileName.hashCode());
+				+ ((executionType == null) ? 0 : executionType.hashCode());
+		result = prime * result
+				+ ((filePath == null) ? 0 : filePath.hashCode());
+		result = prime * result
+				+ (int) (parallelTimeout ^ (parallelTimeout >>> 32));
 		result = prime * result
 				+ ((persistencePath == null) ? 0 : persistencePath.hashCode());
-		result = prime * result
-				+ ((pipelineName == null) ? 0 : pipelineName.hashCode());
 		result = prime * result + ((slicing == null) ? 0 : slicing.hashCode());
 		return result;
 	}
@@ -124,20 +124,21 @@ public class OperationBean extends StatusBean {
 				return false;
 		} else if (!datasetPath.equals(other.datasetPath))
 			return false;
-		if (fileName == null) {
-			if (other.fileName != null)
+		if (deletePersistenceFile != other.deletePersistenceFile)
+			return false;
+		if (executionType != other.executionType)
+			return false;
+		if (filePath == null) {
+			if (other.filePath != null)
 				return false;
-		} else if (!fileName.equals(other.fileName))
+		} else if (!filePath.equals(other.filePath))
+			return false;
+		if (parallelTimeout != other.parallelTimeout)
 			return false;
 		if (persistencePath == null) {
 			if (other.persistencePath != null)
 				return false;
 		} else if (!persistencePath.equals(other.persistencePath))
-			return false;
-		if (pipelineName == null) {
-			if (other.pipelineName != null)
-				return false;
-		} else if (!pipelineName.equals(other.pipelineName))
 			return false;
 		if (slicing == null) {
 			if (other.slicing != null)
@@ -145,5 +146,29 @@ public class OperationBean extends StatusBean {
 		} else if (!slicing.equals(other.slicing))
 			return false;
 		return true;
+	}
+
+	public ExecutionType getExecutionType() {
+		return executionType;
+	}
+
+	public void setExecutionType(ExecutionType executionType) {
+		this.executionType = executionType;
+	}
+
+	public long getParallelTimeout() {
+		return parallelTimeout;
+	}
+
+	public void setParallelTimeout(long parallelTimeout) {
+		this.parallelTimeout = parallelTimeout;
+	}
+
+	public boolean isDeletePersistenceFile() {
+		return deletePersistenceFile;
+	}
+
+	public void setDeletePersistenceFile(boolean deletePersistenceFile) {
+		this.deletePersistenceFile = deletePersistenceFile;
 	}
 }

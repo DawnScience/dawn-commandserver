@@ -5,8 +5,7 @@ Bundle-SymbolicName: org.dawnsci.commandserver.jython
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.jython.Activator
 Bundle-Vendor: DLS
-Require-Bundle: org.eclipse.ui;bundle-version="3.8.2",
- org.eclipse.core.runtime,
+Require-Bundle: org.eclipse.core.runtime,
  org.dawnsci.commandserver;bundle-version="1.0.0",
  uk.ac.diamond.jython;bundle-version="2.5.3",
  uk.ac.diamond.scisoft.python

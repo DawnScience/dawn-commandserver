@@ -8,7 +8,11 @@
  */
 package org.dawnsci.commandserver.jython;
 
+import java.io.FileNotFoundException;
 import java.net.URI;
+import java.net.URL;
+import java.util.HashSet;
+import java.util.Set;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -28,9 +32,23 @@ public class JythonConsumer extends ProcessConsumer {
 	
 	@Override
 	public void start() throws Exception {
-		//This starts the interpreter for script submission
-		//(Borrowed from org.dawb.passerelle.actors.scripts.PythonScript)
-		interpreter = JythonInterpreterUtils.getFullInterpreter();
+		//This starts the interpreter for script submission (Borrowed from org.dawb.passerelle.actors.scripts.PythonScript)
+		
+		//Additional paths (needed for using Autoreduction script)
+		final Set<String> extras = new HashSet<String>();
+		extras.add("com.fasterxml.jackson.core");
+		extras.add("org.dawnsci.persistence");
+		
+		//All set? Let's go!
+		interpreter = JythonInterpreterUtils.getFullInterpreter(null, extras);
+		
+		//Get shared python functions and pass in as a stream.
+		URL pySOURL = this.getClass().getResource("python_funcs.py");
+		if (pySOURL == null) {
+			throw new FileNotFoundException("python_funcs.py (resource not found)");
+		}
+		interpreter.execfile(pySOURL.openStream());
+
 		System.out.println("Jython interpreter started.");
 		
 		//This after other setup as this just sits and sits and...

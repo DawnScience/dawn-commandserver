@@ -9,7 +9,6 @@
 package org.dawnsci.commandserver.jython;
 
 import java.io.File;
-import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
@@ -80,9 +79,11 @@ public class JythonProcess extends ProgressableProcess {
 		if (jybean.getRunScript() == true) {
 			String jyScriptPath = new File(jybean.getJythonCode()).getAbsolutePath();
 			jythonInterpreter.execfile(jyScriptPath);
+			jythonInterpreter.exec("__dlsCleanup()");//Removes all added names from dicts.
 		}
 		else {
 			jythonInterpreter.exec(jybean.getJythonCode());
+			jythonInterpreter.exec("__dlsCleanup()");//Removes all added names from dicts.
 		}
 		
 		//What happens if the user includes a exit() call to jython??? - Looks ok...

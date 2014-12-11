@@ -11,8 +11,6 @@ package org.dawnsci.commandserver.jython;
 import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URL;
-import java.util.HashSet;
-import java.util.Set;
 
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
@@ -34,13 +32,8 @@ public class JythonConsumer extends ProcessConsumer {
 	public void start() throws Exception {
 		//This starts the interpreter for script submission (Borrowed from org.dawb.passerelle.actors.scripts.PythonScript)
 		
-		//Additional paths (needed for using Autoreduction script)
-		final Set<String> extras = new HashSet<String>();
-		extras.add("com.fasterxml.jackson.core");
-		extras.add("org.dawnsci.persistence");
-		
 		//All set? Let's go!
-		interpreter = JythonInterpreterUtils.getFullInterpreter(null, extras);
+		interpreter = JythonInterpreterUtils.getFullInterpreter(null, "com.fasterxml.jackson.core", "org.dawnsci.persistence");
 		
 		//Get shared python functions and pass in as a stream.
 		URL pySOURL = this.getClass().getResource("python_funcs.py");

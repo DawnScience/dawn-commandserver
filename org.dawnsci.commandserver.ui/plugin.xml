@@ -16,8 +16,7 @@
       </view>
       <category
             id="org.dawnsci.commandserver.category"
-            name="Command Server"
-            parentCategory="uk.ac.diamond.scisoft.analysis.rcp">
+            name="Command Server">
       </category>
       <view
             category="org.dawnsci.commandserver.category"

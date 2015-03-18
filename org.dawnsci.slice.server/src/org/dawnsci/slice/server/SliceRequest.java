@@ -183,6 +183,7 @@ class SliceRequest implements HttpSessionBindingListener {
 		IImageService service = ServiceHolder.getImageService();
 		ImageServiceBean bean = createImageServiceBean();
 		
+		// Override histo if they set it.
 		String histo = decode(request.getParameter("histo"));
 		if (histo!=null) bean.decode(histo);
 

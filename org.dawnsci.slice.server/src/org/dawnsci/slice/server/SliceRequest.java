@@ -1,5 +1,6 @@
 package org.dawnsci.slice.server;
 
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
@@ -8,7 +9,6 @@ import java.net.URLDecoder;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.imageio.ImageIO;
-import javax.imageio.stream.ImageOutputStream;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionBindingEvent;
@@ -21,10 +21,14 @@ import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.plotting.api.histogram.HistogramBound;
+import org.eclipse.dawnsci.plotting.api.histogram.IImageService;
 import org.eclipse.dawnsci.plotting.api.histogram.ImageServiceBean;
 import org.eclipse.dawnsci.plotting.api.histogram.ImageServiceBean.HistoType;
 import org.eclipse.dawnsci.plotting.api.histogram.ImageServiceBean.ImageOrigin;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.swt.graphics.ImageData;
+import org.eclipse.swt.graphics.PaletteData;
+import org.eclipse.swt.graphics.RGB;
 
 /**
  * There are one of these objects per session.
@@ -44,13 +48,17 @@ import org.eclipse.jetty.server.Request;
  *    slice`  - Provides the slice in the form of that required org.eclipse.dawnsci.analysis.api.dataset.Slice.convertFromString(...)
  *              for example: [0,:1024,:1024]. If left unset and data not too large, will send while dataset, no slice.
  *              
- *    bin     - downsample  As in Downsample.fromString(...) ; examples: 'MEAN:2x3', 'MAXIMUM:2x2' 
+ *    bin     - downsample  As in Downsample.encode(...) / Downsample.decode(...) ; examples: 'MEAN:2x3', 'MAXIMUM:2x2' 
  *              by default no downsampling is done
  *              
  *    format  - One of Format.values():
  *              DATA - zipped slice, binary (default)
  *              JPG  - JPG made using IImageService to make the image
  *              PNG  - PNG made using IImageService to make the image
+ *              
+ *    histo   - Encoding of histo to the rules of ImageServiceBean.encode(...) / ImageServiceBean.decode(...)
+ *              Example: "MEAN", "OUTLIER_VALUES:5-95"
+ *              Only used when an actual image is requested.
  * 
  *    `URL encoded.
  *    
@@ -58,6 +66,9 @@ import org.eclipse.jetty.server.Request;
  *     * Example in GET format (POST is also ok):
  * 
  *      http://localhost:8080/?path=c%3A/Work/results/TomographyDataSet.hdf5&dataset=/entry/exchange/data&slice=[0,%3A1024,%3A1024]
+ *      
+ *      Or in a browser:
+ *      http://localhost:8080/?path=c%3A/Work/results/TomographyDataSet.hdf5&dataset=/entry/exchange/data&slice=[0,%3A1024,%3A1024]&bin=MAXIMUM:2x2&format=JPG
  *
  * @author fcp94556
  *
@@ -128,7 +139,7 @@ class SliceRequest implements HttpSessionBindingListener {
 		
 		case JPG:
 		case PNG:
-			sendImage(data, baseRequest, response, format);
+			sendImage(data, baseRequest, request, response, format);
 		}
 	}
 	
@@ -157,36 +168,56 @@ class SliceRequest implements HttpSessionBindingListener {
 
 	private void sendImage(IDataset            data, 
 			               Request             baseRequest,
+						   HttpServletRequest  request,
 			               HttpServletResponse response, 
 			               Format              format) throws Exception {
 		
+		if (data.getRank()!=2 && data.getRank()!=1) {
+			throw new Exception("The data used to make an image must either be 1D or 2D!"); 
+		}
+			
 		response.setContentType("image/jpeg");
 		response.setStatus(HttpServletResponse.SC_OK);
 		baseRequest.setHandled(true);
 
+		IImageService service = ServiceHolder.getImageService();
+		ImageServiceBean bean = createImageServiceBean();
 		
+		String histo = decode(request.getParameter("histo"));
+		if (histo!=null) bean.decode(histo);
+
+		bean.setImage(data);
 		
-		ImageOutputStream out = ImageIO.createImageOutputStream(response.getOutputStream());
-		try {
-			
-		} finally {
-			out.close();
-		}
+		final ImageData    imdata = service.getImageData(bean);
+		final BufferedImage image = service.getBufferedImage(imdata);
 		
+		ImageIO.write(image, format.getImageIOString(), response.getOutputStream());		
 	}
 	
 	
 	private ImageServiceBean createImageServiceBean() {
 		ImageServiceBean imageServiceBean = new ImageServiceBean();
-		//imageServiceBean.setPalette(PaletteFactory.makeBluesPalette());
+		imageServiceBean.setPalette(makeGrayScalePalette());
 		imageServiceBean.setOrigin(ImageOrigin.TOP_LEFT);
-		imageServiceBean.setHistogramType(HistoType.MEAN);
 		imageServiceBean.setMinimumCutBound(HistogramBound.DEFAULT_MINIMUM);
 		imageServiceBean.setMaximumCutBound(HistogramBound.DEFAULT_MAXIMUM);
 		imageServiceBean.setNanBound(HistogramBound.DEFAULT_NAN);
-		imageServiceBean.setLo(0);
-		imageServiceBean.setHi(300);		
+		
+		imageServiceBean.setHistogramType(HistoType.OUTLIER_VALUES);
+		imageServiceBean.setLo(5);
+		imageServiceBean.setHi(95);		
+		
 		return imageServiceBean;
+	}
+	/**
+	 * Make 256 level grayscale palette.
+	 */
+	public static PaletteData makeGrayScalePalette() {
+		RGB grayscale[] = new RGB[256];
+		for (int i = 0; i < 256; i++) {
+			grayscale[i] = new RGB(i, i, i);
+		}
+		return new PaletteData(grayscale);
 	}
 
 

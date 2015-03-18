@@ -8,4 +8,14 @@ public enum Format {
 		if (value == null) return DATA;
 		return valueOf(value);
 	}
+
+	public String getImageIOString() {
+		switch(this) {
+		case JPG:
+		case PNG:
+			return toString().toLowerCase();
+		default:
+			throw new RuntimeException("ImageIO not supported with format: "+this);
+		}
+	}
 }

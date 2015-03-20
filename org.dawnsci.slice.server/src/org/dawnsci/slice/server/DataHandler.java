@@ -57,6 +57,7 @@ public class DataHandler extends AbstractHandler {
 		    slicer.slice(target, baseRequest, request, response);
 		    
 		} catch (Exception ne) {
+			ne.printStackTrace();
 			response.setContentType("text/html;charset=utf-8");
 			response.setStatus(HttpServletResponse.SC_FORBIDDEN);
 			baseRequest.setHandled(true);

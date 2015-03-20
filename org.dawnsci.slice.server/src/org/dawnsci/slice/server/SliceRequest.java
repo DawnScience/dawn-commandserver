@@ -1,9 +1,12 @@
 package org.dawnsci.slice.server;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
 import java.util.concurrent.locks.ReentrantLock;
@@ -14,6 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.servlet.http.HttpSessionBindingEvent;
 import javax.servlet.http.HttpSessionBindingListener;
 
+import org.dawnsci.slice.Constants;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
@@ -30,6 +34,7 @@ import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
 
+import java.util.concurrent.TimeUnit;
 /**
  * There are one of these objects per session.
  * 
@@ -48,17 +53,20 @@ import org.eclipse.swt.graphics.RGB;
  *    slice`  - Provides the slice in the form of that required org.eclipse.dawnsci.analysis.api.dataset.Slice.convertFromString(...)
  *              for example: [0,:1024,:1024]. If left unset and data not too large, will send while dataset, no slice.
  *              
- *    bin     - downsample  As in Downsample.encode(...) / Downsample.decode(...) ; examples: 'MEAN:2x3', 'MAXIMUM:2x2' 
+ *    bin`     - downsample  As in Downsample.encode(...) / Downsample.decode(...) ; examples: 'MEAN:2x3', 'MAXIMUM:2x2' 
  *              by default no downsampling is done
  *              
- *    format  - One of Format.values():
+ *    format` - One of Format.values():
  *              DATA - zipped slice, binary (default)
  *              JPG  - JPG made using IImageService to make the image
  *              PNG  - PNG made using IImageService to make the image
+ *              MJPG:<dim> e.g. MJPG:0 to send the first dimension as slices in a series. NOTE slice mist be set in this case.
  *              
- *    histo   - Encoding of histo to the rules of ImageServiceBean.encode(...) / ImageServiceBean.decode(...)
+ *    histo`  - Encoding of histo to the rules of ImageServiceBean.encode(...) / ImageServiceBean.decode(...)
  *              Example: "MEAN", "OUTLIER_VALUES:5-95"
  *              Only used when an actual image is requested.
+ *    
+ *    sleep   - Time to sleep between sending images, default 100ms.
  * 
  *    `URL encoded.
  *    
@@ -69,7 +77,8 @@ import org.eclipse.swt.graphics.RGB;
  *      
  *      Or in a browser:
  *      http://localhost:8080/?path=c%3A/Work/results/TomographyDataSet.hdf5&dataset=/entry/exchange/data&slice=[0,%3A1024,%3A1024]&bin=MAXIMUM:2x2&format=JPG
- *
+ *      http://localhost:8080/?path=c%3A/Work/results/TomographyDataSet.hdf5&dataset=/entry/exchange/data&slice=[0,%3A1024,%3A1024]&bin=MAXIMUM:2x2&format=MJPG:0
+ *      
  * @author fcp94556
  *
  */
@@ -112,58 +121,145 @@ class SliceRequest implements HttpSessionBindingListener {
 		final ILazyDataset lz = dataset!=null 
 				              ? holder.getLazyDataset(dataset)
 				              : holder.getLazyDataset(0);
-	
-		final String slice  = decode(request.getParameter("slice"));		
-		final Slice[] sa    = slice!=null ? Slice.convertFromString(slice) : null;
-		IDataset data = sa!=null ? lz.getSlice(sa) : null;
-		
-		// We might load all the data if it is not too large
-		if (data==null && lz.getRank()<3) data = lz.getSlice(); // Loads all data
-		
-		if (data==null) throw new Exception("Cannot get slice of data for '"+path+"'");
-		
-		data = data.squeeze();
-		
-		// We downsample if there was one
-		String bin = decode(request.getParameter("bin"));
-		if (bin!=null) {
-			data = ServiceHolder.getDownService().downsample(bin, data).get(0);
-		}
 
-		// We set the meta data as header an
+	    if (dataset!=null && lz==null) throw new Exception("Dataset '"+dataset+"' not found in data holder!");
+	    
+		final String slice  = decode(request.getParameter("slice"));		
+		final Slice[] slices    = slice!=null ? Slice.convertFromString(slice) : null;
+		
 		Format format = Format.getFormat(decode(request.getParameter("format")));
+		String bin    = decode(request.getParameter("bin"));
+				
+		// We set the meta data as header an
 		switch(format) {
 		case DATA:
-			sendObject(data, baseRequest, response);
+			sendObject(getData(lz, slices, bin), baseRequest, response);
 			break;
 		
 		case JPG:
 		case PNG:
-			sendImage(data, baseRequest, request, response, format);
+			sendImage(getData(lz, slices, bin), baseRequest, request, response, format);
+			break;
+			
+		case MJPG: // In the case of MJPG, we loop over doSlice(...)
+			sendImages(lz, slices, baseRequest, request, response, format);
 		}
+
 	}
 	
-	private void sendObject(IDataset            data, 
-							Request             baseRequest,
-							HttpServletResponse response) throws Exception {
+	private IDataset getData(ILazyDataset lz, Slice[] slices, String bin) throws Exception {
+		
+		IDataset data = slices!=null ? lz.getSlice(slices) : null;
 
-		response.setContentType("application/zip");
+		// We might load all the data if it is not too large
+		if (data==null && lz.getRank()<3) data = lz.getSlice(); // Loads all data
+
+		if (data==null) throw new Exception("Cannot get slice of data for '"+lz+"'");
+
+		data = data.squeeze();
+
+		// We downsample if there was one
+		if (bin!=null) {
+			data = ServiceHolder.getDownService().downsample(bin, data).get(0);
+		}
+        return data;
+	}
+
+    
+	private void sendImages(ILazyDataset        lz, 
+			                Slice[]             slices,
+							Request             baseRequest,
+							HttpServletRequest  request,
+							HttpServletResponse response, 
+							Format              format) throws Exception {
+
+
 		response.setStatus(HttpServletResponse.SC_OK);
 		baseRequest.setHandled(true);
+		
+		String delemeter_str = getClass().getName()+Long.toHexString(System.currentTimeMillis());
+		response.setContentType(Constants.MCONTENT_TYPE+";boundary=" + delemeter_str);
+				
+		IImageService service = ServiceHolder.getImageService();
+		ImageServiceBean bean = createImageServiceBean();
 
-		response.setHeader("elementClass", data.elementClass().toString());
+		// Override histo if they set it.
+		String histo = decode(request.getParameter("histo"));
+		if (histo!=null) bean.decode(histo);
 
-		final ObjectOutputStream ostream = new ObjectOutputStream(response.getOutputStream());
+		String bin      = decode(request.getParameter("bin"));
+		String sleepStr = decode(request.getParameter("sleep"));
+		if (sleepStr == null|| "".equals(sleepStr)) sleepStr = "100"; // Traditional GDA sleep 100!
+		int sleep = Integer.parseInt(sleepStr);
+
+		OutputStream out    = new BufferedOutputStream(response.getOutputStream(), 100000);
+
+        byte[] mcontent_type = ("Content-Type: "+Constants.MCONTENT_TYPE+";boundary="+delemeter_str).getBytes("UTF-8");
+		byte[] delimiter     = ("--"+delemeter_str).getBytes("UTF-8");
+		byte[] content_type  = "Content-Type: image/jpeg".getBytes("UTF-8");
 		try {
-			Object buffer = ((Dataset)data).getBuffer();
-			ostream.writeObject(buffer);
-			ostream.writeObject(data.getShape());
-			ostream.writeObject(data.getMetadata());
 
+			if (isIE(request)) {
+				out.write(mcontent_type);
+		        out.write(Constants.CRLF);
+	            out.write(Constants.CRLF);
+	            out.write(Constants.CRLF);
+			}
+
+			final int size = lz.getShape()[format.getDimension()];
+			final int from = slices[format.getDimension()].getStart();
+			for (int i = from; i < size; i++) {
+				slices[format.getDimension()].setStart(i);
+				slices[format.getDimension()].setStop(i+1);
+				IDataset data = getData(lz, slices, bin);
+						
+				if (data.getRank()!=2 && data.getRank()!=1) {
+					throw new Exception("The data used to make an image must either be 1D or 2D!"); 
+				}
+
+				bean.setImage(data);
+
+				final ImageData    imdata = service.getImageData(bean);
+				final BufferedImage image = service.getBufferedImage(imdata);
+				
+				final byte[]       frame  = getFrame(image);
+				byte[] content_length = ("Content-Length: " + frame.length).getBytes("UTF-8");
+				
+				out.write(delimiter);
+                out.write(Constants.CRLF);
+                out.write(content_type);
+                out.write(Constants.CRLF);
+                out.write(content_length);
+                out.write(Constants.CRLF);
+                out.write(Constants.CRLF);
+                out.write(frame);
+                out.write(Constants.CRLF);
+                out.write(Constants.CRLF);
+                out.flush();
+                 
+                TimeUnit.MILLISECONDS.sleep(sleep);
+			}
+
+		} catch (Exception ne) {
+			ne.printStackTrace();
+			throw ne;
+			
 		} finally {
-			ostream.flush();
-			ostream.close();
+			if (out!=null)    out.close();
 		}
+	}
+
+	private boolean isIE(HttpServletRequest request) {
+		String userAgent = request.getHeader("User-Agent");
+		return !userAgent.toLowerCase().contains("firefox") &&
+			   !userAgent.toLowerCase().contains("chrome");
+	}
+
+	private byte[] getFrame(BufferedImage image) throws IOException {
+		
+		final ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		ImageIO.write(image, "jpg", stream);
+        return stream.toByteArray();
 	}
 
 	private void sendImage(IDataset            data, 
@@ -182,19 +278,43 @@ class SliceRequest implements HttpSessionBindingListener {
 
 		IImageService service = ServiceHolder.getImageService();
 		ImageServiceBean bean = createImageServiceBean();
+		bean.setImage(data);
 		
 		// Override histo if they set it.
 		String histo = decode(request.getParameter("histo"));
 		if (histo!=null) bean.decode(histo);
-
-		bean.setImage(data);
 		
 		final ImageData    imdata = service.getImageData(bean);
 		final BufferedImage image = service.getBufferedImage(imdata);
 		
-		ImageIO.write(image, format.getImageIOString(), response.getOutputStream());		
+		ImageIO.write(image, format.getImageIOString(), response.getOutputStream());
 	}
 	
+	
+	private void sendObject(IDataset            data, 
+							Request             baseRequest,
+							HttpServletResponse response) throws Exception {
+
+		response.setContentType("application/zip");
+		response.setStatus(HttpServletResponse.SC_OK);
+		baseRequest.setHandled(true);
+
+		response.setHeader("elementClass", data.elementClass().toString());
+
+		final ObjectOutputStream ostream = new ObjectOutputStream(response.getOutputStream());
+		try {
+			Object buffer = ((Dataset)data).getBuffer();
+			ostream.writeObject(buffer);
+			ostream.writeObject(data.getShape());
+			ostream.writeObject(data.getMetadata());
+			
+		} catch (Exception ne) {
+			ne.printStackTrace();
+			throw ne;
+		} finally {
+			ostream.flush();
+		}
+	}
 	
 	private ImageServiceBean createImageServiceBean() {
 		ImageServiceBean imageServiceBean = new ImageServiceBean();

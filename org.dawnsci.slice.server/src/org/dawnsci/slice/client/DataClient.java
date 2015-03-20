@@ -61,6 +61,7 @@ public class DataClient {
 	private Format     format;
 	private String     histo;
 	private long       sleep=100;
+	private int        imageCache=10;
 	private boolean    isFinished;
 	
 	// Private data, not getter/setter
@@ -71,7 +72,7 @@ public class DataClient {
 	}
     
 	/**
-	 * Call to take the next image for a stream (MJPG)
+	 * Call to take the next image for a stream (MJPG). Blocking call.
 	 * If in JPG or PNG mode, this is the same as getImage().
 	 * @return
 	 * @throws Exception
@@ -84,7 +85,7 @@ public class DataClient {
 		if (isFinished()) throw new Exception("Client has infinished reading images!");
 		if (streamer==null) {
 			this.isFinished = false;
-	        this.streamer = new MJPGStreamer(new URL(getURLString()), sleep);
+	        this.streamer = new MJPGStreamer(new URL(getURLString()), sleep, imageCache);
 	        streamer.start(); // Runs thread to add to queue
 		}
 		
@@ -94,6 +95,10 @@ public class DataClient {
 			streamer = null; // A null image means that the connection is down.
 		}
 		return image;
+	}
+	
+	public long getDroppedImageCount() {
+		return streamer.getDroppedImages();
 	}
 
 	public BufferedImage getImage() throws Exception {
@@ -218,6 +223,7 @@ public class DataClient {
 		result = prime * result + ((dataset == null) ? 0 : dataset.hashCode());
 		result = prime * result + ((format == null) ? 0 : format.hashCode());
 		result = prime * result + ((histo == null) ? 0 : histo.hashCode());
+		result = prime * result + imageCache;
 		result = prime * result + ((path == null) ? 0 : path.hashCode());
 		result = prime * result + (int) (sleep ^ (sleep >>> 32));
 		result = prime * result + ((slice == null) ? 0 : slice.hashCode());
@@ -254,6 +260,8 @@ public class DataClient {
 				return false;
 		} else if (!histo.equals(other.histo))
 			return false;
+		if (imageCache != other.imageCache)
+			return false;
 		if (path == null) {
 			if (other.path != null)
 				return false;
@@ -287,6 +295,19 @@ public class DataClient {
 
 	public boolean isFinished() {
 		return isFinished;
+	}
+
+	public void setFinished(boolean b) {
+		isFinished = b;
+		if (streamer!=null) streamer.setFinished(b);
+	}
+
+	public int getImageCache() {
+		return imageCache;
+	}
+
+	public void setImageCache(int imageCache) {
+		this.imageCache = imageCache;
 	}
 
 }

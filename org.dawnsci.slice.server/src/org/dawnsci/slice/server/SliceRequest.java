@@ -9,7 +9,10 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
@@ -24,6 +27,7 @@ import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.plotting.api.histogram.HistogramBound;
 import org.eclipse.dawnsci.plotting.api.histogram.IImageService;
 import org.eclipse.dawnsci.plotting.api.histogram.ImageServiceBean;
@@ -33,8 +37,6 @@ import org.eclipse.jetty.server.Request;
 import org.eclipse.swt.graphics.ImageData;
 import org.eclipse.swt.graphics.PaletteData;
 import org.eclipse.swt.graphics.RGB;
-
-import java.util.concurrent.TimeUnit;
 /**
  * There are one of these objects per session.
  * 
@@ -111,18 +113,9 @@ class SliceRequest implements HttpSessionBindingListener {
 						   HttpServletRequest  request,
 						   HttpServletResponse response) throws Exception {
 
-		final String path = decode(request.getParameter("path"));
-		final File   file = new File(path); // Can we see the file using the local file system?
-		if (!file.exists()) throw new IOException("Path '"+path+"' does not exist!");
-		
-		final IDataHolder holder = ServiceHolder.getLoaderService().getData(path, new IMonitor.Stub()); // TOOD Make it cancellable?
-		
+		final String  path    = decode(request.getParameter("path"));
 		final String  dataset = decode(request.getParameter("dataset"));
-		final ILazyDataset lz = dataset!=null 
-				              ? holder.getLazyDataset(dataset)
-				              : holder.getLazyDataset(0);
-
-	    if (dataset!=null && lz==null) throw new Exception("Dataset '"+dataset+"' not found in data holder!");
+		ILazyDataset lz       = getLazyDataset(path, dataset);
 	    
 		final String slice  = decode(request.getParameter("slice"));		
 		final Slice[] slices    = slice!=null ? Slice.convertFromString(slice) : null;
@@ -147,6 +140,32 @@ class SliceRequest implements HttpSessionBindingListener {
 
 	}
 	
+	private final static Pattern RANDOM = Pattern.compile("RANDOM\\:(\\d)+x(\\d)+");
+	
+	private ILazyDataset getLazyDataset(String path, String dataset) throws Exception {
+		
+		Matcher m = RANDOM.matcher(path);
+		if (m.matches()) {
+			String[] ints = path.split("\\:")[1].split("x");
+			int[]   shape = new int[ints.length];
+			for (int i = 0; i < ints.length; i++) shape[i] = Integer.parseInt(ints[i]);
+			return Random.lazyRand("Test random data", shape);
+		}
+		
+		final File   file = new File(path); // Can we see the file using the local file system?
+		if (!file.exists()) throw new IOException("Path '"+path+"' does not exist!");
+		
+		final IDataHolder holder = ServiceHolder.getLoaderService().getData(path, new IMonitor.Stub()); // TOOD Make it cancellable?
+		
+		final ILazyDataset lz = dataset!=null 
+				              ? holder.getLazyDataset(dataset)
+				              : holder.getLazyDataset(0);
+
+	    if (dataset!=null && lz==null) throw new Exception("Dataset '"+dataset+"' not found in data holder!");
+	    
+	    return lz;
+	}
+
 	private IDataset getData(ILazyDataset lz, Slice[] slices, String bin) throws Exception {
 		
 		IDataset data = slices!=null ? lz.getSlice(slices) : null;
@@ -206,11 +225,13 @@ class SliceRequest implements HttpSessionBindingListener {
 	            out.write(Constants.CRLF);
 			}
 
-			final int size = lz.getShape()[format.getDimension()];
-			final int from = slices[format.getDimension()].getStart();
+			final int size = slices!=null ? lz.getShape()[format.getDimension()] : Integer.MAX_VALUE;
+			final int from = slices!=null ? slices[format.getDimension()].getStart() : 0; // If no slice, stream forever.
 			for (int i = from; i < size; i++) {
-				slices[format.getDimension()].setStart(i);
-				slices[format.getDimension()].setStop(i+1);
+				if (slices!=null){
+					slices[format.getDimension()].setStart(i);
+					slices[format.getDimension()].setStop(i+1);
+				}
 				IDataset data = getData(lz, slices, bin);
 						
 				if (data.getRank()!=2 && data.getRank()!=1) {

@@ -1,6 +1,7 @@
 package org.dawnsci.slice.client;
 
 import java.awt.image.BufferedImage;
+import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
@@ -22,8 +23,17 @@ class MJPGStreamer implements Runnable {
 	private String                       delimiter;
 	private InputStream                  in;
 	private long                         sleepTime;
+	private long                         droppedImages = 0;
+	private boolean                      isFinished;
 
-	public MJPGStreamer(URL url, long sleepTime) throws Exception {
+	/**
+	 * 
+	 * @param url - URL to read from
+	 * @param sleepTime - time to sleep between image reads, we don't want to use all CPU
+	 * @param cacheSize - size of image cache. If image cache grows too large, they are DROPPED.
+	 * @throws Exception
+	 */
+	public MJPGStreamer(URL url, long sleepTime, int cacheSize) throws Exception {
 		
 		URLConnection  conn = url.openConnection();
         conn.setDoInput(true);
@@ -34,21 +44,22 @@ class MJPGStreamer implements Runnable {
         if (!contentType.startsWith(Constants.MCONTENT_TYPE)) throw new Exception("getImages() may only be used with "+Constants.MCONTENT_TYPE);
 
         this.delimiter  = contentType.split("\\;boundary=")[1];
-		this.queue      = new LinkedBlockingQueue<BufferedImage>(10); // TODO How many images can be in the queue?
-		this.in         = conn.getInputStream();
+		this.queue      = new LinkedBlockingQueue<BufferedImage>(cacheSize); // TODO How many images can be in the queue?
+		this.in         = new BufferedInputStream(conn.getInputStream());
 		this.sleepTime  = sleepTime;
 
 	}
 	
 	public void run() {
 		
+		isFinished = false;
 		try {
 			final StringBuilder buf = new StringBuilder();
 
 			int c       = -1;
 			boolean foundImage = false;
 			
-			while((c=in.read())> -1 ) {
+			while(!isFinished && (c=in.read())> -1 ) {
 				
 				buf.append((char)c);
 				if (buf.length()>0 && buf.charAt(buf.length()-1)  == '\n') { // Line found
@@ -60,6 +71,15 @@ class MJPGStreamer implements Runnable {
 					if (foundImage && line.startsWith("Content-Length: ")) {
 						int clength         = Integer.parseInt(line.split("\\:")[1].trim());
 						BufferedImage image = readImage(in, clength);
+						if (image == null || isFinished) return;
+						
+                        if (queue.remainingCapacity()<1) {
+                        	Object gone = queue.poll(); // Goodbye
+                        	if (gone!=null) {
+                        		droppedImages+=1;
+                               	logger.info("We dropped an image of size "+clength+" bytes when reading an MJPG Stream");
+                        	}
+                        }
 						queue.add(image);
 						foundImage = false;
 						
@@ -82,7 +102,6 @@ class MJPGStreamer implements Runnable {
 			}
 			// Cannot have null, instead add tiny empty image
 			queue.add(new BufferedImage(1, 1, 1));
-			Thread.currentThread().interrupt();
 		}
 	}
 	
@@ -93,7 +112,7 @@ class MJPGStreamer implements Runnable {
 	 * @throws InterruptedException
 	 */
 	public BufferedImage take() throws InterruptedException {
-		BufferedImage bi = queue.take();
+		BufferedImage bi = queue.take(); // Might get interrupted
 		if (bi.getWidth()<2 && bi.getHeight()<2) {
 			return null;
 		}
@@ -115,13 +134,19 @@ class MJPGStreamer implements Runnable {
 		imageBytes[0] = (byte)255;
 		int offset    = 1;
 		int numRead   = 0;
-		while (offset < imageBytes.length && (numRead=in.read(imageBytes, offset, imageBytes.length-offset)) >= 0) {
+		while (!isFinished && offset < imageBytes.length && (numRead=in.read(imageBytes, offset, imageBytes.length-offset)) >= 0) {
 			offset += numRead;
 		}       
 
+		if (isFinished) return null;
+		
 		ByteArrayInputStream bais = new ByteArrayInputStream(imageBytes);			
 		return ImageIO.read(bais);
 
+	}
+
+	public long getDroppedImages() {
+		return droppedImages;
 	}
 
 	public void start() {
@@ -130,6 +155,14 @@ class MJPGStreamer implements Runnable {
 		thread.setDaemon(true);
 		thread.setName("MJPG Streamer");
 		thread.start();
+	}
+
+	/**
+	 * Call to tell the streamer to stop adding images to its queue.
+	 * @param b
+	 */
+	public void setFinished(boolean b) {
+		this.isFinished = b;
 	}
 
 }

@@ -1,4 +1,4 @@
-package org.dawnsci.slice.client;
+package org.dawnsci.slice.client.streamer;
 
 /**
  * Interface used to stream either JPG or IDataset from

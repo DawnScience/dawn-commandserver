@@ -1,14 +1,13 @@
-package org.dawnsci.slice.client;
+package org.dawnsci.slice.client.streamer;
 
+import java.io.ByteArrayInputStream;
+import java.io.ObjectInputStream;
 import java.net.URL;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.ShortDataset;
 
 class DataStreamer extends AbstractStreamer<IDataset> {
-
-	private static final Logger logger = LoggerFactory.getLogger(DataStreamer.class);
 	
 	/**
 	 * 
@@ -21,15 +20,22 @@ class DataStreamer extends AbstractStreamer<IDataset> {
 		init(url, sleepTime, cacheSize);
 	}
 	
-	public void run() {
-		
-       System.out.println("Data Streamer not supported!"); 
+	private static IDataset QUEUE_END = new ShortDataset();
+	
+	@Override
+	protected IDataset getQueueEndObject() {
+		return QUEUE_END;
 	}
 
 	@Override
-	protected boolean isCancelObject(IDataset bi) {
-		if (bi.getSize()<1) return true;
-		return false;
+	protected IDataset getFromStream(ByteArrayInputStream bais) throws Exception {
+		ObjectInputStream oin = new ObjectInputStream(bais);
+		try {
+			return (IDataset)oin.readObject();
+		} finally {
+			oin.close();
+		}
 	}
+
 
 }

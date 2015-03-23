@@ -1,18 +1,11 @@
 package org.dawnsci.slice.server.test;
 
 import java.awt.image.BufferedImage;
-import java.awt.image.DirectColorModel;
-import java.awt.image.IndexColorModel;
-import java.awt.image.WritableRaster;
 import java.util.Arrays;
-import java.util.concurrent.BlockingQueue;
 
 import org.dawnsci.slice.client.DataClient;
 import org.dawnsci.slice.server.Format;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.swt.graphics.ImageData;
-import org.eclipse.swt.graphics.PaletteData;
-import org.eclipse.swt.graphics.RGB;
 import org.junit.Test;
 
 /**
@@ -134,33 +127,33 @@ public class ClientTest {
 		System.out.println("Dropped images = "+client.getDroppedImageCount());
 	}
 
-//	@Test
-//	public void testFastMDATA() throws Exception {
-//		
-//		final DataClient client = new DataClient("http://localhost:8080/");
-//		client.setPath("RANDOM:512x512");
-//		client.setFormat(Format.MDATA);
-//		client.setHisto("MEAN");
-//		client.setSleep(10); // 100Hz - she's a fast one!
-//		
-//		int i = 0;
-//		while(!client.isFinished()) {
-//			
-//			final IDataset image = client.takeData();
-//			if (image ==null) break; // Last image in stream is null.
-//			if (image.getShape()[0]!=512) throw new Exception("Unexpected image height '"+image.getShape()[0]+"'");
-//			if (image.getShape()[1]!=512)  throw new Exception("Unexpected image height '"+image.getShape()[1]+"'");
-//			++i;
-//			if (i>1000) {
-//				client.setFinished(true);
-//				break; // That's enough of that
-//			}
-//			
-//			Thread.sleep(80);// Evil sleep means that take() is not as fast as send and there will be drops.
-//		}
-//	
-//		// We say
-//		System.out.println("Received images = "+i);
-//		System.out.println("Dropped images = "+client.getDroppedImageCount());
-//	}
+	@Test
+	public void testFastMDATA() throws Exception {
+		
+		final DataClient<IDataset> client = new DataClient<IDataset>("http://localhost:8080/");
+		client.setPath("RANDOM:512x512");
+		client.setFormat(Format.MDATA);
+		client.setHisto("MEAN");
+		client.setSleep(10); // 100Hz - she's a fast one!
+		
+		int i = 0;
+		while(!client.isFinished()) {
+			
+			final IDataset image = client.take();
+			if (image ==null) break; // Last image in stream is null.
+			if (image.getShape()[0]!=512) throw new Exception("Unexpected image height '"+image.getShape()[0]+"'");
+			if (image.getShape()[1]!=512)  throw new Exception("Unexpected image height '"+image.getShape()[1]+"'");
+			++i;
+			if (i>1000) {
+				client.setFinished(true);
+				break; // That's enough of that
+			}
+			
+			Thread.sleep(80);// Evil sleep means that take() is not as fast as send and there will be drops.
+		}
+	
+		// We say
+		System.out.println("Received images = "+i);
+		System.out.println("Dropped images = "+client.getDroppedImageCount());
+	}
 }

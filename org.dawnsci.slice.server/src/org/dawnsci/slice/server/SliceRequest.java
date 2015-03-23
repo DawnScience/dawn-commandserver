@@ -26,7 +26,6 @@ import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.plotting.api.histogram.HistogramBound;
 import org.eclipse.dawnsci.plotting.api.histogram.IImageService;
@@ -63,6 +62,7 @@ import org.eclipse.swt.graphics.RGB;
  *              JPG  - JPG made using IImageService to make the image
  *              PNG  - PNG made using IImageService to make the image
  *              MJPG:<dim> e.g. MJPG:0 to send the first dimension as slices in a series. NOTE slice mist be set in this case.
+ *              MDATA:<dim> e.g. MDATA:0 to send the first dimension as slices in a series as IDatasets. NOTE slice mist be set in this case.
  *              
  *    histo`  - Encoding of histo to the rules of ImageServiceBean.encode(...) / ImageServiceBean.decode(...)
  *              Example: "MEAN", "OUTLIER_VALUES:5-95"
@@ -134,8 +134,12 @@ class SliceRequest implements HttpSessionBindingListener {
 			sendImage(getData(lz, slices, bin), baseRequest, request, response, format);
 			break;
 			
-		case MJPG: // In the case of MJPG, we loop over doSlice(...)
+		case MJPG:  // In the case of MJPG, we loop over doSlice(...)
+		case MDATA: // In the case of MDATA, we loop over doSlice(...)
 			sendImages(lz, slices, baseRequest, request, response, format);
+			
+	    default:
+	    	throw new Exception("Cannot process format: "+format);
 		}
 
 	}
@@ -213,9 +217,10 @@ class SliceRequest implements HttpSessionBindingListener {
 
 		OutputStream out    = new BufferedOutputStream(response.getOutputStream(), 100000);
 
-        byte[] mcontent_type = ("Content-Type: "+Constants.MCONTENT_TYPE+";boundary="+delemeter_str).getBytes("UTF-8");
-		byte[] delimiter     = ("--"+delemeter_str).getBytes("UTF-8");
-		byte[] content_type  = "Content-Type: image/jpeg".getBytes("UTF-8");
+        byte[] mcontent_type  = ("Content-Type: "+Constants.MCONTENT_TYPE+";boundary="+delemeter_str).getBytes("UTF-8");
+		byte[] delimiter      = ("--"+delemeter_str).getBytes("UTF-8");
+		final String mimeType = format==Format.MJPG ? Constants.JPG_TYPE : Constants.OBJECT_TYPE;
+		byte[] content_type   = ("Content-Type: "+mimeType).getBytes("UTF-8");
 		try {
 
 			if (isIE(request)) {
@@ -237,13 +242,8 @@ class SliceRequest implements HttpSessionBindingListener {
 				if (data.getRank()!=2 && data.getRank()!=1) {
 					throw new Exception("The data used to make an image must either be 1D or 2D!"); 
 				}
-
-				bean.setImage(data);
-
-				final ImageData    imdata = service.getImageData(bean);
-				final BufferedImage image = service.getBufferedImage(imdata);
 				
-				final byte[]       frame  = getFrame(image);
+				final byte[]       frame  = getFrame(data, bean, format);
 				byte[] content_length = ("Content-Length: " + frame.length).getBytes("UTF-8");
 				
 				out.write(delimiter);
@@ -276,10 +276,30 @@ class SliceRequest implements HttpSessionBindingListener {
 			   !userAgent.toLowerCase().contains("chrome");
 	}
 
-	private byte[] getFrame(BufferedImage image) throws IOException {
+	private byte[] getFrame(IDataset data, ImageServiceBean bean, Format format) throws Exception {
 		
-		final ByteArrayOutputStream stream = new ByteArrayOutputStream();
-		ImageIO.write(image, "jpg", stream);
+		ByteArrayOutputStream stream = null;
+		if (format == Format.MJPG) {
+			bean.setImage(data);
+
+			IImageService service = ServiceHolder.getImageService();
+			final ImageData    imdata = service.getImageData(bean);
+			final BufferedImage image = service.getBufferedImage(imdata);
+            
+			stream = new ByteArrayOutputStream();
+			ImageIO.write(image, "jpg", stream);
+	        
+		} else if (format == Format.MDATA) {
+			
+			stream = new ByteArrayOutputStream();
+			final ObjectOutputStream    oout   = new ObjectOutputStream(stream);
+			try {
+				oout.writeObject(data);
+			} finally {
+				oout.close();
+			}
+		}
+		
         return stream.toByteArray();
 	}
 
@@ -324,10 +344,7 @@ class SliceRequest implements HttpSessionBindingListener {
 
 		final ObjectOutputStream ostream = new ObjectOutputStream(response.getOutputStream());
 		try {
-			Object buffer = ((Dataset)data).getBuffer();
-			ostream.writeObject(buffer);
-			ostream.writeObject(data.getShape());
-			ostream.writeObject(data.getMetadata());
+			ostream.writeObject(data);
 			
 		} catch (Exception ne) {
 			ne.printStackTrace();

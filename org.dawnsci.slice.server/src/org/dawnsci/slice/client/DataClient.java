@@ -8,10 +8,9 @@ import java.net.URLEncoder;
 
 import javax.imageio.ImageIO;
 
+import org.dawnsci.slice.client.streamer.IStreamer;
+import org.dawnsci.slice.client.streamer.StreamerFactory;
 import org.dawnsci.slice.server.Format;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.IMetadata;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 /**
  *   
  *    Class to look after making a connection to the HTTP Data slice server.
@@ -109,8 +108,7 @@ public class DataClient<T> {
 		if (isFinished()) throw new Exception("Client has infinished reading images!");
 		if (streamer==null) {
 			this.isFinished = false;
-			Class<? extends IStreamer<?>> clazz = getStreamClass();
-	        this.streamer = (IStreamer<T>)clazz.getConstructor(URL.class, long.class, int.class).newInstance(new URL(getURLString()), sleep, imageCache);
+	        this.streamer = (IStreamer<T>)StreamerFactory.getStreamer(new URL(getURLString()), getSleep(), imageCache, format);
 	        streamer.start(); // Runs thread to add to queue
 		}
 		
@@ -120,19 +118,6 @@ public class DataClient<T> {
 			streamer = null; // A null image means that the connection is down.
 		}
         return image;
-	}
-
-	
-	private Class<? extends IStreamer<?>> getStreamClass() throws Exception {
-		
-		if (format==Format.MJPG) {
-			return MJPGStreamer.class;
-		}
-		
-		if (format==Format.MDATA) {
-			return DataStreamer.class;
-		}
-		throw new Exception("Cannot find streamer class for format : "+format);
 	}
 
 	public long getDroppedImageCount() {
@@ -190,15 +175,7 @@ public class DataClient<T> {
 	        ObjectInputStream oin=null;
 			try {
 		        oin  = new ObjectInputStream(url.openStream());
-				
-				Object buffer = oin.readObject();
-				Object shape  = oin.readObject();
-				Object meta   = oin.readObject();
-				
-				IDataset ret = DatasetFactory.createFromObject(buffer);
-				ret.setShape((int[])shape);
-				ret.setMetadata((IMetadata)meta);
-				return (T)ret;
+				return (T)oin.readObject();
 				
 			} finally {
 				if (oin!=null) oin.close();

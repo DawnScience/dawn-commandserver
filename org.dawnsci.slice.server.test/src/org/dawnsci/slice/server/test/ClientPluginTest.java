@@ -18,6 +18,7 @@ import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace.DownsampleType;
 import org.eclipse.dawnsci.plotting.api.trace.ITrace;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.ide.FileStoreEditorInput;
@@ -59,24 +60,36 @@ public class ClientPluginTest {
     	
     	IPlotImageService plotService = (IPlotImageService)ServiceManager.getService(IPlotImageService.class);
      		
-    	final DataClient client = new DataClient("http://localhost:8080/");
+    	final DataClient<BufferedImage> client = new DataClient<BufferedImage>("http://localhost:8080/");
     	client.setPath("c:/Work/results/TomographyDataSet.hdf5");
     	client.setDataset("/entry/exchange/data");
     	client.setSlice("[700,:1024,:1024]");
     	client.setBin("MEAN:2x2");
     	client.setFormat(Format.MJPG);
-    	client.setHisto("MEAN");
+    	client.setHisto("MEDIAN");
     	client.setSleep(100); // Default anyway is 100ms
 
 
-    	while(!client.isFinished()) {
-
-    		final BufferedImage image = client.take();
-    		if (image==null) break;
-    		
-    		IDataset set = plotService.createDataset(image);
-    		imt.setData(set, null, false);
-    		EclipseUtils.delay(1000);
+    	try {
+	    	while(!client.isFinished()) {
+	
+	    		final BufferedImage image = client.take();
+	    		if (image==null) break;
+	    		
+	    		final IDataset set = plotService.createDataset(image);
+	    		
+	    		Display.getDefault().syncExec(new Runnable() {
+	    			public void run() {
+	    	    		imt.setData(set, null, false);
+	    	    		sys.repaint();
+	    			}
+	    		});
+	    		
+	    		EclipseUtils.delay(1000);
+	    	}
+    	} catch (Exception ne) {
+    		client.setFinished(true);
+    		throw ne;
     	}
 
  		

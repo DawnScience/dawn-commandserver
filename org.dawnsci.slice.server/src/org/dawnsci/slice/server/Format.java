@@ -2,7 +2,25 @@ package org.dawnsci.slice.server;
 
 public enum Format {
 
-	DATA, JPG, PNG, MJPG(0);
+	/**
+	 * Single data shot
+	 */
+	DATA, 
+	
+	/**
+	 * Stream of IDataset
+	 */
+	MDATA(0), 
+	
+	/**
+	 * Single Image
+	 */
+	JPG, PNG, 
+	
+	/**
+	 * Stream of images
+	 */
+	MJPG(0); 
 	
 	/**
 	 * The dimension to slice over when doing MJPG streams.
@@ -43,8 +61,9 @@ public enum Format {
 		switch(this) {
 		case JPG:
 		case PNG:
-		case MJPG:
 			return toString().toLowerCase();
+		case MJPG:
+			return "jpg";
 		default:
 			throw new RuntimeException("ImageIO not supported with format: "+this);
 		}

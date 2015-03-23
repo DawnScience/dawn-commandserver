@@ -1,13 +1,11 @@
 package org.dawnsci.slice.client;
 
 import java.awt.image.BufferedImage;
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import javax.imageio.ImageIO;
 
@@ -15,16 +13,11 @@ import org.dawnsci.slice.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-class MJPGStreamer implements Runnable {
+class MJPGStreamer extends AbstractStreamer<BufferedImage> {
 
 	private static final Logger logger = LoggerFactory.getLogger(MJPGStreamer.class);
 	
-	private BlockingQueue<BufferedImage> queue;
 	private String                       delimiter;
-	private InputStream                  in;
-	private long                         sleepTime;
-	private long                         droppedImages = 0;
-	private boolean                      isFinished;
 
 	/**
 	 * 
@@ -35,19 +28,12 @@ class MJPGStreamer implements Runnable {
 	 */
 	public MJPGStreamer(URL url, long sleepTime, int cacheSize) throws Exception {
 		
-		URLConnection  conn = url.openConnection();
-        conn.setDoInput(true);
-        conn.setDoOutput(true);
-        conn.setUseCaches(false);
-
+		URLConnection conn = init(url, sleepTime, cacheSize);
+		
         String contentType = conn.getContentType();
         if (!contentType.startsWith(Constants.MCONTENT_TYPE)) throw new Exception("getImages() may only be used with "+Constants.MCONTENT_TYPE);
 
         this.delimiter  = contentType.split("\\;boundary=")[1];
-		this.queue      = new LinkedBlockingQueue<BufferedImage>(cacheSize); // TODO How many images can be in the queue?
-		this.in         = new BufferedInputStream(conn.getInputStream());
-		this.sleepTime  = sleepTime;
-
 	}
 	
 	public void run() {
@@ -77,7 +63,7 @@ class MJPGStreamer implements Runnable {
                         	Object gone = queue.poll(); // Goodbye
                         	if (gone!=null) {
                         		droppedImages+=1;
-                               	logger.info("We dropped an image of size "+clength+" bytes when reading an MJPG Stream");
+                               	logger.trace("We dropped an image of size "+clength+" bytes when reading an MJPG Stream");
                         	}
                         }
 						queue.add(image);
@@ -92,6 +78,7 @@ class MJPGStreamer implements Runnable {
 			}
 			
 		} catch (Exception ne) {
+			setFinished(true);
 			logger.error("Cannot read input stream in "+getClass().getSimpleName(), ne);
 			
 		} finally {
@@ -105,19 +92,7 @@ class MJPGStreamer implements Runnable {
 		}
 	}
 	
-	/**
-	 * Blocks until image added. Once null is added, we are done.
-	 * @return Image or null when finished.
-	 * 
-	 * @throws InterruptedException
-	 */
-	public BufferedImage take() throws InterruptedException {
-		BufferedImage bi = queue.take(); // Might get interrupted
-		if (bi.getWidth()<2 && bi.getHeight()<2) {
-			return null;
-		}
-		return bi;
-	}
+	
 	
 	private BufferedImage readImage(InputStream in, int clength) throws Exception {
 		
@@ -145,24 +120,11 @@ class MJPGStreamer implements Runnable {
 
 	}
 
-	public long getDroppedImages() {
-		return droppedImages;
+	@Override
+	protected boolean isCancelObject(BufferedImage bi) {
+		if (bi.getWidth()<2 && bi.getHeight()<2) {
+			return true;
+		}
+		return false;
 	}
-
-	public void start() {
-		Thread thread = new Thread(this);
-		thread.setPriority(Thread.MIN_PRIORITY);
-		thread.setDaemon(true);
-		thread.setName("MJPG Streamer");
-		thread.start();
-	}
-
-	/**
-	 * Call to tell the streamer to stop adding images to its queue.
-	 * @param b
-	 */
-	public void setFinished(boolean b) {
-		this.isFinished = b;
-	}
-
 }

@@ -1,6 +1,5 @@
 package org.dawnsci.slice.client;
 
-import java.awt.image.BufferedImage;
 import java.io.ObjectInputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URL;
@@ -38,7 +37,8 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
  *              DATA - zipped slice, binary (default)
  *              JPG  - JPG made using IImageService to make the image
  *              PNG  - PNG made using IImageService to make the image
- *              MJPG:<dim> e.g. MJPG:0 to send the first dimension as slices in a series. NOTE slice mist be set in this case.
+ *              MJPG:<dim> e.g. MJPG:0 to send the first dimension as slices in a series as JPGs. NOTE slice mist be set in this case.
+ *              MDATA:<dim> e.g. MDATA:0 to send the first dimension as slices in a series as IDatasets. NOTE slice mist be set in this case.
  *
  *    histo`  - Encoding of histo to the rules of ImageServiceBean.encode(...) / ImageServiceBean.decode(...)
  *              Example: "MEAN", "OUTLIER_VALUES:5-95"
@@ -47,11 +47,31 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
  *    sleep   - Time to sleep between sending images, default 100ms.
  * 
  *    `URL encoded.
+ *    
+ *    Usage:
+ *    Normally we simply use getImage() or get data but for a stream, the formula is:
+
+    <code>
+    	try {
+	    	while(!client.isFinished()) {
+	
+	    		final BufferedImage image = client.take(); // Blocks
+	    		if (image==null) break;
+	    		
+	    		// Do what we want with the image, may cause exception
+	    		//...
+	    	}
+    	} catch (Exception ne) {
+    		client.setFinished(true);
+    		throw ne;
+    	}
+    </code>
 
  * @author fcp94556
  *
  */
-public class DataClient {
+public class DataClient<T> {
+
 
 	private String     base;
 	private String     path;
@@ -65,7 +85,8 @@ public class DataClient {
 	private boolean    isFinished;
 	
 	// Private data, not getter/setter
-	private MJPGStreamer streamer;
+	private IStreamer<T> streamer;
+	
 
 	public DataClient(String base) {
 		this.base = base;
@@ -77,31 +98,62 @@ public class DataClient {
 	 * @return
 	 * @throws Exception
 	 */
-	public BufferedImage take() throws Exception {
+	public T take() throws Exception {
 		
-		if (format!=Format.MJPG) {
-			return getImage();
+		if (format!=Format.MJPG && format.isImage()) {
+			return get();
+		} else if (format!=Format.MDATA && (format==null || format==Format.DATA)) {
+			return get();
 		}
+		
 		if (isFinished()) throw new Exception("Client has infinished reading images!");
 		if (streamer==null) {
 			this.isFinished = false;
-	        this.streamer = new MJPGStreamer(new URL(getURLString()), sleep, imageCache);
+			Class<? extends IStreamer<?>> clazz = getStreamClass();
+	        this.streamer = (IStreamer<T>)clazz.getConstructor(URL.class, long.class, int.class).newInstance(new URL(getURLString()), sleep, imageCache);
 	        streamer.start(); // Runs thread to add to queue
 		}
 		
-		BufferedImage image = streamer.take();
+		T image = streamer.take();
 		if (image == null) {
 			isFinished = true;
 			streamer = null; // A null image means that the connection is down.
 		}
-		return image;
+        return image;
 	}
+
 	
+	private Class<? extends IStreamer<?>> getStreamClass() throws Exception {
+		
+		if (format==Format.MJPG) {
+			return MJPGStreamer.class;
+		}
+		
+		if (format==Format.MDATA) {
+			return DataStreamer.class;
+		}
+		throw new Exception("Cannot find streamer class for format : "+format);
+	}
+
 	public long getDroppedImageCount() {
 		return streamer.getDroppedImages();
 	}
+	
+	public T get() throws Exception {
+		
+		if (format==null) format = Format.DATA;
+		switch(format) {
+		case DATA:
+			return getData();
+		case JPG:
+		case PNG:
+			return getImage();
+		}
+		throw new Exception("Format '"+format+"' cannot be used with get()");
+	}
 
-	public BufferedImage getImage() throws Exception {
+
+	private T getImage() throws Exception {
 		
 		isFinished = false;
 		try {
@@ -115,14 +167,14 @@ public class DataClient {
 			conn.setDoOutput(true);
 			conn.setUseCaches(false);
 
-			return ImageIO.read(url.openStream());
+			return (T)ImageIO.read(url.openStream());
 		} finally {
 			isFinished = true;
 		}
 	}
 
 	
-	public IDataset getData() throws Exception {
+	private T getData() throws Exception {
 		isFinished = false;
 		try {
 			if (format!=null && format!=Format.DATA) {
@@ -146,7 +198,7 @@ public class DataClient {
 				IDataset ret = DatasetFactory.createFromObject(buffer);
 				ret.setShape((int[])shape);
 				ret.setMetadata((IMetadata)meta);
-				return ret;
+				return (T)ret;
 				
 			} finally {
 				if (oin!=null) oin.close();
@@ -237,7 +289,7 @@ public class DataClient {
 			return false;
 		if (getClass() != obj.getClass())
 			return false;
-		DataClient other = (DataClient) obj;
+		DataClient<T> other = (DataClient<T>) obj;
 		if (base == null) {
 			if (other.base != null)
 				return false;

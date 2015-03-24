@@ -9,10 +9,7 @@
 package org.dawnsci.commandserver.core.consumer;
 
 import java.net.URI;
-import java.util.Collection;
-import java.util.Comparator;
 import java.util.Enumeration;
-import java.util.TreeSet;
 import java.util.UUID;
 
 import javax.jms.Connection;

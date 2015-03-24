@@ -162,6 +162,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 		this.session  = aliveConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
 		this.producer = session.createProducer(topic);
+		logger.warn(getName()+" Heartbeat ActiveMQ connection to "+uri+" made.");
 		return producer;
 	}
 

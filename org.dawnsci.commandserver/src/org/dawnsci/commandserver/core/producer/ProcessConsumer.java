@@ -255,7 +255,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		final MessageConsumer consumer = session.createConsumer(queue);
 		connection.start();
 		
-		logger.warn(getName()+" ActiveMQ connection to "+uri+" made.");
+		logger.warn(getName()+" Submission ActiveMQ connection to "+uri+" made.");
 		
 		return consumer;
 	}

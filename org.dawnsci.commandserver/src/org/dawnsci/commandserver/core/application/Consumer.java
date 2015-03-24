@@ -66,7 +66,7 @@ public class Consumer implements IApplication {
 		if (logBack.exists()) {
 			System.out.println("Setting logback.configurationFile to "+logBack.getAbsolutePath());
 			System.setProperty("logback.configurationFile", logBack.getAbsolutePath());
-			System.out.println("Log file is probably at: "+System.getProperty("java.io.tmpdir")+System.getProperty("user.name")+"-"+clazz.getSimpleName()+".log");
+			System.out.println("Log file is probably at: "+System.getProperty("java.io.tmpdir")+"/"+System.getProperty("user.name")+"-"+clazz.getSimpleName()+".log");
 		}
 		
 		this.consumer = clazz.newInstance();

@@ -33,6 +33,8 @@ import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -41,13 +43,19 @@ import com.sun.jna.Platform;
 
 
 /**
- * Extend to provide a connection between a running process 
- * and its 
+ * Extend to provide a connection between a running process.
+ * 
+ * This class has a user readable log file, represented by PrintStream out
+ * and a logger. A given message might be applicable for both places, depending
+ * on what message the user might need to see.
  * 
  * @author Matthew Gerring
  *
  */
 public abstract class ProgressableProcess implements Runnable, IBroadcaster {
+
+	private static final Logger logger = LoggerFactory.getLogger(ProgressableProcess.class);
+
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
@@ -74,8 +82,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
-			// Not fatal but would be nice...
-			e.printStackTrace();
+			logger.warn("Cannot find local host!", e);
 		}
 		broadcast(bean);
 	}
@@ -106,6 +113,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
         	}
         } catch (Exception ne) {
         	ne.printStackTrace(out);
+			logger.error("Cannot run process!", ne);
         	
 			bean.setStatus(Status.FAILED);
 			bean.setMessage(ne.getMessage());
@@ -204,7 +212,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 			cancelMonitor();
 			broadcaster.broadcast(bean, false);
 		} catch (Exception e) {
-			e.printStackTrace();
+			logger.error("Cannot broadcast", e);
 		}
  	}
 
@@ -216,7 +224,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 			try {
 			    topicConnection.close();
 			} catch (Exception ne) {
-				ne.printStackTrace();
+				logger.error("Cannot close topic", ne);
 			}
 		}
 	}
@@ -273,7 +281,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 
     				}
     			} catch (Exception e) {
-    				e.printStackTrace();
+    				logger.error("Cannot deal with message "+message, e);
     			}
     		}
 
@@ -343,7 +351,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
-				e.printStackTrace();
+				logger.error("Dry run sleeping failed", e);
 			}
 			System.out.println("Dry run : "+bean.getPercentComplete());
 			bean.setPercentComplete(i);

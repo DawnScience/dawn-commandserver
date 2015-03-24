@@ -8,9 +8,11 @@
  */
 package org.dawnsci.commandserver.core.application;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
@@ -35,6 +37,8 @@ import org.osgi.framework.Bundle;
  */
 public class Consumer implements IApplication {
 
+	// DO NOT USE Log4j in this class until logback.configurationFile has been set.
+	
 	private IConsumerExtension consumer;
 
 	@Override
@@ -55,6 +59,15 @@ public class Consumer implements IApplication {
 		
 		@SuppressWarnings("unchecked")
 		final Class<? extends IConsumerExtension> clazz = (Class<? extends IConsumerExtension>) bundle.loadClass(conf.get("consumer"));
+		
+		// Logging, if any
+		final File   loc    = FileLocator.getBundleFile(bundle);
+		final File   logBack= new File(loc, "logback.xml");
+		if (logBack.exists()) {
+			System.out.println("Setting logback.configurationFile to "+logBack.getAbsolutePath());
+			System.setProperty("logback.configurationFile", logBack.getAbsolutePath());
+			System.out.println("Log file is probably at: "+System.getProperty("java.io.tmpdir")+System.getProperty("user.name")+"-"+clazz.getSimpleName()+".log");
+		}
 		
 		this.consumer = clazz.newInstance();
 		consumer.init(conf);

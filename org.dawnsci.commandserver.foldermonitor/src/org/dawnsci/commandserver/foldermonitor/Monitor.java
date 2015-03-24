@@ -110,7 +110,7 @@ public class Monitor extends AliveConsumer {
 	@Override
 	public void start() throws Exception {
 		
-		startNotifications(); // Tell the GUI that we are alive
+		startHeartbeat(); // Tell the GUI that we are alive
 		
 		boolean nio = Boolean.parseBoolean(config.get("nio"));
 		if (nio) {

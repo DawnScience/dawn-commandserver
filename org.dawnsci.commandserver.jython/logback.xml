@@ -1,0 +1,51 @@
+<configuration debug="false">
+  
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>DEBUG</level>
+	</filter>
+    <encoder>
+      <pattern>%d{HH:mm:ss.SSS} %-5level %msg %n</pattern>
+    </encoder>
+  </appender>
+
+	<appender name="DebugFILE"
+		class="ch.qos.logback.core.rolling.RollingFileAppender">
+		
+		<!--  CHANGE THIS IF CONFIG COPIED 'JythonConsumer" to the class name of your consumer. -->
+		<file>${java.io.tmpdir}/${user.name}-JythonConsumer.log</file>
+		
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <!-- daily rollover -->
+            <fileNamePattern>${java.io.tmpdir}/${user.name}-JythonConsumer%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+
+	   	    <!--  CHANGE THIS IF CONFIG COPIED 'MXSubmissionConsumer" to the class name of your consumer. -->
+            <timeBasedFileNamingAndTriggeringPolicy
+                class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+                <!-- or whenever the file size reaches 20MB -->
+                <maxFileSize>20MB</maxFileSize>
+            </timeBasedFileNamingAndTriggeringPolicy>
+			<!-- keep 1 days' worth of history we are only a GUI -->
+            <maxHistory>1</maxHistory>
+            <cleanHistoryOnStart>true</cleanHistoryOnStart>
+        </rollingPolicy>
+		
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>WARN</level>
+		</filter>
+		<encoder>
+			<pattern>%d %-5level %logger - %m %ex %n</pattern>
+		</encoder>
+	</appender>
+
+	<logger name="org.apache.commons" level="ERROR"/>
+	
+	<logger name="ncsa.hdf" level="ERROR"/>
+	
+	<root>
+		<level value="ALL" />
+		<appender-ref ref="DebugFILE" />
+		<appender-ref ref="STDOUT" />
+	</root>
+	
+</configuration>

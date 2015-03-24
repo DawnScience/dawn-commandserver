@@ -25,7 +25,7 @@
                 <!-- or whenever the file size reaches 20MB -->
                 <maxFileSize>20MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
-			<!-- keep 1 days' worth of history we are only a GUI -->
+			<!-- keep 1 days' worth of history we are only a consumer -->
             <maxHistory>1</maxHistory>
             <cleanHistoryOnStart>true</cleanHistoryOnStart>
         </rollingPolicy>

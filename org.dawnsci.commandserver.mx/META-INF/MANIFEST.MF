@@ -12,3 +12,4 @@ Require-Bundle: org.dawnsci.commandserver;bundle-version="1.0.0",
 Export-Package: org.dawnsci.commandserver.mx.beans,
  org.dawnsci.commandserver.mx.consumer,
  org.dawnsci.commandserver.mx.process
+Import-Package: org.slf4j;version="1.7.6"

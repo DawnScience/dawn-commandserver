@@ -29,10 +29,14 @@ import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AliveConsumer implements IConsumerExtension {
+	
+	private static final Logger logger = LoggerFactory.getLogger(AliveConsumer.class);
 
 	private URI                  uri;
 
@@ -68,11 +72,10 @@ public abstract class AliveConsumer implements IConsumerExtension {
 		try {
 			cbean.setHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {
-			// Not fatal but would be nice...
-			e.printStackTrace();
+			logger.error("Cannot find host!", e);
 		}
 
-		System.out.println("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");
+		logger.info("Running events on topic "+Constants.ALIVE_TOPIC+" to notify of '"+getName()+"' service being available.");
 		
 		
 		final Thread aliveThread = new Thread(new Runnable() {
@@ -155,7 +158,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 
     				}
     			} catch (Exception e) {
-    				e.printStackTrace();
+    				logger.error("Cannot deal with terminate message "+message);
     			}
     		}
 

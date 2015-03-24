@@ -35,6 +35,8 @@ import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -52,6 +54,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public abstract class ProcessConsumer extends AliveConsumer {
 	
+	private static final Logger logger = LoggerFactory.getLogger(ProcessConsumer.class);
+
 
 	private String submitQName, statusTName, statusQName;
 	protected Map<String, String> config;
@@ -143,7 +147,8 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		final MessageConsumer consumer = session.createConsumer(queue);
 		connection.start();
 		
-		System.out.println("Starting consumer for submissions to queue "+submitQName);
+		logger.warn("Starting consumer for submissions to queue "+submitQName);
+		
         while (isActive()) { // You have to kill it or call stop() to stop it!
             
         	try {
@@ -179,14 +184,14 @@ public abstract class ProcessConsumer extends AliveConsumer {
                     	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
                     	if (process!=null) {
                     		if (process.isBlocking()) {
-                        	    System.out.println("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    			logger.info("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     		}
                     		processCount++;
                     		process.start();
                     		if (process.isBlocking()) {
-                        	    System.out.println("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    			logger.info("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     		} else {
-                        	    System.out.println("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+                    			logger.info("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
                     		}
                     	}
                     	
@@ -195,7 +200,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
        		
         	} catch (Throwable ne) {
         		// Really basic error reporting, they have to pipe to file.
-        		ne.printStackTrace();
+        		logger.error("Cannot receive messages from activemq!", ne);
         		setActive(false);
         	}
 		}
@@ -282,7 +287,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		            	}
 
 	            	} catch (Exception ne) {
-	            		System.out.println("Message "+t.getText()+" is not legal and will be removed.");
+	            		logger.warn("Message "+t.getText()+" is not legal and will be removed.", ne);
 	            		removeIds.add(t.getJMSMessageID());
 	            	}
 	        	}
@@ -307,7 +312,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		        		bean.setStatus(Status.FAILED);
 		        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
 		        		
-                    	System.out.println("Failed job "+bean.getName()+" messageid("+jMSMessageID+")");
+		        		logger.warn("Failed job "+bean.getName()+" messageid("+jMSMessageID+")");
 
 		        	}
 				}

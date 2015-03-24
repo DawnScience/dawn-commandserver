@@ -24,6 +24,8 @@ import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.POSIX;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Rerun of several collections as follows:
@@ -37,6 +39,8 @@ import org.dawnsci.commandserver.mx.beans.ProjectBean;
  */
 public class Xia2Process extends ProgressableProcess{
 	
+	private static final Logger logger = LoggerFactory.getLogger(Xia2Process.class);
+
 	private final static String SETUP_COMMAND = "module load xia2"; // Change by setting org.dawnsci.commandserver.mx.moduleCommand	
 	private final static String XIA2_NAME     = "xia2";             // Change by setting org.dawnsci.commandserver.mx.xia2Command
 	
@@ -77,10 +81,11 @@ public class Xia2Process extends ProgressableProcess{
  		final File   xia2Dir = getUnique(new File(runDir), "MultiCrystal_", 1);
 		xia2Dir.mkdirs();
 		
+		File processLog = new File(xia2Dir, "xia2JavaProcessLog.txt");
  		try {
-			setLoggingFile(new File(xia2Dir, "xia2JavaProcessLog.txt"));
+			setLoggingFile(processLog);
 		} catch (IOException e1) {
-			e1.printStackTrace();
+			logger.error("Cannot redirect logging file to "+processLog, e1);
 		}
  		
  		// Example:
@@ -93,7 +98,7 @@ public class Xia2Process extends ProgressableProcess{
 		try {
 			writeProjectBean(processingDir, "projectBean.json");
 		} catch (Exception e) {
-			e.printStackTrace(out);
+			logger.error("Cannot write project json bean in "+processingDir, e);
 		}
 		
 		// If we have the -scriptLocation argument, use that
@@ -279,6 +284,7 @@ public class Xia2Process extends ProgressableProcess{
 					// Should we send the failure to monitor the file as an error?
 					// NOPE because xia2 writes an error file, that info is more useful.
 					ne.printStackTrace(out);
+					logger.error("Cannot monitor xia2 progress ", ne);
 				}
 			}
 		});

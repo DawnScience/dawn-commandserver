@@ -33,6 +33,7 @@ import javax.jms.TextMessage;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.slf4j.Logger;
@@ -86,7 +87,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 */
 	public void start() throws Exception {
 		
-		startNotifications();
+		startHeartbeat();
 		createTerminateListener();
 		
 		processStatusQueue(getUri(), statusQName);
@@ -126,6 +127,17 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	// TODO FIXME
 	protected volatile int processCount;
 
+    /**
+     * A consumer of the submitQ which can get recreated
+     * Should activeMQ go down.
+     */
+	private MessageConsumer consumer;
+
+    /**
+     * The connection which is active and should be closed.
+     */
+	private Connection connection;
+
 	/**
 	 * WARNING - starts infinite loop - you have to kill 
 	 * @param uri
@@ -138,76 +150,116 @@ public abstract class ProcessConsumer extends AliveConsumer {
 										String submitQName,
 										String statusTName, 
 										String statusQName) throws Exception {
+		
+		logger.warn("Starting consumer for submissions to queue "+submitQName);
+		
+    	ObjectMapper mapper = new ObjectMapper();
+		long waitTime = 0;
+   	
+        while (isActive()) { // You have to kill it or call stop() to stop it!
+            
+        	try {
+        		
+        		// Consumes messages from the queue.
+	        	Message m = getMessage(uri, submitQName);
+	            if (m!=null) {
+		        	waitTime = 0; // We got a message
+	            	
+	            	// TODO FIXME Check if we have the max number of processes
+	            	// exceeded and wait until we don't...
+	            	
+	            	TextMessage t = (TextMessage)m;
+	            	
+	            	final StatusBean bean = mapper.readValue(t.getText(), getBeanClass());
+	            	sendBean(uri, t, bean);
+	            	
+	            }
+       		
+        	} catch (Throwable ne) {
+        		
+        		if (!isDurable()) break;
+        		        		
+       			Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
+       			waitTime+=Constants.NOTIFICATION_FREQUENCY;
+    			checkTime(waitTime); 
+    			
+        		logger.warn(getName()+" ActiveMQ connection to "+uri+" lost.");
+        		logger.warn("We will check every 2 seconds for 24 hours, until it comes back.");
 
+        		continue;
+        	}
+		}
+		
+	}
+	
+	private void sendBean(URI uri, TextMessage t, StatusBean bean) throws Exception {
+		
+		if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
+        	
+        	if (!isHandled(bean)) return; // Consume it and move on
+        	
+        	// Now we put the bean in the status queue and we 
+        	// start the process
+        	RemoteSubmission factory = new RemoteSubmission(uri);
+        	factory.setLifeTime(t.getJMSExpiration());
+        	factory.setPriority(t.getJMSPriority());
+        	factory.setTimestamp(t.getJMSTimestamp());
+        	factory.setQueueName(statusQName); // Move the message over to a status queue.
+        	
+        	factory.submit(bean, false);
+        	
+        	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
+        	if (process!=null) {
+        		if (process.isBlocking()) {
+        			logger.info("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+        		}
+        		processCount++;
+        		process.start();
+        		if (process.isBlocking()) {
+        			logger.info("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+        		} else {
+        			logger.info("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
+        		}
+        	}
+        	
+        }
+	}
+
+	private Message getMessage(URI uri, String submitQName) throws InterruptedException, JMSException {
+		
+		try {
+			if (this.consumer == null) {
+				this.consumer = createConsumer(uri, submitQName);
+			}
+			
+			return consumer.receive(1000);
+			
+		} catch (Exception ne) {
+			consumer = null;
+			try {
+				connection.close();
+			} catch (Exception expected) {
+				logger.info("Cannot close old connection", ne);
+			}
+			throw ne;
+		}
+	}
+
+	private MessageConsumer createConsumer(URI uri, String submitQName) throws JMSException {
+		
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		Connection    connection = connectionFactory.createConnection();
+		this.connection = connectionFactory.createConnection();
 		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue = session.createQueue(submitQName);
 
 		final MessageConsumer consumer = session.createConsumer(queue);
 		connection.start();
 		
-		logger.warn("Starting consumer for submissions to queue "+submitQName);
+		logger.warn(getName()+" ActiveMQ connection to "+uri+" made.");
 		
-        while (isActive()) { // You have to kill it or call stop() to stop it!
-            
-        	try {
-        		
-        		// Consumes messages from the queue.
-	        	Message m = consumer.receive(1000);
-	            if (m!=null) {
-	            	
-	            	// TODO FIXME Check if we have the max number of processes
-	            	// exceeded and wait until we dont...
-	            	
-	            	TextMessage t = (TextMessage)m;
-	            	ObjectMapper mapper = new ObjectMapper();
-	            	
-	            	final StatusBean bean = mapper.readValue(t.getText(), getBeanClass());
-	            	
-	            	
-	            	
-                    if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
-                    	
-                    	if (!isHandled(bean)) continue; // Consume it and move on
-                    	
-                    	// Now we put the bean in the status queue and we 
-                    	// start the process
-                    	RemoteSubmission factory = new RemoteSubmission(uri);
-                    	factory.setLifeTime(t.getJMSExpiration());
-                    	factory.setPriority(t.getJMSPriority());
-                    	factory.setTimestamp(t.getJMSTimestamp());
-                    	factory.setQueueName(statusQName); // Move the message over to a status queue.
-                    	
-                    	factory.submit(bean, false);
-                    	
-                    	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
-                    	if (process!=null) {
-                    		if (process.isBlocking()) {
-                    			logger.info("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-                    		}
-                    		processCount++;
-                    		process.start();
-                    		if (process.isBlocking()) {
-                    			logger.info("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-                    		} else {
-                    			logger.info("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-                    		}
-                    	}
-                    	
-                    }
-	            }
-       		
-        	} catch (Throwable ne) {
-        		// Really basic error reporting, they have to pipe to file.
-        		logger.error("Cannot receive messages from activemq!", ne);
-        		setActive(false);
-        	}
-		}
-		
+		return consumer;
 	}
-	
-	
+
 	/**
 	 * Override to stop handling certain events in the queue.
 	 * @param bean

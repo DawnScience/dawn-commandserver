@@ -16,6 +16,7 @@ import java.util.UUID;
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 import javax.jms.DeliveryMode;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
@@ -37,17 +38,22 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 public abstract class AliveConsumer implements IConsumerExtension {
 	
 	private static final Logger logger = LoggerFactory.getLogger(AliveConsumer.class);
+	
+	protected static final long ADAY = 24*60*60*1000; // ms
 
 	private URI                  uri;
 
-	protected Connection         aliveConnection;
+	private Connection           aliveConnection;
+	private Connection terminateConnection;
+	private Session              session;
+	
 	protected final String       consumerId;
 	protected String             consumerVersion;
 
 	private boolean active = true;
 
-	private Connection terminateConnection;
 	private ConsumerBean cbean;
+
 
 	protected AliveConsumer() {
 		this.consumerId      = System.currentTimeMillis()+"_"+UUID.randomUUID().toString();
@@ -60,7 +66,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 	 */
 	public abstract String getName();
 
-	protected void startNotifications() throws Exception {
+	protected void startHeartbeat() throws Exception {
 		
 		if (uri==null) throw new NullPointerException("Please set the URI before starting notifications!");
 		this.cbean = new ConsumerBean();
@@ -80,46 +86,83 @@ public abstract class AliveConsumer implements IConsumerExtension {
 		
 		final Thread aliveThread = new Thread(new Runnable() {
 			public void run() {
+
+				long waitTime = 0;
 				
-				try {
-					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
-					aliveConnection = connectionFactory.createConnection();
-					aliveConnection.start();
-	
-					final Session         session  = aliveConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-					final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
-					final MessageProducer producer = session.createProducer(topic);
+				final ObjectMapper mapper = new ObjectMapper();
+				// Here we are sending the message out to the topic
+				while(isActive()) {
+					try {
 
-					final ObjectMapper mapper = new ObjectMapper();
+						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);							
+						sendBeat(mapper.writeValueAsString(cbean));
+						waitTime = 0;
 
-					// Here we are sending the message out to the topic
-					while(isActive()) {
-						try {
-							Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
-							
-							TextMessage temp = session.createTextMessage(mapper.writeValueAsString(cbean));
-							producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
-							
-							if (ConsumerStatus.STARTING.equals(cbean.getStatus())) {
-								cbean.setStatus(ConsumerStatus.RUNNING);
-							}
-
-						} catch (InterruptedException ne) {
-							break;
-						} catch (Exception neOther) {
-							neOther.printStackTrace();
+						if (ConsumerStatus.STARTING.equals(cbean.getStatus())) {
+							cbean.setStatus(ConsumerStatus.RUNNING);
 						}
-					}
-				} catch (Exception ne) {
-					ne.printStackTrace();
-					setActive(false);
+
+					} catch (Exception ne) {
+						
+						if (!isDurable()) break;
+						
+						waitTime+=Constants.NOTIFICATION_FREQUENCY;
+						checkTime(waitTime);
+						
+		        		logger.warn(getName()+" ActiveMQ connection to "+uri+" lost.");
+		        		logger.warn("We will check every 2 seconds for 24 hours, until it comes back.");
+		        		
+						continue;							
+					} 
 				}
 			}
+
 		});
 		aliveThread.setName("Alive Notification Topic");
 		aliveThread.setDaemon(true);
 		aliveThread.setPriority(Thread.MIN_PRIORITY);
 		aliveThread.start();
+	}
+	
+	protected void checkTime(long waitTime) {
+		
+		if (waitTime>ADAY) {
+			setActive(false);
+			logger.warn("ActiveMQ permanently lost. "+getName()+" will now shutdown!");
+			System.exit(0);
+		}
+	}
+
+	private MessageProducer      producer;
+
+	protected void sendBeat(String json)  throws JMSException {
+		
+		try {
+			if (producer==null) producer = createProducer();
+			TextMessage temp = session.createTextMessage(json);
+			producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);	
+			
+		} catch (Exception ne) {
+			producer = null;
+			try {
+				aliveConnection.close();
+			} catch (Exception expected) {
+				logger.info("Cannot close old connection", expected);
+			}
+			throw ne;
+		}
+	}
+
+	private MessageProducer createProducer() throws JMSException {
+		
+		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);		
+		aliveConnection = connectionFactory.createConnection();
+		aliveConnection.start();
+
+		this.session  = aliveConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
+		final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
+		this.producer = session.createProducer(topic);
+		return producer;
 	}
 
     protected void createTerminateListener() throws Exception {
@@ -151,7 +194,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
     						if (bean.getStatus() == ConsumerStatus.REQUEST_TERMINATE) {
     							System.out.println(getName()+" has been requested to terminate and will exit.");
     							cbean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
-    							Thread.currentThread().sleep(2500);
+    							Thread.sleep(2500);
     							System.exit(0);
     						}
     					}
@@ -217,6 +260,17 @@ public abstract class AliveConsumer implements IConsumerExtension {
 
 	protected void setUri(URI uri) {
 		this.uri = uri;
+	}
+
+	
+	protected boolean durable = true;
+
+	public boolean isDurable() {
+		return durable;
+	}
+
+	public void setDurable(boolean durable) {
+		this.durable = durable;
 	}
 
 }

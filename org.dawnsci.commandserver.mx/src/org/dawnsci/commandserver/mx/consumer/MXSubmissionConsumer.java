@@ -15,6 +15,9 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
+import org.dawnsci.commandserver.mx.server.PathValidationServer;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * This consumer monitors a queue and starts runs based
@@ -28,6 +31,8 @@ import org.dawnsci.commandserver.mx.process.Xia2Process;
 public class MXSubmissionConsumer extends ProcessConsumer {
 
 	public final static String NAME = "Multi-crystal Reprocessing Consumer";
+	
+	private PathValidationServer server;
 	public MXSubmissionConsumer() {
 		consumerVersion = "1.1";
 	}
@@ -35,6 +40,28 @@ public class MXSubmissionConsumer extends ProcessConsumer {
 	@Override
 	public String getName() {
 		return NAME;
+	}
+	
+	@Override
+	public void start() throws Exception {
+		
+		if (config.containsKey("validatorport")) {
+			// We start a validator on this machine using Jetty
+			// This allows directory paths to be checked for existence and 
+			// if they are writable to the consumer.
+			this.server = new PathValidationServer();
+			server.setPort(Integer.parseInt(config.get("validatorport")));
+			server.start();
+		}
+		
+		// Blocking
+		super.start();
+	}
+	
+	@Override
+	public void stop() throws Exception {
+		super.stop();
+		if (server!=null) server.stop();
 	}
 
 	@Override

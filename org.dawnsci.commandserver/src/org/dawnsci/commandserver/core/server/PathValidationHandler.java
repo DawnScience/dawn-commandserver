@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.mx.server;
+package org.dawnsci.commandserver.core.server;
 
 
 import java.io.File;
@@ -13,7 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-public class PathValidationHandler extends AbstractHandler {
+class PathValidationHandler extends AbstractHandler {
 
 	@Override
 	public void handle(String target, Request baseRequest,
@@ -26,12 +26,20 @@ public class PathValidationHandler extends AbstractHandler {
 		try {
 			final String  path  = decode(request.getParameter("path"));
 			final File    file  = new File(path);
+			
 			boolean ok = file.exists() && file.canRead() && file.canWrite();
-		
-			response.getWriter().println(String.valueOf(ok));
+			if (ok) {
+				response.getWriter().println(String.valueOf(PathState.OK));
+			} else if (!file.exists()){
+				response.getWriter().println(String.valueOf(PathState.NON_EXISTING));
+			} else if (!file.canRead()){
+				response.getWriter().println(String.valueOf(PathState.NON_READABLE));
+			} else if (!file.canRead()){
+				response.getWriter().println(String.valueOf(PathState.NON_WRITABLE));
+			}
 
 		} catch (Exception ne) {
-			response.getWriter().println(String.valueOf(false));
+			response.getWriter().println(String.valueOf(PathState.INVALID));
 		}
 		
 	}

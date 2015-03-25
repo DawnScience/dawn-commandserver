@@ -1,4 +1,4 @@
-package org.dawnsci.commandserver.mx.server;
+package org.dawnsci.commandserver.core.server;
 
 import org.eclipse.jetty.server.Server;
 import org.slf4j.Logger;

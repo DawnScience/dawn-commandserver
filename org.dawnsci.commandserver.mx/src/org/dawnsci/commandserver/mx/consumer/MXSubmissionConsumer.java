@@ -13,11 +13,9 @@ import java.net.URI;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.dawnsci.commandserver.core.server.PathValidationServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
-import org.dawnsci.commandserver.mx.server.PathValidationServer;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This consumer monitors a queue and starts runs based

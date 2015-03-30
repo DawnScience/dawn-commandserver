@@ -11,5 +11,6 @@ package org.dawnsci.commandserver.ui.preference;
 public class CommandConstants {
 
 	public static final String JMS_URI            = "org.dawnsci.commandserver.URI";
+	public static final String DIR_CHECKING_URI   = "org.dawnsci.commandserver.xia2.directory.checkingURL";
 
 }

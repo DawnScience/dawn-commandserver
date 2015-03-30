@@ -22,6 +22,7 @@ public class CommandInitializer extends AbstractPreferenceInitializer {
 		
 		// TODO This is not the final URI
 		store.setDefault(CommandConstants.JMS_URI,          "tcp://sci-serv5.diamond.ac.uk:61616");
+		store.setDefault(CommandConstants.DIR_CHECKING_URI, "http://cs04r-sc-vserv-45.diamond.ac.uk:8619");
 
 	}
 

@@ -3,7 +3,6 @@ package org.dawnsci.slice.server.test;
 import java.awt.image.BufferedImage;
 import java.util.Collection;
 
-import org.dawb.common.services.IPlotImageService;
 import org.dawb.common.services.ServiceManager;
 import org.dawb.common.ui.util.EclipseUtils;
 import org.dawnsci.slice.client.DataClient;
@@ -11,6 +10,7 @@ import org.dawnsci.slice.server.Format;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
+import org.eclipse.dawnsci.plotting.api.image.IPlotImageService;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace.DownsampleType;
 import org.eclipse.dawnsci.plotting.api.trace.ITrace;

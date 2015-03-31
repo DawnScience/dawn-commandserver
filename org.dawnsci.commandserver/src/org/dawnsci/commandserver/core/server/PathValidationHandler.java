@@ -26,16 +26,15 @@ class PathValidationHandler extends AbstractHandler {
 		try {
 			final String  path  = decode(request.getParameter("path"));
 			final File    file  = new File(path);
-			
-			boolean ok = file.exists() && file.canRead() && file.canWrite();
-			if (ok) {
-				response.getWriter().println(String.valueOf(PathState.OK));
-			} else if (!file.exists()){
+							
+			if (!file.exists()){
 				response.getWriter().println(String.valueOf(PathState.NON_EXISTING));
 			} else if (!file.canRead()){
 				response.getWriter().println(String.valueOf(PathState.NON_READABLE));
-			} else if (!file.canRead()){
+			} else if (!file.canWrite()){
 				response.getWriter().println(String.valueOf(PathState.NON_WRITABLE));
+			} else {
+				response.getWriter().println(String.valueOf(PathState.OK));
 			}
 
 		} catch (Exception ne) {

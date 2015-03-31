@@ -7,6 +7,8 @@ import org.dawb.common.services.ServiceManager;
 import org.dawb.common.ui.util.EclipseUtils;
 import org.dawnsci.slice.client.DataClient;
 import org.dawnsci.slice.server.Format;
+import org.eclipse.dawnsci.analysis.api.dataset.DataEvent;
+import org.eclipse.dawnsci.analysis.api.dataset.IDataListener;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
@@ -28,6 +30,31 @@ import org.junit.Test;
  */
 public class ClientPluginTest {
 
+	private volatile int count = 0;
+	
+	/**
+	 * Test opens stream in plotting system.
+	 * @throws Exception
+	 */
+	@Test
+	public void testDynamicDataset() throws Exception {
+		
+		DataClient<BufferedImage> client = new DataClient<BufferedImage>("http://localhost:8080/");
+    	client.setPath("RANDOM:512x512");
+    	client.setFormat(Format.MJPG);
+    	client.setHisto("MEAN");
+    	client.setImageCache(10); // More than we will send...
+    	client.setSleep(100);     // Default anyway is 100ms
+
+    	IWorkbenchPart part = openView();
+		 
+		final IPlottingSystem   sys = (IPlottingSystem)part.getAdapter(IPlottingSystem.class);
+		final DynamicRGBDataset rgb = new DynamicRGBDataset(client, 512, 512);
+		sys.createPlot2D(rgb, null, null);
+
+		rgb.start(100); // blocks until 100 images received.
+	}
+	
 	/**
 	 * Test opens stream in plotting system.
 	 * @throws Exception
@@ -132,7 +159,7 @@ public class ClientPluginTest {
 	    		});
 	    		System.out.println("Slice "+i+" plotted");
 	    		++i;
-				if (i>1000) {
+				if (i>100) {
 					client.setFinished(true);
 					break; // That's enough of that
 				}

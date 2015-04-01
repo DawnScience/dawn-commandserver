@@ -1,10 +1,14 @@
 package org.dawnsci.commandserver.core.server;
 
 
-import java.io.File;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URLDecoder;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -13,7 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.eclipse.jetty.server.Request;
 import org.eclipse.jetty.server.handler.AbstractHandler;
 
-class PathValidationHandler extends AbstractHandler {
+class FilePermissionHandler extends AbstractHandler {
 
 	@Override
 	public void handle(String target, Request baseRequest,
@@ -24,23 +28,17 @@ class PathValidationHandler extends AbstractHandler {
 		baseRequest.setHandled(true);
 		
 		try {
-			final String  path  = decode(request.getParameter("path"));
-			final File    file  = new File(path);
+		    final String  spath  = decode(request.getParameter("path"));
+			final Path     path  = Paths.get(spath);
+			Set<PosixFilePermission> perms = Files.getPosixFilePermissions(path);
 							
-			if (!file.exists()){
-				response.getWriter().println(String.valueOf(PathState.NON_EXISTING));
-			} else if (!file.canRead()){
-				response.getWriter().println(String.valueOf(PathState.NON_READABLE));
-			} else if (!file.canWrite()){
-				response.getWriter().println(String.valueOf(PathState.NON_WRITABLE));
-			} else {
-				response.getWriter().println(String.valueOf(PathState.OK));
+			for (PosixFilePermission posixFilePermission : perms) {
+				response.getWriter().println(String.valueOf(posixFilePermission));
 			}
 
-		} catch (Exception ne) {
-			response.getWriter().println(String.valueOf(PathState.INVALID));
+		} catch (Throwable ne) {
+			response.getWriter().println("INALVID");
 		}
-		
 	}
 
 	

@@ -13,7 +13,7 @@ import java.net.URI;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
-import org.dawnsci.commandserver.core.server.PathValidationServer;
+import org.dawnsci.commandserver.core.server.FilePermissionServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
 
@@ -30,7 +30,7 @@ public class MXSubmissionConsumer extends ProcessConsumer {
 
 	public final static String NAME = "Multi-crystal Reprocessing Consumer";
 	
-	private PathValidationServer server;
+	private FilePermissionServer server;
 	public MXSubmissionConsumer() {
 		consumerVersion = "1.1";
 	}
@@ -47,7 +47,7 @@ public class MXSubmissionConsumer extends ProcessConsumer {
 			// We start a validator on this machine using Jetty
 			// This allows directory paths to be checked for existence and 
 			// if they are writable to the consumer.
-			this.server = new PathValidationServer();
+			this.server = new FilePermissionServer();
 			server.setPort(Integer.parseInt(config.get("validatorport")));
 			server.start();
 		}

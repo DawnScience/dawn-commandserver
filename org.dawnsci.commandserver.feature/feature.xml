@@ -234,4 +234,18 @@
          version="9.2.9.v20150224"
          unpack="false"/>
 
+   <plugin
+         id="org.eclipse.jetty.security"
+         download-size="0"
+         install-size="0"
+         version="9.2.9.v20150224"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.jetty.websocket.common"
+         download-size="0"
+         install-size="0"
+         version="9.2.9.v20150224"
+         unpack="false"/>
+
 </feature>

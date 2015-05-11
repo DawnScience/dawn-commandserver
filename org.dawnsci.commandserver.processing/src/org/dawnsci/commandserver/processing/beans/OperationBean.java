@@ -28,6 +28,8 @@ public class OperationBean extends StatusBean {
 	private String               filePath;              
 	private String               datasetPath;
 	private Map<Integer, String> slicing;
+	private Map<Integer, String> axesNames;
+	private String 				 outputFilePath;
 	
 	// The pipeline that we need to run
 	// The pipeline is saved shared disk at
@@ -35,6 +37,7 @@ public class OperationBean extends StatusBean {
 	// This is not ideal because if the consumer 
 	// and client do not share disk, it will not work.
 	private String               persistencePath;
+
 	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
 	
@@ -66,6 +69,14 @@ public class OperationBean extends StatusBean {
 	public void setFilePath(String fileName) {
 		this.filePath = fileName;
 	}
+	
+	public String getOutputFilePath() {
+		return outputFilePath;
+	}
+
+	public void setOutputFilePath(String outputFilePath) {
+		this.outputFilePath = outputFilePath;
+	}
 
 	public String getDatasetPath() {
 		return datasetPath;
@@ -89,6 +100,14 @@ public class OperationBean extends StatusBean {
 
 	public void setPersistencePath(String persistencePath) {
 		this.persistencePath = persistencePath;
+	}
+	
+	public void setAxesNames(Map<Integer, String> axesNames) {
+		this.axesNames = axesNames;
+	}
+	
+	public Map<Integer, String> getAxesNames() {
+		return this.axesNames;
 	}
 
 	@Override

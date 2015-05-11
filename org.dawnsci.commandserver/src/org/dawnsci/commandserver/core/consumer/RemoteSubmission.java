@@ -134,8 +134,6 @@ public class RemoteSubmission {
 		Queue queue   = qSes.createQueue(queueName);
 		qCon.start();
 		
-	    QueueBrowser qb = qSes.createBrowser(queue);
-   
     	Class        clazz  = obean.getClass();
     	ObjectMapper mapper = new ObjectMapper();
 	   
@@ -143,7 +141,7 @@ public class RemoteSubmission {
 	    	POLL: while(true) {
 	    		
 	    		Thread.sleep(500);
-	    		
+	    		QueueBrowser qb = qSes.createBrowser(queue);
 		    	@SuppressWarnings("rawtypes")
 		    	Enumeration  e  = qb.getEnumeration();
 	
@@ -153,9 +151,9 @@ public class RemoteSubmission {
 		    		if (m instanceof TextMessage) {
 		    			TextMessage t = (TextMessage)m;
 		    			final StatusBean bean = mapper.readValue(t.getText(), clazz);
+
 		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
 		    				if (bean.getStatus().isFinal()) return bean;
-System.out.println(bean.getPercentComplete());
 		    				continue POLL;
 		    			}
 		    		}

@@ -122,6 +122,12 @@ public class OperationSubmission extends RemoteSubmission {
 		return obean;
 	}
 
+	public void prepare(OperationBean obean) throws Exception {
+
+		// StatusBean stuff
+		obean.setRunDirectory(runDirectory);
+		obean.setName(name);
+	}
 
 	/**
 	 * @param dir

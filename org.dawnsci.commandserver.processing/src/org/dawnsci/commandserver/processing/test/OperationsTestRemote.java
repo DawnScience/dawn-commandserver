@@ -10,6 +10,8 @@ package org.dawnsci.commandserver.processing.test;
 
 import java.io.File;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
@@ -17,15 +19,20 @@ import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
+import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
+import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
+import org.eclipse.dawnsci.analysis.api.processing.OperationData;
+import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.fitting.functions.FunctionFactory;
@@ -51,10 +58,15 @@ import uk.ac.diamond.scisoft.analysis.processing.operations.ValueModel;
 public class OperationsTestRemote {
 
 	private static IOperationService    oservice;
+	private static IPersistenceService pservice;
 	
 	// OSGI fills this for us
 	public static void setOperationService(IOperationService s) {
 		oservice = s;
+	}
+	
+	public static void setPersistenceService(IPersistenceService p) {
+		pservice = p;
 	}
 
 	private IOperationContext   context;
@@ -128,7 +140,7 @@ public class OperationsTestRemote {
 	private void testRemoteRun(IOperationContext context2) throws Exception {
 		// Run the model
 		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"));
-		OperationBean obean = factory.submit(context);
+		OperationBean obean = factory.submit(context2);
 
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
@@ -137,6 +149,76 @@ public class OperationsTestRemote {
 
 		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
 		System.out.println(bean);		
+	}
+	
+	@Ignore
+	@Test
+	public void testRemoteReal() throws Exception {
+		IPersistentFile pf = pservice.getPersistentFile("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150331_164949.nxs");
+		IOperation<? extends IOperationModel, ? extends OperationData>[] ops = pf.getOperations();
+		pf.close();
+		IOperationContext con = oservice.createContext();
+		con.setSeries(ops);
+		con.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
+		con.setDatasetPath("/entry1/pixium10_tif/image_data");
+		con.setSlicing("all");
+		Map<Integer, String> axesNames = new HashMap<Integer, String>();
+		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
+		
+		testRemoteRun(con);
+		
+	}
+	
+	@Ignore
+	@Test
+	public void testRemoteRealBig() throws Exception {
+		IPersistentFile pf = pservice.getPersistentFile("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/big/42016_processed_150409_163751.nxs");
+		IOperation<? extends IOperationModel, ? extends OperationData>[] ops = pf.getOperations();
+		pf.close();
+		IOperationContext con = oservice.createContext();
+		con.setSeries(ops);
+		con.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/big/42016.nxs");
+		con.setDatasetPath("/entry1/instrument/pixium10_tif/image_data");
+		con.setSlicing("0:20");
+//		Map<Integer, String> axesNames = new HashMap<Integer, String>();
+//		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
+		
+		testRemoteRun(con);
+		
+	}
+	
+	private void testRemoteRunBean(OperationBean obean) throws Exception {
+		// Run the model
+		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"));
+		factory.prepare(obean);
+		factory.submit(obean, true);
+
+		// Blocks until a final state is reached
+		Thread.sleep(2000); 
+		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
+		final StatusBean bean = factory.monitor(obean);
+
+		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
+		System.out.println(bean);		
+	}
+	
+	@Ignore
+	@Test
+	public void testRemoteRealBean() throws Exception {
+		OperationBean b = new OperationBean();
+		
+		b.setDeletePersistenceFile(false);
+		b.setPersistencePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150331_164949.nxs");
+		b.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
+		b.setDatasetPath("/entry1/pixium10_tif/image_data");
+		Map<Integer,String> s = new HashMap<Integer,String>();
+		s.put(0, "all");
+		b.setSlicing(s);
+		Map<Integer, String> axesNames = new HashMap<Integer, String>();
+		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
+		b.setAxesNames(axesNames);
+		b.setOutputFilePath("/dls/science/groups/das/ExampleData/powder/remotetest/output3.nxs");
+		testRemoteRunBean(b);
 	}
 
 }

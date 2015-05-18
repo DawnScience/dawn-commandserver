@@ -4,7 +4,7 @@ Bundle-Name: MX
 Bundle-SymbolicName: org.dawnsci.commandserver.mx
 Bundle-Version: 1.0.0.qualifier
 Bundle-Vendor: Diamond Light Source
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.dawnsci.commandserver;bundle-version="1.0.0",
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.2.0",
  com.fasterxml.jackson.core.jackson-core;bundle-version="2.2.0",

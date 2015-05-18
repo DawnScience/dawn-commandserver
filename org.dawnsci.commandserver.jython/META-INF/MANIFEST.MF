@@ -11,3 +11,4 @@ Require-Bundle: org.eclipse.core.runtime,
  uk.ac.diamond.scisoft.python
 Bundle-ActivationPolicy: lazy
 Import-Package: org.apache.commons.cli
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7

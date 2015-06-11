@@ -55,6 +55,13 @@ public class Consumer implements IApplication {
 			}
 		}
 		
+		this.consumer = create(conf);
+		consumer.start(); // blocking method
+		return consumer;
+	}
+
+	public static IConsumerExtension create(Map<String, String> conf) throws Exception {
+		
 		final Bundle bundle = Platform.getBundle(conf.get("bundle"));
 		
 		@SuppressWarnings("unchecked")
@@ -69,9 +76,8 @@ public class Consumer implements IApplication {
 			System.out.println("Log file is probably at: "+System.getProperty("java.io.tmpdir")+"/"+System.getProperty("user.name")+"-"+clazz.getSimpleName()+".log");
 		}
 		
-		this.consumer = clazz.newInstance();
+		IConsumerExtension consumer = clazz.newInstance();
 		consumer.init(conf);
-		consumer.start(); // blocking method
 		
 		return consumer;
 	}

@@ -8,7 +8,6 @@
  */
 package org.dawnsci.commandserver.foldermonitor;
 
-import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_MODIFY;
@@ -304,6 +303,7 @@ public class Monitor extends AliveConsumer {
 		stopped = true;
 		Thread.sleep(2000);
 		connection.close();
+		setActive(false);
 	}
 
  

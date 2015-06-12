@@ -26,6 +26,7 @@ import java.util.TreeSet;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
 import javax.jms.MessageListener;
@@ -301,7 +302,8 @@ public class StatusQueueView extends ViewPart {
 
 	private void createActions() {
 		
-		final IContributionManager toolMan = getViewSite().getActionBars().getToolBarManager();
+		final IContributionManager toolMan  = getViewSite().getActionBars().getToolBarManager();
+		final IContributionManager dropDown = getViewSite().getActionBars().getMenuManager();
 		final MenuManager          menuMan = new MenuManager();
 	
 		final Action openResults = new Action("Open results for selected run", Activator.getDefault().getImageDescriptor("icons/results.png")) {
@@ -311,9 +313,11 @@ public class StatusQueueView extends ViewPart {
 		};
 		
 		toolMan.add(openResults);
-		menuMan.add(openResults);
 		toolMan.add(new Separator());
+		menuMan.add(openResults);
 		menuMan.add(new Separator());
+		dropDown.add(openResults);
+		dropDown.add(new Separator());
 		
 		
 		this.kill = new Action("Terminate job", Activator.getDefault().getImageDescriptor("icons/terminate.png")) {
@@ -346,6 +350,7 @@ public class StatusQueueView extends ViewPart {
 		};
 		toolMan.add(kill);
 		menuMan.add(kill);
+		dropDown.add(kill);
 		
 		final Action rerun = new Action("Rerun", Activator.getDefault().getImageDescriptor("icons/rerun.png")) {
 			public void run() {
@@ -354,6 +359,7 @@ public class StatusQueueView extends ViewPart {
 		};
 		toolMan.add(rerun);
 		menuMan.add(rerun);
+		dropDown.add(rerun);
 
 		toolMan.add(new Separator());
 		menuMan.add(new Separator());
@@ -368,9 +374,11 @@ public class StatusQueueView extends ViewPart {
 		
 		toolMan.add(showAll);
 		menuMan.add(showAll);
+		dropDown.add(showAll);
 		
 		toolMan.add(new Separator());
 		menuMan.add(new Separator());
+		dropDown.add(new Separator());
 
 		
 		final Action refresh = new Action("Refresh", Activator.getDefault().getImageDescriptor("icons/arrow-circle-double-135.png")) {
@@ -381,6 +389,7 @@ public class StatusQueueView extends ViewPart {
 		
 		toolMan.add(refresh);
 		menuMan.add(refresh);
+		dropDown.add(refresh);
 
 		final Action configure = new Action("Configure...", Activator.getDefault().getImageDescriptor("icons/document--pencil.png")) {
 			public void run() {
@@ -397,9 +406,69 @@ public class StatusQueueView extends ViewPart {
 		
 		toolMan.add(configure);
 		menuMan.add(configure);
+		dropDown.add(configure);
+		
+		final Action clearQueue = new Action("Clear Queue") {
+			public void run() {
+				purgeQueues();
+			}
+		};
+		menuMan.add(new Separator());
+		dropDown.add(new Separator());
+		menuMan.add(clearQueue);
+		dropDown.add(clearQueue);
 		
 		viewer.getControl().setMenu(menuMan.createContextMenu(viewer.getControl()));
 	}
+
+	protected void purgeQueues() {
+
+		boolean ok = MessageDialog.openQuestion(getSite().getShell(), "Confirm Clear Queues", "Are you sure you would like to remove all items from the queue "+getQueueName()+" and "+getSubmissionQueueName()+"?\n\nThis could abort or disconnect runs of other users.");
+		if (!ok) return;
+
+        purgeQueue(getQueueName());
+        purgeQueue(getSubmissionQueueName());
+		
+		reconnect();		
+
+	}
+
+	private void purgeQueue(String qName) {
+		
+		QueueConnection qCon = null;
+		try {
+			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(getUri());
+			qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
+			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+			Queue queue   = qSes.createQueue(qName);
+			qCon.start();
+			
+		    QueueBrowser qb = qSes.createBrowser(queue);
+	    
+		    @SuppressWarnings("rawtypes")
+			Enumeration  e  = qb.getEnumeration();					
+			while(e.hasMoreElements()) {
+				Message msg = (Message)e.nextElement();
+	        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+msg.getJMSMessageID()+"'");
+	        	Message rem = consumer.receive(1000);	
+	        	if (rem!=null) System.out.println("Removed "+rem);
+			    consumer.close();
+			}
+			qSes.commit();
+			
+		} catch (Exception ne) {
+			logger.error("Cannot clear queue!", ne);
+			
+		} finally {
+			if (qCon!=null) {
+			    try {
+					qCon.close();
+				} catch (JMSException e) {
+					logger.error("Cannot close queue!", e);
+				}
+			}
+		}
+ 	}
 
 	protected void rerunSelection() {
 		

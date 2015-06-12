@@ -15,9 +15,8 @@ import org.slf4j.LoggerFactory;
 public class WorkflowProxy implements IRemoteWorkbench {
 
 	private static final Logger logger = LoggerFactory.getLogger(WorkflowProxy.class);
-	private StatusBean  bean;
+	private StatusBean      bean;
 	private WorkflowProcess process;
-	private String      momlPath;
 
 	public WorkflowProxy(WorkflowProcess process, StatusBean bean) {
 		this.process     = process;
@@ -28,7 +27,7 @@ public class WorkflowProxy implements IRemoteWorkbench {
 	public void executionStarted() {
 		bean.setStatus(Status.RUNNING);
 		bean.setPercentComplete(0);
-		bean.setMessage("Starting workflow "+momlPath);
+		bean.setMessage("Starting workflow "+bean.getProperty("workflow_name"));
 		process.broadcast(bean);
 	}
 
@@ -39,14 +38,7 @@ public class WorkflowProxy implements IRemoteWorkbench {
 		if (returnCode==0) bean.setPercentComplete(100);
 		bean.setMessage("Workflow finished with code "+returnCode);
 		process.broadcast(bean);
-		
-		if (!process.isBlocking()) { // We need to clear up
-			try {
-				process.getService().clear();
-			} catch (Exception e) {
-				logger.error("Cannot clear service!", e);
-			}
-		}
+		process.terminationNotification(returnCode);
 	}
 
 	@Override
@@ -56,7 +48,6 @@ public class WorkflowProxy implements IRemoteWorkbench {
 
 	@Override
 	public boolean monitorDirectory(String fullPath, boolean startMonitoring) {
-		// TODO Auto-generated method stub
 		return false;
 	}
 

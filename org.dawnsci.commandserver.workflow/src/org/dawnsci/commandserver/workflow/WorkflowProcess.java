@@ -1,7 +1,10 @@
 package org.dawnsci.commandserver.workflow;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.URI;
 import java.util.Map;
 
@@ -10,10 +13,14 @@ import org.dawb.workbench.jmx.service.WorkflowFactory;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkflowProcess extends ProgressableProcess {
+	
+	private static final Logger logger = LoggerFactory.getLogger(WorkflowProcess.class);
 
-	private File    tmpDir;
+	private File             runDir;
 	private IWorkflowService service;
 
 	public WorkflowProcess(URI                uri, 
@@ -36,31 +43,40 @@ public class WorkflowProcess extends ProgressableProcess {
 		final File visitDir = newFile.getParentFile().getParentFile();
 
 		// We run the commands in a temporary directory for this consumer
-		tmpDir = getUnique(new File(visitDir, "tmp"), processName+"processing_", 1);
- 		bean.setRunDirectory(tmpDir.getAbsolutePath());
+		runDir = getUnique(new File(visitDir, "tmp"), processName+"processing_", 1);
+ 		bean.setRunDirectory(runDir.getAbsolutePath());
 		
 		// We record the bean so that reruns of reruns are possible.
 		try {
-			writeProjectBean(tmpDir, processName+"Bean.json");
+			writeProjectBean(runDir, processName+"Bean.json");
 		} catch (Exception e) {
 			e.printStackTrace(out);
 		}
-		
+		bean.setProperty("logLocation",  "\""+runDir.getAbsolutePath()+"/workflow_log.txt\"");
+	
 		// If we have the -scriptLocation argument, use that		
 		String momlLocation = arguments.get("momlLocation");
 		if (momlLocation==null || "null".equals(momlLocation)) throw new IOException("-momlLocation argument must be set");
-		bean.setProperty("momlLocation", momlLocation);
+		bean.setProperty("momlLocation",  momlLocation);
+		bean.setProperty("workflow_name", (new File(momlLocation)).getName());
 		
 		String execLocation = arguments.get("execLocation");
 		if (execLocation==null || "null".equals(momlLocation)) throw new IOException("-execLocation argument must be set to location of dawn executable to use for the workflow!");
 		bean.setProperty("execLocation", execLocation);
 
 	}
+	
+	private PrintWriter out, err;
 
 	@Override
 	public void execute() throws Exception {
 		
         this.service = WorkflowFactory.createWorkflowService(new WorkflowProvider(this, bean));
+        
+        this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
+        this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
+        service.setLoggingStreams(out, err);
+        
 		final Process workflow = service.start();
 		
 		// Normally is it not blocking, many workflows may run at the same time.
@@ -73,16 +89,33 @@ public class WorkflowProcess extends ProgressableProcess {
 			bean.setPercentComplete(100d);
 			bean.setMessage("Ran "+bean.getProperty("momlLocation"));
 			broadcast(bean);
+			
+			if (out!=null) out.close();
+			if (err!=null) err.close();
+
 		}
 	}
 
 	@Override
 	public void terminate() throws Exception {
 		if (service!=null) service.stop(-101);
+		if (out!=null) out.close();
+		if (err!=null) err.close();
 	}
 
-	protected IWorkflowService getService() {
-		return service;
+	/**
+	 * Notify from the workflow service
+	 * @param code
+	 */
+	protected void terminationNotification(int code) {
+		if (!isBlocking()) { // We need to clear up
+			try {
+				service.clear();
+			} catch (Exception e) {
+				logger.error("Cannot clear service!", e);
+			}
+		}
+		if (out!=null) out.close();
+		if (err!=null) err.close();
 	}
-
 }

@@ -48,7 +48,7 @@ public class WorkflowProvider implements IRemoteServiceProvider {
 
 	@Override
 	public boolean getServiceTerminate() {
-		return false;
+		return true;
 	}
 
 	@Override

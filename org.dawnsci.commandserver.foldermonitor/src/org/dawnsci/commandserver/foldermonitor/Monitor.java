@@ -16,6 +16,7 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -271,6 +272,18 @@ public class Monitor extends AliveConsumer {
 			bean.setProperties(loadProperties(config.get("properties")));
 		}
 		
+		final File newFile = new File(bean.getPath());
+		if (!newFile.exists()) throw new FileNotFoundException("Cannot find "+bean.getPath());
+		final File visitDir = newFile.getParentFile().getParentFile();
+
+		String visitDirPath = visitDir.getAbsolutePath();
+		if (visitDirPath.contains(" ")) visitDirPath = "\""+visitDirPath+"\"";
+		bean.setProperty("filepath",visitDirPath);
+		
+		String fileName = getFileNameNoExtension(newFile);
+		if (fileName.contains(" ")) fileName = "\""+fileName+"\"";
+		bean.setProperty("fileroot",fileName);
+		
 		return bean;
 	}
 	
@@ -326,4 +339,24 @@ public class Monitor extends AliveConsumer {
 	public String getName() {
 		return "Folder monitoring '"+location+"'";
 	}
+	
+	private static String getFileNameNoExtension(File file) {
+		return getFileNameNoExtension(file.getName());
+	}
+
+	/**
+	 * Get Filename minus it's extension if present
+	 * 
+	 * @param file
+	 *            File to get filename from
+	 * @return String filename minus its extension
+	 */
+	private static String getFileNameNoExtension(String fileName) {
+		int posExt = fileName.lastIndexOf(".");
+		// No File Extension
+		return posExt == -1 ? fileName : fileName.substring(0, posExt);
+
+	}
+
+
 }

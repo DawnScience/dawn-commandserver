@@ -8,6 +8,8 @@
  */
 package org.dawnsci.commandserver.core.beans;
 
+import java.util.Properties;
+
 
 /**
  * A bean whose JSON value can sit in a queue on the JMS server and 
@@ -46,6 +48,11 @@ public class StatusBean {
 	 */
 	protected long   submissionTime;
 	
+	/**
+	 * Additional properties which may be set.
+	 */
+	private Properties properties;
+
 	private StatusBean( Status none,String name, String message, double percentComplete,
 			String userName, String uniqueId, long submissionTime) {
 		this.status          = none;
@@ -71,6 +78,7 @@ public class StatusBean {
         this.submissionTime  = with.submissionTime;
         this.message         = with.message;
         this.runDirectory    = with.runDirectory;
+        this.properties      = with.properties;
 	}
 
 	
@@ -101,6 +109,7 @@ public class StatusBean {
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
+		result = prime * result + ((properties == null) ? 0 : properties.hashCode());
 		result = prime * result
 				+ ((hostName == null) ? 0 : hostName.hashCode());
 		result = prime * result + ((message == null) ? 0 : message.hashCode());
@@ -150,6 +159,11 @@ public class StatusBean {
 			if (other.runDirectory != null)
 				return false;
 		} else if (!runDirectory.equals(other.runDirectory))
+			return false;
+		if (properties == null) {
+			if (other.properties != null)
+				return false;
+		} else if (!properties.equals(other.properties))
 			return false;
 		if (status != other.status)
 			return false;
@@ -245,6 +259,27 @@ public class StatusBean {
 
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
+	}
+
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+
+	public void setProperties(Properties properties) {
+		this.properties = properties;
+	}
+
+
+	public void setProperty(String key, String value) {
+		if (properties==null) properties = new Properties();
+		properties.setProperty(key, value);
+	}
+
+
+	public String getProperty(String key) {
+		return properties.getProperty(key);
 	}
 
 }

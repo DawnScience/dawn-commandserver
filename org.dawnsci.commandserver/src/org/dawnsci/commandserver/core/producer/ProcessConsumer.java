@@ -40,6 +40,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 /**
  * This consumer monitors a queue and starts runs based
@@ -177,6 +178,9 @@ public abstract class ProcessConsumer extends AliveConsumer {
        		
         	} catch (Throwable ne) {
         		
+        		if (ne instanceof UnrecognizedPropertyException) {
+        			logger.error("Cannot deserialize bean!", ne);
+        		}
         		if (!isDurable()) break;
         		        		
        			Thread.sleep(Constants.NOTIFICATION_FREQUENCY);

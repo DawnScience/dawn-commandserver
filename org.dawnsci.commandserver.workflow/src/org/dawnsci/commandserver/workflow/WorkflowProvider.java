@@ -1,6 +1,5 @@
 package org.dawnsci.commandserver.workflow;
 
-import java.io.File;
 import java.util.Properties;
 
 import org.dawb.workbench.jmx.IRemoteServiceProvider;
@@ -14,8 +13,8 @@ public class WorkflowProvider implements IRemoteServiceProvider {
 	private StatusBean       bean;
 	private IRemoteWorkbench bench;
 
-	public WorkflowProvider(ProgressableProcess broadcaster, StatusBean bean) {
-		this.bench       = new WorkflowProxy(broadcaster, bean);
+	public WorkflowProvider(WorkflowProcess process, StatusBean bean) {
+		this.bench       = new WorkflowProxy(process, bean);
 		this.bean        = bean;
 	}
 

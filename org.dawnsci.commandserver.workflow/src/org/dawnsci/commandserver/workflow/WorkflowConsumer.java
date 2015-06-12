@@ -6,8 +6,6 @@ import java.net.URI;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
-import org.dawnsci.commandserver.foldermonitor.EventType;
-import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
 
 public class WorkflowConsumer extends ProcessConsumer {
 
@@ -19,9 +17,9 @@ public class WorkflowConsumer extends ProcessConsumer {
 	@Override
 	protected boolean isHandled(StatusBean bean) {
 		
-		if (bean instanceof FolderEventBean) {
-			FolderEventBean feb = (FolderEventBean)bean;
-			if (feb.getType()!=EventType.ENTRY_CREATE) return false; // Only interested in new files.
+		if (bean.getProperties().containsKey("event_type")) {
+			final String type = bean.getProperty("event_type");
+			if (!type.equals("ENTRY_CREATE")) return false; // Only interested in new files.
 		}
 		return true;
 	}
@@ -32,9 +30,9 @@ public class WorkflowConsumer extends ProcessConsumer {
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {
 		// We are only interested in new files
-		if (bean instanceof FolderEventBean) {
-			FolderEventBean feb = (FolderEventBean)bean;
-			if (feb.getType()!=EventType.ENTRY_CREATE) return null; // Only interested in new files.
+		if (bean.getProperties().containsKey("event_type")) {
+			final String type = bean.getProperty("event_type");
+			if (!type.equals("ENTRY_CREATE")) return null; // Only interested in new files.
 		}
 				
 		WorkflowProcess process = new WorkflowProcess(uri, config.get("processName"), statusTName, statusQName, config, bean);
@@ -49,8 +47,20 @@ public class WorkflowConsumer extends ProcessConsumer {
 
 	@Override
 	public String getName() {
-		if (config.containsKey("consumerName")) return config.get("consumerName");
-		return getClass().getSimpleName();
+		
+		final StringBuilder buf = new StringBuilder();
+		if (config.containsKey("consumerName")) {
+			buf.append( config.get("consumerName") );
+		} else {
+		    buf.append(getClass().getSimpleName());
+		}
+		String momlLocation = config.get("momlLocation");
+		if (momlLocation==null || "null".equals(momlLocation)) throw new RuntimeException("-momlLocation argument must be set");
+		final File moml = new File(momlLocation);
+		buf.append(" (");
+		buf.append(moml.getName());
+		buf.append(" )");
+        return buf.toString();
 	}
 
 }

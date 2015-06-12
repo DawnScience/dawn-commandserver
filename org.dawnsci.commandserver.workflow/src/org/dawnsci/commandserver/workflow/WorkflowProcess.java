@@ -1,16 +1,15 @@
 package org.dawnsci.commandserver.workflow;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.Map;
 
 import org.dawb.workbench.jmx.service.IWorkflowService;
 import org.dawb.workbench.jmx.service.WorkflowFactory;
+import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.foldermonitor.FolderEventBean;
 
 public class WorkflowProcess extends ProgressableProcess {
 
@@ -26,11 +25,14 @@ public class WorkflowProcess extends ProgressableProcess {
 		
 		super(uri, statusTName, statusQName, sbean);
 		
-		final FolderEventBean bean = (FolderEventBean)sbean;
-		
-		final File newFile = new File(bean.getPath());
-		if (!newFile.exists()) throw new FileNotFoundException("Cannot find "+bean.getPath());
-		
+		File newFile = null;
+		if (bean.getProperties().containsKey("file_path")) {
+			newFile = new File(bean.getProperty("file_path"));
+		} else {
+			newFile = File.createTempFile("default", ".data_input");
+		}
+
+
 		final File visitDir = newFile.getParentFile().getParentFile();
 
 		// We run the commands in a temporary directory for this consumer
@@ -60,15 +62,27 @@ public class WorkflowProcess extends ProgressableProcess {
 		
         this.service = WorkflowFactory.createWorkflowService(new WorkflowProvider(this, bean));
 		final Process workflow = service.start();
-		if (isBlocking()) workflow.waitFor(); // Waits until it is finished.
 		
-		// Release any memory used by the object
-		service.clear();
+		// Normally is it not blocking, many workflows may run at the same time.
+		if (isBlocking()) {
+			workflow.waitFor(); // Waits until it is finished.
+			// Release any memory used by the object
+			service.clear();
+			
+			bean.setStatus(Status.COMPLETE);
+			bean.setPercentComplete(100d);
+			bean.setMessage("Ran "+bean.getProperty("momlLocation"));
+			broadcast(bean);
+		}
 	}
 
 	@Override
 	public void terminate() throws Exception {
 		if (service!=null) service.stop(-101);
+	}
+
+	protected IWorkflowService getService() {
+		return service;
 	}
 
 }

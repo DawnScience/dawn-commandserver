@@ -9,15 +9,17 @@ import org.dawb.workbench.jmx.UserInputBean;
 import org.dawb.workbench.jmx.UserPlotBean;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class WorkflowProxy implements IRemoteWorkbench {
 
+	private static final Logger logger = LoggerFactory.getLogger(WorkflowProxy.class);
 	private StatusBean  bean;
-	private ProgressableProcess process;
+	private WorkflowProcess process;
 	private String      momlPath;
 
-	public WorkflowProxy(ProgressableProcess process, StatusBean bean) {
+	public WorkflowProxy(WorkflowProcess process, StatusBean bean) {
 		this.process     = process;
 		this.bean        = bean;
 	}
@@ -32,10 +34,19 @@ public class WorkflowProxy implements IRemoteWorkbench {
 
 	@Override
 	public void executionTerminated(int returnCode) {
+		
 		bean.setStatus(returnCode==0 ? Status.COMPLETE : Status.FAILED);
 		if (returnCode==0) bean.setPercentComplete(100);
-		bean.setMessage("Workflow terminated with code "+returnCode);
+		bean.setMessage("Workflow finished with code "+returnCode);
 		process.broadcast(bean);
+		
+		if (!process.isBlocking()) { // We need to clear up
+			try {
+				process.getService().clear();
+			} catch (Exception e) {
+				logger.error("Cannot clear service!", e);
+			}
+		}
 	}
 
 	@Override

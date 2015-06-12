@@ -16,7 +16,6 @@ import static java.nio.file.StandardWatchEventKinds.OVERFLOW;
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.InetAddress;
@@ -46,6 +45,7 @@ import javax.jms.ConnectionFactory;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
+import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.producer.AliveConsumer;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
 
@@ -231,7 +231,7 @@ public class Monitor extends AliveConsumer {
                 
                 // print out event
                 System.out.format("%s: %s\n", kind, child);
-                FolderEventBean bean = bean(kind, child);
+                StatusBean bean = bean(kind, child);
   
                 broadcaster.broadcast(bean, true);
                 
@@ -249,13 +249,13 @@ public class Monitor extends AliveConsumer {
 		System.out.println("Finished folder monitor @ '"+dir+"'");
 	}
 
-	private FolderEventBean bean(Kind kind, Path child) throws IOException {
+	private StatusBean bean(Kind kind, Path child) throws IOException {
 		return bean(EventType.valueOf(kind.name()), child);
 	}
 	
-	private FolderEventBean bean(EventType type, Path child) throws IOException {
+	private StatusBean bean(EventType type, Path child) throws IOException {
 		
-		FolderEventBean bean = new FolderEventBean(type, child.toAbsolutePath().toString());
+		StatusBean bean = new StatusBean();
 		bean.setStatus(Status.NONE);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
@@ -272,17 +272,26 @@ public class Monitor extends AliveConsumer {
 			bean.setProperties(loadProperties(config.get("properties")));
 		}
 		
-		final File newFile = new File(bean.getPath());
-		if (!newFile.exists()) throw new FileNotFoundException("Cannot find "+bean.getPath());
-		final File visitDir = newFile.getParentFile().getParentFile();
-
-		String visitDirPath = visitDir.getAbsolutePath();
-		if (visitDirPath.contains(" ")) visitDirPath = "\""+visitDirPath+"\"";
-		bean.setProperty("filepath",visitDirPath);
+		final String path = child.toAbsolutePath().toString();
 		
-		String fileName = getFileNameNoExtension(newFile);
-		if (fileName.contains(" ")) fileName = "\""+fileName+"\"";
-		bean.setProperty("fileroot",fileName);
+		final File newFile = new File(path);
+		bean.setProperty("file_name",  newFile.getName());
+		bean.setProperty("file_path",  path);
+		bean.setProperty("file_dir",   newFile.getParent());
+		bean.setProperty("event_type", type.name());
+		
+		if (newFile.exists()) {
+		
+			final File visitDir = newFile.getParentFile().getParentFile();
+	
+			String visitDirPath = visitDir.getAbsolutePath();
+			if (visitDirPath.contains(" ")) visitDirPath = "\""+visitDirPath+"\"";
+			bean.setProperty("filepath",visitDirPath);
+			
+			String fileName = getFileNameNoExtension(newFile);
+			if (fileName.contains(" ")) fileName = "\""+fileName+"\"";
+			bean.setProperty("fileroot",fileName);
+		}
 		
 		return bean;
 	}

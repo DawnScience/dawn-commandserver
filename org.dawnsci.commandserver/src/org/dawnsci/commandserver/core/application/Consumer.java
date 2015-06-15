@@ -64,7 +64,7 @@ public class Consumer implements IApplication {
 	}
 
 	@SuppressWarnings("unchecked")
-	private static void loadProperties(@SuppressWarnings("rawtypes") Map conf, String path) throws Exception {
+	static Map<String,String> loadProperties(@SuppressWarnings("rawtypes") Map conf, String path) throws Exception {
 		File file = new File(path);
 		if (!file.exists()) throw new Exception("Cannot read properties file "+path);
 		
@@ -73,7 +73,7 @@ public class Consumer implements IApplication {
 			Properties props = new Properties();
 			props.load(in);
 			conf.putAll(props);
-			
+			return conf;
 		} finally {
 			in.close();
 		}

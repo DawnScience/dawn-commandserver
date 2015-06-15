@@ -111,6 +111,7 @@ public class Monitor extends AliveConsumer {
 	public void start() throws Exception {
 		
 		startHeartbeat(); // Tell the GUI that we are alive
+		createTerminateListener();
 		
 		boolean nio = Boolean.parseBoolean(config.get("nio"));
 		if (nio) {
@@ -346,6 +347,9 @@ public class Monitor extends AliveConsumer {
 
 	@Override
 	public String getName() {
+		if (config.containsKey("consumerName")) {
+			return config.get("consumerName")+"'"+location+"'";
+		}
 		return "Folder monitoring '"+location+"'";
 	}
 	

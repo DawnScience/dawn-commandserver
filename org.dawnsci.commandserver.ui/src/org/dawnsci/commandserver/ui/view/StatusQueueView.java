@@ -22,7 +22,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-import java.util.TreeSet;
 
 import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
@@ -46,6 +45,7 @@ import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.Constants;
+import org.dawnsci.commandserver.core.consumer.QueueReader;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
@@ -600,10 +600,21 @@ public class StatusQueueView extends ViewPart {
 					monitor.beginTask("Connect to command server", 10);
 					monitor.worked(1);
 					
-					Collection<StatusBean> runningList = getStatusBeans(uri, getQueueName(), monitor);
+					// Date sorted
+					Comparator<StatusBean> c = new Comparator<StatusBean>() {		
+						@Override
+						public int compare(StatusBean o1, StatusBean o2) {
+							// Newest first!
+					        long t1 = o2.getSubmissionTime();
+					        long t2 = o1.getSubmissionTime();
+					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
+						}
+					};
+					final QueueReader<StatusBean> reader = new QueueReader<StatusBean>(c);
+					Collection<StatusBean> runningList = reader.getBeans(uri, getQueueName(), getBeanClass(), monitor);
 					monitor.worked(1);
 			        
-					Collection<StatusBean> submittedList = getStatusBeans(uri, getSubmissionQueueName(), monitor);
+					Collection<StatusBean> submittedList = reader.getBeans(uri, getSubmissionQueueName(), getBeanClass(), monitor);
 					monitor.worked(1);
 
 					// We reverse the queue because it comes out date ascending and we
@@ -651,53 +662,14 @@ public class StatusQueueView extends ViewPart {
 
 	}
 
-	protected Collection<StatusBean> getStatusBeans(final URI uri, final String queueName, final IProgressMonitor monitor) throws Exception {
-		
-		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		monitor.worked(1);
-		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
-		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue queue   = qSes.createQueue(queueName);
-		qCon.start();
-		
-	    QueueBrowser qb = qSes.createBrowser(queue);
-		monitor.worked(1);
-    
-	    @SuppressWarnings("rawtypes")
-		Enumeration  e  = qb.getEnumeration();
-	    
-        Class        clazz  = getBeanClass();
-		ObjectMapper mapper = new ObjectMapper();
-		
-		final Collection<StatusBean> list = new TreeSet<StatusBean>(new Comparator<StatusBean>() {
-			@Override
-			public int compare(StatusBean o1, StatusBean o2) {
-				// Newest first!
-		        long t1 = o2.getSubmissionTime();
-		        long t2 = o1.getSubmissionTime();
-		        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
-			}
-		});
 
-        while(e.hasMoreElements()) {
-	    	Message m = (Message)e.nextElement();
-	    	if (m==null) continue;
-        	if (m instanceof TextMessage) {
-            	TextMessage t = (TextMessage)m;
-				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-              	list.add(bean);
-        	}
-	    }
-        return list;
-	}
-
-	private Class getBeanClass() throws ClassNotFoundException {
+	private Class<? extends StatusBean> getBeanClass() throws ClassNotFoundException {
 	    String beanBundleName = getSecondaryIdAttribute("beanBundleName");
 	    String beanClassName  = getSecondaryIdAttribute("beanClassName");
 	    
 	    @SuppressWarnings("rawtypes")
 	    Bundle bundle = Platform.getBundle(beanBundleName);
-		return bundle.loadClass(beanClassName);
+		return (Class<? extends StatusBean>)bundle.loadClass(beanClassName);
 	}
 
 	protected void createColumns() {

@@ -56,14 +56,23 @@ public class WorkflowProcess extends ProgressableProcess {
 	
 		// If we have the -scriptLocation argument, use that		
 		String momlLocation = arguments.get("momlLocation");
-		if (momlLocation==null || "null".equals(momlLocation)) throw new IOException("-momlLocation argument must be set");
+		if (momlLocation==null || "null".equals(momlLocation) || "".equals(momlLocation)) {
+			throw new IOException("-momlLocation argument must be set");
+		}
 		bean.setProperty("momlLocation",  momlLocation);
 		bean.setProperty("workflow_name", (new File(momlLocation)).getName());
 		
 		String execLocation = arguments.get("execLocation");
-		if (execLocation==null || "null".equals(momlLocation)) throw new IOException("-execLocation argument must be set to location of dawn executable to use for the workflow!");
+		if (execLocation==null || "null".equals(execLocation) || "".equals(execLocation)) {
+			throw new IOException("-execLocation argument must be set to location of dawn executable to use for the workflow!");
+		}
 		bean.setProperty("execLocation", execLocation);
 
+		// One windows can have different command to run workflow if we like, optional
+		String winExecLocation = arguments.get("winExecLocation");
+		if (winExecLocation!=null && !"null".equals(winExecLocation) && !"".equals(winExecLocation)) {
+			bean.setProperty("winExecLocation", winExecLocation);
+		}
 	}
 	
 	private PrintWriter out, err;

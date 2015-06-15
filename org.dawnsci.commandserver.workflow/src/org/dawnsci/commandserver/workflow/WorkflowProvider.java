@@ -43,7 +43,17 @@ public class WorkflowProvider implements IRemoteServiceProvider {
 	public String getInstallationPath() {
 		// For instance at Diamond:   "module load dawn/snapshot ; $DAWN_RELEASE_DIRECTORY/dawn"
 		// Or on windows: "C:\Users\fcp94556\Desktop\DawnMaster\dawn.exe"
+		if (isWindowsOS() && bean.getProperty("winExecLocation")!=null) {
+			return bean.getProperty("winExecLocation");
+		}
 		return bean.getProperty("execLocation");
+	}
+	
+	/**
+	 * @return true if windows
+	 */
+	static public final boolean isWindowsOS() {
+		return (System.getProperty("os.name").indexOf("Windows") == 0);
 	}
 
 	@Override

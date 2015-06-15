@@ -8,9 +8,12 @@
  */
 package org.dawnsci.commandserver.core.application;
 
+import java.io.BufferedInputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.Platform;
@@ -60,8 +63,32 @@ public class Consumer implements IApplication {
 		return consumer;
 	}
 
+	@SuppressWarnings("unchecked")
+	private static void loadProperties(@SuppressWarnings("rawtypes") Map conf, String path) throws Exception {
+		File file = new File(path);
+		if (!file.exists()) throw new Exception("Cannot read properties file "+path);
+		
+		final BufferedInputStream in = new BufferedInputStream(new FileInputStream(file));
+		try {
+			Properties props = new Properties();
+			props.load(in);
+			conf.putAll(props);
+			
+		} finally {
+			in.close();
+		}
+	}
+
 	public static IConsumerExtension create(Map<String, String> conf) throws Exception {
 		
+		// Often the properties are set from the command line
+		// but an alternative is to save them to a properties file.
+		// In this case we reload the properties file and add this to
+		// the properties.
+		if (conf.containsKey("properties")) {
+			loadProperties(conf, conf.get("properties"));
+		}
+
 		final Bundle bundle = Platform.getBundle(conf.get("bundle"));
 		
 		@SuppressWarnings("unchecked")

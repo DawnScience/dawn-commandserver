@@ -268,8 +268,8 @@ public class Monitor extends AliveConsumer {
 		bean.setName(child.getFileName().toString());
 		bean.setSubmissionTime(System.currentTimeMillis());
 		
-		if (config.get("properties")!=null) {
-			bean.setProperties(loadProperties(config.get("properties")));
+		if (config.get("extraProperties")!=null) {
+			bean.setProperties(loadProperties(config.get("extraProperties")));
 		}
 		
 		final String path = child.toAbsolutePath().toString();

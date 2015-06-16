@@ -62,7 +62,6 @@ public class HeartbeatChecker {
         					TextMessage t = (TextMessage) message;
         					ConsumerBean  b = mapper.readValue(t.getText(), ConsumerBean.class);
         					if (!consumerName.equals(b.getName())) {
-        						ok = false;
         						return;
         					}
         					logger.trace(b.getName()+ " is alive and well.");

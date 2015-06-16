@@ -26,9 +26,6 @@ import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.Job;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

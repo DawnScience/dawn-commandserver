@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="Operation Process">
-   <implementation class="org.dawnsci.commandserver.processing.process.OperationProcess"/>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="Operation Runner">
+   <implementation class="org.dawnsci.commandserver.processing.process.OperationRunner"/>
    <reference bind="setOperationService" cardinality="1..1" interface="org.eclipse.dawnsci.analysis.api.processing.IOperationService" name="IOperationService" pdynamic="static"/>
    <reference bind="setPersistenceService" cardinality="1..1" interface="org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService" name="IPersistenceService" policy="static"/>
    <reference bind="setLoaderService" cardinality="1..1" interface="org.eclipse.dawnsci.analysis.api.io.ILoaderService" name="ILoaderService" policy="static"/>

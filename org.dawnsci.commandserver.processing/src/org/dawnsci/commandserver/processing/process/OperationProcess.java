@@ -11,66 +11,38 @@ package org.dawnsci.commandserver.processing.process;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
-import java.util.Arrays;
 
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
-import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
-import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
-import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
-import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
-import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
-import org.eclipse.dawnsci.analysis.api.processing.IOperation;
-import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
-import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
-import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
-import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
-import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
-import org.eclipse.dawnsci.hdf5.operation.HierarchicalFileExecutionVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
- * Rerun of several collections as follows:
- * o Write the Xia2 command file, automatic.xinfo
- * o Runs Xia2 with file
- * o Progress reported by stating xia2.txt
- * o Runs xia2 html to generate report.
+ * Runs the OperationPipeline by executing a dawn command.
+ * This command runs in a separate process which can include
+ * a cluster command if required.
  * 
  * @author Matthew Gerring
  *
  */
 public class OperationProcess extends ProgressableProcess{
 	
-	private static IOperationService   oservice;
-	private static IPersistenceService pservice;
-	private static ILoaderService      lservice;
+	private static final Logger logger = LoggerFactory.getLogger(OperationProcess.class);
 	
-	// Set by OSGI
-	public static void setOperationService(IOperationService s) {
-		oservice = s;
-	}
-	// Set by OSGI
-	public static void setPersistenceService(IPersistenceService s) {
-		pservice = s;
-	}
-	// Set by OSGI
-	public static void setLoaderService(ILoaderService s) {
-		lservice = s;
-	}
-	// Used so that a no-argument constructor exists but is not useful.
+	
+	private String   processingDir;
+    private Process  process;
+
+	
+	/**
+	 * Used to run a process without a beam and for OSGi to inject
+	 * services as required.
+	 */
 	public OperationProcess() {
 		super();
 	}
 
-	
-	
-	private String              processingDir;
-	
 	public OperationProcess(URI        uri, 
 			                String     statusTName, 
 			                String     statusQName,
@@ -120,8 +92,12 @@ public class OperationProcess extends ProgressableProcess{
 		createTerminateListener();
 		
 		try {
-			runPipeline();
+			// TODO Run as process out of DAWN similar to how workflows run
+			File path = new File(processingDir, "operationBean.json");
+			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
 			
+			execute(path);
+		
 			// TODO Actually run something?
 			bean.setStatus(Status.COMPLETE);
 			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
@@ -137,60 +113,21 @@ public class OperationProcess extends ProgressableProcess{
 		}
 	}
 
-	private void runPipeline() throws Throwable {
+	private void execute(File path) {
 		
-		OperationBean obean = (OperationBean)bean;
-		IPersistentFile file = pservice.createPersistentFile(obean.getPersistencePath());
-		try {
-			// We should get these back exactly as they were defined.
-		    final IOperation[] ops = file.getOperations();
-		    
-		    // Create a context and run the pipeline
-		    final IOperationContext context = oservice.createContext();
-		    context.setSeries(ops);
-		    context.setExecutionType(obean.getExecutionType());
-		    context.setParallelTimeout(obean.getParallelTimeout());
-		    
-		    final IDataHolder holder = lservice.getData(obean.getFilePath(), new IMonitor.Stub());
-		    //take a local view
-		    final ILazyDataset lz    = holder.getLazyDataset(obean.getDatasetPath()).getSliceView();
-		    //TODO need to set up Axes and SliceSeries metadata here
-		   
-		    SourceInformation si = new SourceInformation(obean.getFilePath(), obean.getDatasetPath(), lz);
-		    lz.setMetadata(new SliceFromSeriesMetadata(si));
-		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames());
-			lz.setMetadata(axm);
-		    
-		    context.setData(lz);
-		    context.setSlicing(obean.getSlicing());
-		    
-		    //Create visitor to save data
-		    final IExecutionVisitor visitor = new HierarchicalFileExecutionVisitor(obean.getOutputFilePath());
-		    context.setVisitor(visitor);
-		    
-		    // We create a monitor which publishes information about what
-		    // operation was completed.
-		    int[] shape = lz.getShape();
-		    int work = getTotalWork(Slicer.getSliceArrayFromSliceDimensions(context.getSlicing(), shape), shape,
-		    		Slicer.getDataDimensions(shape, context.getSlicing()));
-		    context.setMonitor(new OperationMonitor(obean, this, work));
-		    
-		    oservice.execute(context);
-		    
-		} finally {
-			file.close();
-			
-			if (obean.isDeletePersistenceFile()) {
-			    final File persFile = new File(obean.getPersistencePath());
-			    persFile.delete();
-			}
-		}
+		final String line = createExecutionLine(path);
+		logger.debug("Execution line: "+line);
+		
+	}
 
+	private String createExecutionLine(File path) {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 	@Override
 	public void terminate() throws Exception {
-		// Please implement to clean up on the cluster.
+		if (process!=null) process.destroyForcibly();
 	}
 
 	public String getProcessingDir() {
@@ -199,20 +136,6 @@ public class OperationProcess extends ProgressableProcess{
 
 	public void setProcessingDir(String processingDir) {
 		this.processingDir = processingDir;
-	}
-	
-	private int getTotalWork(Slice[] slices, int[] shape, int[] datadims) {
-		SliceND slice = new SliceND(shape, slices);
-		int[] nShape = slice.getShape();
-
-		int[] dd = datadims.clone();
-		Arrays.sort(dd);
-		
-		 int n = 1;
-		 for (int i = 0; i < nShape.length; i++) {
-			 if (Arrays.binarySearch(dd, i) < 0) n *= nShape[i];
-		 }
-		return n;
 	}
 
 }

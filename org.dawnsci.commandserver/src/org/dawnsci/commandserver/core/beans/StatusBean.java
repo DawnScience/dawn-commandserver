@@ -8,6 +8,8 @@
  */
 package org.dawnsci.commandserver.core.beans;
 
+import java.util.Properties;
+
 
 /**
  * A bean whose JSON value can sit in a queue on the JMS server and 
@@ -30,6 +32,7 @@ public class StatusBean {
 	protected double percentComplete;
 	protected String userName;
 	protected String hostName;
+	protected Properties properties;
 	
 	/**
 	 * Directory of rerun, may be null
@@ -109,6 +112,8 @@ public class StatusBean {
 		temp = Double.doubleToLongBits(percentComplete);
 		result = prime * result + (int) (temp ^ (temp >>> 32));
 		result = prime * result
+				+ ((properties == null) ? 0 : properties.hashCode());
+		result = prime * result
 				+ ((runDirectory == null) ? 0 : runDirectory.hashCode());
 		result = prime * result + ((status == null) ? 0 : status.hashCode());
 		result = prime * result
@@ -145,6 +150,11 @@ public class StatusBean {
 			return false;
 		if (Double.doubleToLongBits(percentComplete) != Double
 				.doubleToLongBits(other.percentComplete))
+			return false;
+		if (properties == null) {
+			if (other.properties != null)
+				return false;
+		} else if (!properties.equals(other.properties))
 			return false;
 		if (runDirectory == null) {
 			if (other.runDirectory != null)
@@ -245,6 +255,16 @@ public class StatusBean {
 
 	public void setHostName(String hostName) {
 		this.hostName = hostName;
+	}
+
+
+	public Properties getProperties() {
+		return properties;
+	}
+
+
+	public void setProperties(Properties properties) {
+		this.properties = properties;
 	}
 
 }

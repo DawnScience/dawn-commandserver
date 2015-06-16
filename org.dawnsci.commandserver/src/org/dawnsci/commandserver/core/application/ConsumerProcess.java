@@ -3,7 +3,6 @@ package org.dawnsci.commandserver.core.application;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
-import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.HashMap;
 import java.util.Map;
@@ -119,15 +118,16 @@ public class ConsumerProcess {
 		buf.append(" -noExit -noSplash -application org.dawnsci.commandserver.consumer ");
 		buf.append(" -data ");
 		buf.append(workspace);
-		buf.append(" -vmargs ");
-		
 		if (propertiesFile!=null) {
-			buf.append("-Dproperties=");
+			buf.append(" -properties = ");
 			buf.append("\"");
 			buf.append(propertiesFile.getAbsolutePath());
 			buf.append("\"");
-			
-		} else {
+		}
+
+		buf.append(" -vmargs ");
+		
+		if (propertiesFile==null) {
 			for(Object name : conf.keySet()) {
 				buf.append(" ");
 				buf.append("-D");

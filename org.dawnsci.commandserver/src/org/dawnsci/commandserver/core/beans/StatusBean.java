@@ -57,7 +57,7 @@ public class StatusBean {
         this.userName        = userName;
         this.uniqueId        = uniqueId;
         this.submissionTime  = submissionTime;
-	}
+ 	}
 
 	
 	/**
@@ -74,6 +74,7 @@ public class StatusBean {
         this.submissionTime  = with.submissionTime;
         this.message         = with.message;
         this.runDirectory    = with.runDirectory;
+        this.properties      = with.properties;
 	}
 
 	

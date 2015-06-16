@@ -115,19 +115,18 @@ public class ConsumerProcess {
 		final String workspace = System.getProperty("user.home")+"/"+consumerName.replace(' ', '_');
 		
 		buf.append(install);
-		buf.append(" -noExit -noSplash -application org.dawnsci.commandserver.consumer ");
+		buf.append(" -noSplash -application org.dawnsci.commandserver.consumer ");
 		buf.append(" -data ");
 		buf.append(workspace);
 		if (propertiesFile!=null) {
-			buf.append(" -properties = ");
+			buf.append(" -properties ");
 			buf.append("\"");
 			buf.append(propertiesFile.getAbsolutePath());
 			buf.append("\"");
 		}
-
-		buf.append(" -vmargs ");
-		
+	
 		if (propertiesFile==null) {
+			buf.append(" -vmargs ");
 			for(Object name : conf.keySet()) {
 				buf.append(" ");
 				buf.append("-D");

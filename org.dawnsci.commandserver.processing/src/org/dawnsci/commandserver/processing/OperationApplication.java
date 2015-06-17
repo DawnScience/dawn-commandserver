@@ -14,6 +14,10 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 /**
  * Used to execute an operation pipeline from an OperationBean
  * 
+ * Example command line to run the application from a DAWN install
+ * which should work on the cluster:
+ *    module load dawn/nightly ; $DAWN_RELEASE_DIRECTORY/dawn -noSplash -application org.dawnsci.commandserver.processing.processing -data ~/Operation_Consumer -path /<beanpath>/operationBean.json >> someLogFile.txt
+ * 
  * @author fcp94556
  *
  */

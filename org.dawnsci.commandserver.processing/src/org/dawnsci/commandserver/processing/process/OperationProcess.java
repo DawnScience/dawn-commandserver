@@ -11,7 +11,10 @@ package org.dawnsci.commandserver.processing.process;
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
+import org.dawnsci.commandserver.core.application.ApplicationProcess;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
@@ -26,13 +29,11 @@ import org.slf4j.LoggerFactory;
  * @author Matthew Gerring
  *
  */
-public class OperationProcess extends ProgressableProcess{
-	
-	private static final Logger logger = LoggerFactory.getLogger(OperationProcess.class);
-	
+public class OperationProcess extends ProgressableProcess {	
 	
 	private String   processingDir;
     private Process  process;
+	private Map<String, String> conf;
 
 	
 	/**
@@ -46,10 +47,11 @@ public class OperationProcess extends ProgressableProcess{
 	public OperationProcess(URI        uri, 
 			                String     statusTName, 
 			                String     statusQName,
+			                Map<String,String> conf,
 			                OperationBean bean) {
 		
 		super(uri, statusTName, statusQName, bean);
-		
+		this.conf = conf;
 		setBlocking(false);
 		
         final String runDir;
@@ -96,8 +98,14 @@ public class OperationProcess extends ProgressableProcess{
 			File path = new File(processingDir, "operationBean.json");
 			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
 			
-			execute(path);
-		
+			final Map<String,String> args = createApplicationArgs(path);
+			ApplicationProcess process = new ApplicationProcess(args, conf);
+			process.setApplicationName("org.dawnsci.commandserver.processing.processing");
+			process.setOutFileName("operation_out.txt");
+			process.setErrFileName("operation_err.txt");
+			Process p = process.start();
+			if (isBlocking()) p.waitFor();
+			
 			// TODO Actually run something?
 			bean.setStatus(Status.COMPLETE);
 			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
@@ -113,21 +121,15 @@ public class OperationProcess extends ProgressableProcess{
 		}
 	}
 
-	private void execute(File path) {
-		
-		final String line = createExecutionLine(path);
-		logger.debug("Execution line: "+line);
-		
+	private Map<String, String> createApplicationArgs(File path) {
+		final Map<String,String> args = new HashMap<String, String>(1);
+		args.put("path", path.getAbsolutePath());
+		return args;
 	}
-
-	private String createExecutionLine(File path) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
+    
 	@Override
 	public void terminate() throws Exception {
-		if (process!=null) process.destroyForcibly();
+		if (process!=null) process.destroy();
 	}
 
 	public String getProcessingDir() {

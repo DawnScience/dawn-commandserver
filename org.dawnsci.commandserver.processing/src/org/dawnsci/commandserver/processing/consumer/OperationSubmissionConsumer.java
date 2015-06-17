@@ -43,7 +43,7 @@ public class OperationSubmissionConsumer extends ProcessConsumer {
 			                                    String statusQName, 
 			                                    StatusBean bean) throws Exception {
 
-		return new OperationProcess(uri, statusTName, statusQName, (OperationBean)bean);
+		return new OperationProcess(uri, statusTName, statusQName, config, (OperationBean)bean);
 	}
 
 

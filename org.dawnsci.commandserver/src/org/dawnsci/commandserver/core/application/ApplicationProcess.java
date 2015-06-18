@@ -30,6 +30,8 @@ public class ApplicationProcess {
 	private String             applicationName = "org.dawnsci.commandserver.consumer";
 	private String             outFileName="consumer_out.log";
 	private String             errFileName="consumer_err.log";
+	private String             xms=null;
+	private String             xmx=null;
 
 
 	public ApplicationProcess(File propertiesFile) throws Exception {
@@ -146,6 +148,17 @@ public class ApplicationProcess {
 				if (value.contains(" ")) buf.append("\"");
 			}
 		}
+		if (xmx!=null || xms!=null) {
+			if (!buf.toString().contains("-vmargs")) buf.append(" -vmargs ");
+			if (xms!=null) {
+				buf.append("-Xms");
+				buf.append(xms);
+			}
+			if (xmx!=null) {
+				buf.append("-Xmx");
+				buf.append(xmx);
+			}
+		}
 		
 		if (sysProps.containsKey("logLocation")) {
 			buf.append(" >> "+sysProps.get("logLocation"));
@@ -205,6 +218,22 @@ public class ApplicationProcess {
 
 	public void setErrFileName(String errFileName) {
 		this.errFileName = errFileName;
+	}
+
+	public String getXms() {
+		return xms;
+	}
+
+	public void setXms(String xms) {
+		this.xms = xms;
+	}
+
+	public String getXmx() {
+		return xmx;
+	}
+
+	public void setXmx(String xmx) {
+		this.xmx = xmx;
 	}
 
 }

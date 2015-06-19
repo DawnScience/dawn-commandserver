@@ -5,7 +5,6 @@ import java.util.Properties;
 import org.dawb.workbench.jmx.IRemoteServiceProvider;
 import org.dawb.workbench.jmx.IRemoteWorkbench;
 import org.dawnsci.commandserver.core.beans.StatusBean;
-import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.core.resources.ResourcesPlugin;
 
 public class WorkflowProvider implements IRemoteServiceProvider {
@@ -32,6 +31,9 @@ public class WorkflowProvider implements IRemoteServiceProvider {
 	public String getWorkspacePath() {
 		if (bean.getProperties()!=null && bean.getProperties().containsKey("workspaceLocation")) {
 			return bean.getProperty("workspaceLocation");
+		}
+		if (System.getProperty("workspaceLocation")!=null) {
+			return System.getProperty("workspaceLocation");
 		}
 		final String location = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
 		return location;

@@ -454,7 +454,6 @@ public class StatusQueueView extends ViewPart {
 	        	if (rem!=null) System.out.println("Removed "+rem);
 			    consumer.close();
 			}
-			qSes.commit();
 			
 		} catch (Exception ne) {
 			logger.error("Cannot clear queue!", ne);

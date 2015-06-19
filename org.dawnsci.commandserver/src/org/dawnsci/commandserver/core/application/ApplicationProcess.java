@@ -161,9 +161,11 @@ public class ApplicationProcess {
 		}
 		
 		if (sysProps.containsKey("logLocation")) {
-			buf.append(" >> "+sysProps.get("logLocation"));
+			// Two spaces deals with the value of the last property being \
+			buf.append("  > "+sysProps.get("logLocation"));
 		} else {
-			buf.append(" >> "+workspace+"/consumer.log");
+			// Two spaces deals with the value of the last property being \
+			buf.append("  > "+workspace+"/consumer.log");
 		}
 
 		return buf.toString();

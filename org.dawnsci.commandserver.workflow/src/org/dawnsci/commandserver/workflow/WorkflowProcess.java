@@ -85,7 +85,7 @@ public class WorkflowProcess extends ProgressableProcess {
         this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
         this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
         service.setLoggingStreams(out, err);
-        
+
 		final Process workflow = service.start();
 		
 		// Normally is it not blocking, many workflows may run at the same time.

@@ -190,6 +190,10 @@ public class ApplicationProcess {
 		return workspace;
 	}
 	
+	public void setProgramArgument(String argName, String argValue) {
+		progArgs.put(argName, argValue);
+	}
+	
 	/**
 	 * @return true if linux
 	 */

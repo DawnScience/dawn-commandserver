@@ -30,6 +30,9 @@ public class WorkflowProvider implements IRemoteServiceProvider {
 
 	@Override
 	public String getWorkspacePath() {
+		if (bean.getProperties()!=null && bean.getProperties().containsKey("workspaceLocation")) {
+			return bean.getProperty("workspaceLocation");
+		}
 		final String location = ResourcesPlugin.getWorkspace().getRoot().getLocation().toOSString();
 		return location;
 	}

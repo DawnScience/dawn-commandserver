@@ -43,16 +43,19 @@ public class WorkflowProxy implements IRemoteWorkbench {
 
 	@Override
 	public boolean openFile(String fullPath) {
+		logger.debug("Workflow Requested to open file "+fullPath);
 		return false;
 	}
 
 	@Override
 	public boolean monitorDirectory(String fullPath, boolean startMonitoring) {
+		logger.debug("Workflow Requested to monitor dir "+fullPath);
 		return false;
 	}
 
 	@Override
 	public boolean refresh(String projectName, String resourcePath) {
+		logger.debug("Workflow Requested to refresh "+resourcePath);
 		return false;
 	}
 

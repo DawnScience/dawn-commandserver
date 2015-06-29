@@ -29,7 +29,6 @@ public class MonitorCreateFileTest {
 		recursiveDelete(dir);
 		dir.mkdirs();		
 
-		
 		monitor = new Monitor();
 		final Map<String,String> conf = new HashMap<String,String>(2);
 		conf.put("nio",       "true");

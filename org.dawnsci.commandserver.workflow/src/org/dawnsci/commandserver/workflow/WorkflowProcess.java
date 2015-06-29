@@ -16,12 +16,16 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.isencia.passerelle.workbench.model.launch.ModelRunner;
+
 public class WorkflowProcess extends ProgressableProcess {
 	
 	private static final Logger logger = LoggerFactory.getLogger(WorkflowProcess.class);
 
 	private File             runDir;
 	private IWorkflowService service;
+
+	private Map<String, String> arguments;
 
 	public WorkflowProcess(URI                uri, 
 			               final String       processName,
@@ -31,6 +35,7 @@ public class WorkflowProcess extends ProgressableProcess {
                            StatusBean         sbean) throws IOException {
 		
 		super(uri, statusTName, statusQName, sbean);
+		this.arguments = arguments;
 		
 		File newFile = null;
 		if (bean.getProperties().containsKey("file_path")) {
@@ -79,30 +84,40 @@ public class WorkflowProcess extends ProgressableProcess {
 
 	@Override
 	public void execute() throws Exception {
+			
+        final WorkflowProvider prov = new WorkflowProvider(this, bean);
 		
-        this.service = WorkflowFactory.createWorkflowService(new WorkflowProvider(this, bean));
-        
-        this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
-        this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
-        service.setLoggingStreams(out, err);
+		boolean sameVM = "true".equals(arguments.get("sameVM"));
+		if (sameVM) {
+	        final ModelRunner runner = new ModelRunner();
+	        runner.runModel(prov.getModelPath(), false);
+		} else {
+			this.service = WorkflowFactory.createWorkflowService(prov);
+			
+	        this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
+	        this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
+	        service.setLoggingStreams(out, err);
 
-		final Process workflow = service.start();
-		
-		// Normally is it not blocking, many workflows may run at the same time.
-		if (isBlocking()) {
-			workflow.waitFor(); // Waits until it is finished.
-			// Release any memory used by the object
-			service.clear();
+			final Process workflow = service.start();
 			
-			bean.setStatus(Status.COMPLETE);
-			bean.setPercentComplete(100d);
-			bean.setMessage("Ran "+bean.getProperty("momlLocation"));
-			broadcast(bean);
-			
-			if (out!=null) out.close();
-			if (err!=null) err.close();
+			// Normally is it not blocking, many workflows may run at the same time.
+			if (isBlocking()) {
+				workflow.waitFor(); // Waits until it is finished.
+				// Release any memory used by the object
+				service.clear();
+				
+				bean.setStatus(Status.COMPLETE);
+				bean.setPercentComplete(100d);
+				bean.setMessage("Ran "+bean.getProperty("momlLocation"));
+				broadcast(bean);
+				
+				if (out!=null) out.close();
+				if (err!=null) err.close();
+
+			}
 
 		}
+        
 	}
 
 	@Override

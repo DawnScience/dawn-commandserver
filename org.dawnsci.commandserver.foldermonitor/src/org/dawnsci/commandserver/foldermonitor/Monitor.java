@@ -220,34 +220,38 @@ public class Monitor extends AliveConsumer {
 			
 			List<WatchEvent<?>> events = key.pollEvents();
 			for (WatchEvent<?> event : events) {
-                
+
 				Kind kind = event.kind();
-                if (kind == OVERFLOW)  continue;
-                
-                WatchEvent<?> ev = (WatchEvent<?>)event;
-                Object   context = ev.context();
-                if (!(context instanceof Path)) continue;
-                
-                Path name  = (Path)context;
-                Path child = dir.resolve(name);
-                
-                if (filePattern!=null) {
-                	if (!filePattern.matcher(child.getFileName().toString()).matches()) {
-                		continue;
-                	}
-                }
-                
-                // print out event
-                System.out.format("%s: %s\n", kind, child);
-                StatusBean bean = bean(kind, child);
-  
-                broadcaster.broadcast(bean, true);
-                
-                if (recursive && (kind == ENTRY_CREATE)) {
-                	if (Files.isDirectory(child)) {
-                		registerAll(child);
-                	}
-                }
+				if (kind == OVERFLOW)  continue;
+
+				WatchEvent<?> ev = (WatchEvent<?>)event;
+				Object   context = ev.context();
+				if (!(context instanceof Path)) continue;
+
+				Path name  = (Path)context;
+				Path child = dir.resolve(name);
+				try {
+
+					if (filePattern!=null) {
+						if (!filePattern.matcher(child.getFileName().toString()).matches()) {
+							continue;
+						}
+					}
+
+					// print out event
+					System.out.format("%s: %s\n", kind, child);
+					StatusBean bean = bean(kind, child);
+
+					broadcaster.broadcast(bean, true);
+
+				} finally {
+
+	                if (recursive && (kind == ENTRY_CREATE)) {
+	                	if (Files.isDirectory(child)) {
+	                		registerAll(child);
+	                	}
+	                }
+				}
                 
 			}
 			

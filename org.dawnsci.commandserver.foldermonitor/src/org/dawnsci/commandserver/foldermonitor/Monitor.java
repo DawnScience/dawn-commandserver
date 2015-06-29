@@ -63,13 +63,14 @@ public class Monitor extends AliveConsumer {
 	
 	private boolean       stopped;
 	
-	private WatchService  watcher;
 	private Path          dir;
 	private Connection    connection;
 	private String        location;
 	private Broadcaster   broadcaster;
 	private Map<String, String> config;
 	private Pattern       filePattern;
+
+	private WatchService watcher;
 
 	@Override
 	public void init(Map<String, String> configuration) throws Exception {
@@ -92,19 +93,7 @@ public class Monitor extends AliveConsumer {
 		if (!fdir.exists()) throw new Exception(location+" does not exist and cannot be monitored!");
 
 		this.dir       = Paths.get(location);
-		this.watcher   = FileSystems.getDefault().newWatchService();
 		
-		boolean recursive = Boolean.parseBoolean(configuration.get("recursive"));
-		if (recursive) {
-			registerAll(dir);
-		} else {
-			dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
-		}
-		
-        if (configuration.containsKey("filePattern")) {
-        	filePattern = Pattern.compile(configuration.get("filePattern")); // Might throw exception.
-        	System.out.println("File name matching set to '"+filePattern+"'");
-        }
 	}
 	
 	@Override
@@ -112,7 +101,16 @@ public class Monitor extends AliveConsumer {
 		
 		startHeartbeat(); // Tell the GUI that we are alive
 		createTerminateListener();
+		startMonitor();
+	}
+	
+	private void startMonitor() throws Exception {
 		
+        if (config.containsKey("filePattern")) {
+        	filePattern = Pattern.compile(config.get("filePattern")); // Might throw exception.
+        	System.out.println("File name matching set to '"+filePattern+"'");
+        }
+
 		boolean nio = Boolean.parseBoolean(config.get("nio"));
 		if (nio) {
             startNio();
@@ -123,7 +121,7 @@ public class Monitor extends AliveConsumer {
             startPolling();
 		}
 	}
-	
+
 	private void startPolling() throws Exception {
 		
 		final long sleepTime = config.get("sleepTime") != null ? Long.parseLong(config.get("sleepTime")) : 1000L;
@@ -205,7 +203,16 @@ public class Monitor extends AliveConsumer {
 
 	private void startNio() throws Exception {
 		
+		this.watcher   = FileSystems.getDefault().newWatchService();
+		
 		boolean recursive = Boolean.parseBoolean(config.get("recursive"));
+		if (recursive) {
+			registerAll(dir);
+		} else {
+			dir.register(watcher, ENTRY_CREATE, ENTRY_DELETE, ENTRY_MODIFY);
+		}
+
+		
 		System.out.println("Starting nio folder monitor @ '"+dir+"'. Recursive is "+(recursive?"on":"off"));
 		while(!stopped) {
 			
@@ -280,6 +287,7 @@ public class Monitor extends AliveConsumer {
 		bean.setProperty("file_path",  path);
 		bean.setProperty("file_dir",   newFile.getParent());
 		bean.setProperty("event_type", type.name());
+		bean.setProperty("is_file",    String.valueOf(newFile.isFile()));
 		
 		if (newFile.exists()) {
 		
@@ -322,10 +330,10 @@ public class Monitor extends AliveConsumer {
 	public void stop() throws Exception {
 		
 		System.out.println("Stopping folder monitor @ '"+dir+"'");
-		watcher.close();
+		if (watcher!=null) watcher.close();
 		stopped = true;
 		Thread.sleep(2000);
-		connection.close();
+		if (connection!=null) connection.close();
 		setActive(false);
 	}
 
@@ -371,5 +379,28 @@ public class Monitor extends AliveConsumer {
 
 	}
 
-
+    /**
+     * Used by tests to override data and start a monitor
+     * @param conf
+     */
+	public void mock(Map<String,String> conf, Path dir) {
+		this.config      = conf;
+		this.dir         = dir;
+		
+		final Thread monitorThread = new Thread(new Runnable() {
+			public void run() {
+				try {
+					startMonitor();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+		}, "Mock File Monitor Thread");
+		monitorThread.setDaemon(true);
+		monitorThread.start();
+	}
+	
+	public void setBroadcaster(Broadcaster testCaster) {
+		this.broadcaster = testCaster;
+	}
 }

@@ -6,7 +6,8 @@ Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.foldermonitor.Activator
 Bundle-Vendor: DLS
 Require-Bundle: org.eclipse.core.runtime,
- org.dawnsci.commandserver;bundle-version="1.0.0"
+ org.dawnsci.commandserver;bundle-version="1.0.0",
+ org.junit;bundle-version="4.10.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: org.dawnsci.commandserver.foldermonitor

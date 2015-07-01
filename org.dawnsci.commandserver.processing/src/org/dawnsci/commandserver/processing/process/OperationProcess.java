@@ -37,7 +37,7 @@ public class OperationProcess extends ProgressableProcess {
 
 	
 	/**
-	 * Used to run a process without a beam and for OSGi to inject
+	 * Used to run a process without a bean and for OSGi to inject
 	 * services as required.
 	 */
 	public OperationProcess() {

@@ -54,7 +54,7 @@ public class DummyProcess extends ProgressableProcess {
 
 	@Override
 	public void terminate() throws Exception {
-		// We do nothing here, normally the dryRun() will now exist because
+		// We do nothing here, normally the dryRun() will now exit because
 		// the status changed.
 	}
 

@@ -22,7 +22,7 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.eclipse.dawnsci.hdf5.operation.HierarchicalFileExecutionVisitor;
 
-public class OperationRunner {
+public class OperationExecution {
 
 	private static IOperationService   oservice;
 	private static IPersistenceService pservice;

@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.processing.beans.OperationBean;
-import org.dawnsci.commandserver.processing.process.OperationRunner;
+import org.dawnsci.commandserver.processing.process.OperationExecution;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
 
@@ -23,7 +23,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  */
 public class OperationApplication implements IApplication {
 
-	private OperationRunner runner;
+	private OperationExecution runner;
 
 	/**
 	 * Must have the path to where the OperationBean is jsoned
@@ -44,7 +44,7 @@ public class OperationApplication implements IApplication {
 			}
 		}
 		
-		this.runner = new OperationRunner();
+		this.runner = new OperationExecution();
 		runner.run(createOperationBean(conf));
 		return runner;
 	}

@@ -21,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
+import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
@@ -208,7 +209,7 @@ public class OperationsTestRemote {
 		OperationBean b = new OperationBean();
 		
 		b.setDeletePersistenceFile(false);
-		b.setPersistencePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150331_164949.nxs");
+		b.setPersistencePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150507_134350.nxs");
 		b.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
 		Map<Integer,String> s = new HashMap<Integer,String>();
@@ -219,6 +220,38 @@ public class OperationsTestRemote {
 		b.setAxesNames(axesNames);
 		b.setOutputFilePath("/dls/science/groups/das/ExampleData/powder/remotetest/output3.nxs");
 		testRemoteRunBean(b);
+	}
+	
+	@Ignore
+	@Test
+	public void testRemoteRealBeanCluster() throws Exception {
+		OperationBean b = new OperationBean();
+		b.setRunDirectory("/dls/tmp/operations/");
+		b.setDeletePersistenceFile(false);
+		b.setPersistencePath("/dls/i12/data/2015/cm12163-2/processing/Jacob/46923_processed_150623_135514.nxs");
+		b.setFilePath("/dls/i12/data/2015/cm12163-2/rawdata/46923.nxs");
+		b.setDatasetPath("/entry1/pixium10_tif/image_data");
+		Map<Integer,String> s = new HashMap<Integer,String>();
+		s.put(0, "all");
+		b.setSlicing(s);
+		b.setExecutionType(ExecutionType.PARALLEL);
+		Map<Integer, String> axesNames = new HashMap<Integer, String>();
+		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
+		b.setAxesNames(axesNames);
+		b.setOutputFilePath("/dls/science/groups/das/ExampleData/tmp/output_cluster_0.nxs");
+		
+		// Run the model
+		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"),b.getRunDirectory());
+		factory.prepare(b);
+		factory.submit(b, true);
+
+		// Blocks until a final state is reached
+		Thread.sleep(2000); 
+		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
+		final StatusBean bean = factory.monitor(b);
+
+		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
+		System.out.println(bean);	
 	}
 
 }

@@ -103,6 +103,8 @@ public class OperationProcess extends ProgressableProcess {
 			process.setApplicationName("org.dawnsci.commandserver.processing.processing");
 			process.setOutFileName("operation_out.txt");
 			process.setErrFileName("operation_err.txt");
+			process.setPropagateSysProps(false);
+			if (bean instanceof OperationBean)process.setXmx(((OperationBean)bean).getXmx());
 			Process p = process.start();
 			if (isBlocking()) p.waitFor();
 			

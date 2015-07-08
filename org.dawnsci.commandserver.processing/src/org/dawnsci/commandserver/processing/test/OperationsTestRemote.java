@@ -234,6 +234,7 @@ public class OperationsTestRemote {
 		Map<Integer,String> s = new HashMap<Integer,String>();
 		s.put(0, "all");
 		b.setSlicing(s);
+		b.setXmx("4096m");
 		b.setExecutionType(ExecutionType.PARALLEL);
 		Map<Integer, String> axesNames = new HashMap<Integer, String>();
 		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");

@@ -40,6 +40,7 @@ public class OperationBean extends StatusBean {
 
 	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
+	private String 				 xmx;
 	
 	// Tidying stuff
 	private boolean deletePersistenceFile = true;
@@ -59,6 +60,7 @@ public class OperationBean extends StatusBean {
         this.executionType   = db.executionType;
         this.parallelTimeout = db.parallelTimeout;
         this.deletePersistenceFile = db.deletePersistenceFile;
+        this.xmx = db.xmx;
 	}
 	
 
@@ -189,5 +191,13 @@ public class OperationBean extends StatusBean {
 
 	public void setDeletePersistenceFile(boolean deletePersistenceFile) {
 		this.deletePersistenceFile = deletePersistenceFile;
+	}
+
+	public String getXmx() {
+		return xmx;
+	}
+
+	public void setXmx(String xmx) {
+		this.xmx = xmx;
 	}
 }

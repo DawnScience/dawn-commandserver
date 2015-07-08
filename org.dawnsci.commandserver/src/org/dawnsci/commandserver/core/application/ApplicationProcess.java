@@ -32,6 +32,7 @@ public class ApplicationProcess {
 	private String             errFileName="consumer_err.log";
 	private String             xms=null;
 	private String             xmx=null;
+	private boolean			   propagateSysProps = true;
 
 
 	public ApplicationProcess(File propertiesFile) throws Exception {
@@ -135,7 +136,7 @@ public class ApplicationProcess {
 			}
 		}
 	
-		if (propertiesFile==null && sysProps!=null) {
+		if (propertiesFile==null && sysProps!=null && propagateSysProps) {
 			buf.append(" -vmargs ");
 			for(String name : sysProps.keySet()) {
 				buf.append(" ");
@@ -160,10 +161,10 @@ public class ApplicationProcess {
 			}
 		}
 		
-		if (sysProps.containsKey("logLocation")) {
+		if (sysProps.containsKey("logLocation") && propagateSysProps) {
 			// Two spaces deals with the value of the last property being \
 			buf.append("  > "+sysProps.get("logLocation"));
-		} else {
+		} else if (propagateSysProps){
 			// Two spaces deals with the value of the last property being \
 			buf.append("  > "+workspace+"/consumer.log");
 		}
@@ -240,6 +241,14 @@ public class ApplicationProcess {
 
 	public void setXmx(String xmx) {
 		this.xmx = xmx;
+	}
+
+	public boolean isPropagateSysProps() {
+		return propagateSysProps;
+	}
+
+	public void setPropagateSysProps(boolean propagateSysProps) {
+		this.propagateSysProps = propagateSysProps;
 	}
 
 }

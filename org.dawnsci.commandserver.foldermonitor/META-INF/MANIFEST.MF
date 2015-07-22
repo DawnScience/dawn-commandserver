@@ -4,11 +4,10 @@ Bundle-Name: Foldermonitor
 Bundle-SymbolicName: org.dawnsci.commandserver.foldermonitor
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.foldermonitor.Activator
-Bundle-Vendor: Diamond Light Source
+Bundle-Vendor: DLS
 Require-Bundle: org.eclipse.core.runtime,
  org.dawnsci.commandserver;bundle-version="1.0.0",
- org.junit;bundle-version="4.10.0",
- javax.jms;bundle-version="[1.1.0,1.1.1)"
+ org.junit;bundle-version="4.10.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: org.dawnsci.commandserver.foldermonitor

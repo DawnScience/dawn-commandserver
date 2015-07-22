@@ -3,7 +3,7 @@
       id="org.dawnsci.commandserver.feature"
       label="Feature"
       version="1.0.0.qualifier"
-      provider-name="Diamond Light Source">
+      provider-name="DLS">
 
    <description url="http://www.example.com/description">
       [Enter Feature Description here.]
@@ -229,20 +229,6 @@
 
    <plugin
          id="org.dawnsci.commandserver.bubbles"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="org.apache.activemq.activemq-osgi"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="javax.jms"
          download-size="0"
          install-size="0"
          version="0.0.0"

@@ -34,7 +34,7 @@
 			<level>WARN</level>
 		</filter>
 		<encoder>
-			<pattern>%d %-5level %logger - %m %ex %n</pattern>
+			<pattern>%d %-5level %logger - %m %rEx %n</pattern>
 		</encoder>
 	</appender>
 

@@ -27,6 +27,7 @@ Export-Package: javax.jms,
  org.dawnsci.commandserver.core.process,
  org.dawnsci.commandserver.core.producer,
  org.dawnsci.commandserver.core.server,
+ org.dawnsci.commandserver.core.topic,
  org.dawnsci.commandserver.core.util
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0",

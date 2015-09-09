@@ -23,20 +23,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
 import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
 import javax.jms.Queue;
 import javax.jms.QueueBrowser;
 import javax.jms.QueueConnection;
 import javax.jms.QueueConnectionFactory;
 import javax.jms.QueueSession;
 import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.jms.Topic;
 
 import org.dawb.common.ui.util.EclipseUtils;
 import org.dawb.common.ui.util.GridUtils;
@@ -47,6 +42,9 @@ import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.QueueReader;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.topic.BeanChangeEvent;
+import org.dawnsci.commandserver.core.topic.BeanChangeListener;
+import org.dawnsci.commandserver.core.topic.TopicMonitor;
 import org.dawnsci.commandserver.core.util.CmdUtils;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
@@ -99,8 +97,6 @@ import org.osgi.framework.Bundle;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * A view for which the secondary id MUST be set and provides the queueName
  * and optionally the queue view name if a custom one is required. Syntax of
@@ -137,7 +133,8 @@ public class StatusQueueView extends ViewPart {
 	private Map<String, StatusBean>           queue;
 	private boolean                           showEntireQueue = false;
 
-	private Connection topicConnection;
+	private TopicMonitor<StatusBean>           topicMonitor;
+	private TopicMonitor<AdministratorMessage> adminMonitor;
 
 	private Action kill;
 
@@ -192,66 +189,43 @@ public class StatusQueueView extends ViewPart {
 		// Use job because connection might timeout.
 		final Job topicJob = new Job("Create topic listener") {
 
+
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			        StatusQueueView.this.topicConnection = connectionFactory.createConnection();
-			        topicConnection.start();
-	
-			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	
-			        Topic           topic    = session.createTopic(getTopicName());
-			        MessageConsumer consumer = session.createConsumer(topic);
-	
-			        final Class        clazz  = getBeanClass();
-			        final ObjectMapper mapper = new ObjectMapper();
-			        
-			        MessageListener listener = new MessageListener() {
-			            public void onMessage(Message message) {		            	
-			                try {
-			                    if (message instanceof TextMessage) {
-			                        TextMessage t = (TextMessage) message;
-			        				final StatusBean bean = mapper.readValue(t.getText(), clazz);
-			                        mergeBean(bean);
-			                    }
-			                } catch (Exception e) {
-			                    logger.error("Updating changed bean from topic", e);
-			                }
-			            }
-			        };
-			        consumer.setMessageListener(listener);
-			        
+			        final Class  clazz  = getBeanClass();
+					topicMonitor = new TopicMonitor<StatusBean>(uri, clazz, getTopicName());
+					topicMonitor.addBeanChangeListener(new BeanChangeListener<StatusBean>() {
+						@Override
+						public void beanChangePerformed(BeanChangeEvent<StatusBean> event) {
+							final StatusBean bean = event.getBean();
+	                        try {
+								mergeBean(bean);
+							} catch (Exception e) {
+								logger.error("Cannot merge changed bean!");
+							}
+						}
+					});
+					topicMonitor.connect();
 
-			        // Create a listener for administrator broadcast messages.
-			        topic    = session.createTopic(Constants.ADMIN_MESSAGE_TOPIC);
-			        consumer = session.createConsumer(topic);
-			        listener = new MessageListener() {
-			            public void onMessage(Message message) {		            	
-			                try {
-			                    if (message instanceof TextMessage) {
-			    			        // AdministratorMessage shows a message to the user.
-			    			        final Class        msgClass  = AdministratorMessage.class;
-
-			    			        TextMessage t = (TextMessage) message;
-			        				final AdministratorMessage bean = mapper.readValue(t.getText(), msgClass);
-			                        
-			        				getSite().getShell().getDisplay().syncExec(new Runnable() {
-			        					public void run() {
-			                                   MessageDialog.openError(getViewSite().getShell(), 
-			                                		                   bean.getTitle(), 
-			                                		                   bean.getMessage());
-			                                   
-			                                   viewer.refresh();
-			        					}
-			        				});
- 			                    }
-			                } catch (Exception e) {
-			                    // Not a big deal if they do not get admin messages.
-			                }
-			            }
-			        };
-			        consumer.setMessageListener(listener);
+			        
+					adminMonitor = new TopicMonitor<AdministratorMessage>(uri, AdministratorMessage.class, Constants.ADMIN_MESSAGE_TOPIC);
+					adminMonitor.addBeanChangeListener(new BeanChangeListener<AdministratorMessage>() {
+						@Override
+						public void beanChangePerformed(BeanChangeEvent<AdministratorMessage> event) {
+							final AdministratorMessage bean = event.getBean();
+	        				getSite().getShell().getDisplay().syncExec(new Runnable() {
+	        					public void run() {
+	                                   MessageDialog.openError(getViewSite().getShell(), 
+	                                		                   bean.getTitle(), 
+	                                		                   bean.getMessage());
+	                                   
+	                                   viewer.refresh();
+	        					}
+	        				});
+						}
+					});
+					adminMonitor.connect();
 
 			        return Status.OK_STATUS;
 			        
@@ -273,7 +247,8 @@ public class StatusQueueView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 		try {
-			if (topicConnection!=null) topicConnection.close();
+			if (topicMonitor!=null) topicMonitor.close();
+			if (adminMonitor!=null) adminMonitor.close();
 		} catch (Exception ne) {
 			logger.warn("Problem stopping topic listening for "+getTopicName(), ne);
 		}
@@ -525,6 +500,10 @@ public class StatusQueueView extends ViewPart {
 					new Status(IStatus.ERROR, "org.dawnsci.commandserver.ui", e.getMessage()));
 		}
 		
+	}
+
+	public void refresh() {
+		reconnect();
 	}
 
 	protected void reconnect() {

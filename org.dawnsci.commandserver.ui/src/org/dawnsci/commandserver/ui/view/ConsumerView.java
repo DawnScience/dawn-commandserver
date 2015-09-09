@@ -16,21 +16,14 @@ import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.jms.Topic;
-
 import org.dawb.common.ui.util.GridUtils;
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
+import org.dawnsci.commandserver.core.topic.BeanChangeEvent;
+import org.dawnsci.commandserver.core.topic.BeanChangeListener;
+import org.dawnsci.commandserver.core.topic.TopicMonitor;
 import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
@@ -58,8 +51,6 @@ import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * A view which shows the active consumers available to process commands.
  * 
@@ -78,7 +69,7 @@ public class ConsumerView extends ViewPart {
 	// Data
 	private Map<String, ConsumerBean>         consumers;
 
-	private Connection topicConnection;
+	private TopicMonitor<ConsumerBean>        topicMon;
 
 	@Override
 	public void createPartControl(Composite content) {
@@ -142,33 +133,17 @@ public class ConsumerView extends ViewPart {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-					ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			        topicConnection = connectionFactory.createConnection();
-			        topicConnection.start();
-	
-			        Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-	
-			        final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
-			        final MessageConsumer consumer = session.createConsumer(topic);
-	
-			        final ObjectMapper mapper = new ObjectMapper();
-			        
-			        MessageListener listener = new MessageListener() {
-			            public void onMessage(Message message) {		            	
-			                try {
-			                    if (message instanceof TextMessage) {
-			                        TextMessage t = (TextMessage) message;
-			        				final ConsumerBean bean = mapper.readValue(t.getText(), ConsumerBean.class);
-			        				bean.setLastAlive(System.currentTimeMillis());
-			                        consumers.put(bean.getConsumerId(), bean);
-			                    }
-			                } catch (Exception e) {
-			                    logger.error("Updating changed bean from topic", e);
-			                }
-			            }
-			        };
-			        consumer.setMessageListener(listener);
-			        return Status.OK_STATUS;
+					topicMon = new TopicMonitor<ConsumerBean>(uri, ConsumerBean.class, Constants.ALIVE_TOPIC);
+					topicMon.addBeanChangeListener(new BeanChangeListener<ConsumerBean>() {
+						@Override
+						public void beanChangePerformed(BeanChangeEvent<ConsumerBean> event) {
+	        				final ConsumerBean bean = event.getBean();
+	        				bean.setLastAlive(System.currentTimeMillis());
+	                        consumers.put(bean.getConsumerId(), bean);
+						}
+					});
+					topicMon.connect();
+					return Status.OK_STATUS;
 			        
 				} catch (Exception ne) {
 					logger.error("Cannot listen to topic changes because command server is not there", ne);
@@ -188,7 +163,7 @@ public class ConsumerView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 		try {
-			if (topicConnection!=null) topicConnection.close();
+			if (topicMon!=null) topicMon.close();
 		} catch (Exception ne) {
 			logger.warn("Problem stopping topic listening for "+Constants.ALIVE_TOPIC, ne);
 		}

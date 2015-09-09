@@ -342,6 +342,10 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		dryRun(100);
 	}
 	protected void dryRun(int size) {
+        dryRun(size, true);
+	}
+	
+	protected void dryRun(int size, boolean complete) {
 		for (int i = 0; i < size; i++) {
 			
 			if (bean.getStatus()==Status.REQUEST_TERMINATE ||

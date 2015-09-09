@@ -38,6 +38,8 @@ public class RemoteSubmission {
 	private long   lifeTime;
 	private long   timestamp;
 	
+	private ObjectMapper objectMapper;
+	
 	RemoteSubmission() {
 		
 	}
@@ -74,7 +76,7 @@ public class RemoteSubmission {
 			producer = session.createProducer(queue);
 			producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-			ObjectMapper mapper = new ObjectMapper();
+			ObjectMapper mapper = getObjectMapper();
 
 			if (getTimestamp()<1) setTimestamp(System.currentTimeMillis());
 			if (getPriority()<1)  setPriority(1);
@@ -262,6 +264,21 @@ public class RemoteSubmission {
 
 	public void setUniqueId(String uniqueId) {
 		this.uniqueId = uniqueId;
+	}
+
+	public ObjectMapper getObjectMapper() {
+		if (objectMapper == null) objectMapper = new ObjectMapper();
+		return objectMapper;
+	}
+
+	/**
+	 * Call to ovrride the mapper used to ensure that the objects you would
+	 * like to send are serializable. 
+	 * 
+	 * @param objectMapper
+	 */
+	public void setObjectMapper(ObjectMapper objectMapper) {
+		this.objectMapper = objectMapper;
 	}
 	
 }

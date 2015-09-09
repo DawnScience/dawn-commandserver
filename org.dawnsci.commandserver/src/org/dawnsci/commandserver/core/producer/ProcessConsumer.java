@@ -39,6 +39,7 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
@@ -154,7 +155,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 		logger.warn("Starting consumer for submissions to queue "+submitQName);
 		
-    	ObjectMapper mapper = new ObjectMapper();
+    	ObjectMapper mapper = createObjectMapper();
 		long waitTime = 0;
    	
         while (isActive()) { // You have to kill it or call stop() to stop it!
@@ -171,11 +172,15 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	            	
 	            	TextMessage t = (TextMessage)m;
 	            	
-	            	final StatusBean bean = mapper.readValue(t.getText(), getBeanClass());
+	            	final String     str  = t.getText();
+	            	final StatusBean bean = mapper.readValue(str, getBeanClass());
 	            	sendBean(uri, t, bean);
 	            	
 	            }
        		
+        	} catch (JsonMappingException fatal) {
+        		logger.error("Fatal except deserializing object!", fatal);
+        		
         	} catch (Throwable ne) {
         		
         		if (ne instanceof UnrecognizedPropertyException) {
@@ -196,6 +201,15 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 	}
 	
+	/**
+	 * Override to define an alternative object mapper to deal with the objects
+	 * in the bean type.
+	 * @return
+	 */
+	protected ObjectMapper createObjectMapper() {
+		return new ObjectMapper();
+	}
+
 	private void sendBean(URI uri, TextMessage t, StatusBean bean) throws Exception {
 		
 		if (bean!=null) { // We add this to the status list so that it can be rendered in the UI

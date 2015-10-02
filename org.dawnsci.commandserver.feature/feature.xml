@@ -17,6 +17,10 @@
       [Enter License Description here.]
    </license>
 
+   <includes
+         id="org.eclipse.dawnsci.remotedataset.feature"
+         version="0.0.0"/>
+
    <plugin
          id="org.dawnsci.commandserver.mx"
          download-size="0"

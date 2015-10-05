@@ -4,7 +4,7 @@ Bundle-Name: Jython
 Bundle-SymbolicName: org.dawnsci.commandserver.jython
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: org.dawnsci.commandserver.jython.Activator
-Bundle-Vendor: DLS
+Bundle-Vendor: Diamond Light Source
 Require-Bundle: org.eclipse.core.runtime,
  org.dawnsci.commandserver;bundle-version="1.0.0",
  uk.ac.diamond.jython;bundle-version="2.5.3",

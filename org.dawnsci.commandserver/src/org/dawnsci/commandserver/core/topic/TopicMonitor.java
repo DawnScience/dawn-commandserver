@@ -14,14 +14,13 @@ import javax.jms.TextMessage;
 import javax.jms.Topic;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
- * Class to monitor a topic a notify listener(s) with the deserilizaed bean.
+ * Class to monitor a topic a notify listener(s) with the deserialized bean.
  * 
  * @author Matthew Gerring
  *

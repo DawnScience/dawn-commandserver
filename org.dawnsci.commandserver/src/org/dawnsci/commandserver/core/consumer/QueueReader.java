@@ -43,13 +43,13 @@ public class QueueReader<T> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(QueueReader.class);
 	
-	private Comparator comparator;
+	private Comparator<? super T> comparator;
 
 	public QueueReader() {
 		this(null);
 	}
 	
-	public QueueReader(Comparator comparator) {
+	public QueueReader(Comparator<? super T> comparator) {
 		this.comparator = comparator;
 	}
 
@@ -96,6 +96,7 @@ public class QueueReader<T> {
 		    	if (m==null) continue;
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
+					@SuppressWarnings("unchecked")
 					final T bean = (T)mapper.readValue(t.getText(), clazz);
 	              	list.add(bean);
 	        	}
@@ -136,6 +137,7 @@ public class QueueReader<T> {
 					try {
 						if (message instanceof TextMessage) {
 							TextMessage t = (TextMessage) message;
+							@SuppressWarnings("unchecked")
 							final T bean = (T)mapper.readValue(t.getText(), clazz);
 							Method nameMethod = bean.getClass().getMethod("getName");
 							ret.put((String)nameMethod.invoke(bean), bean);

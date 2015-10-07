@@ -47,7 +47,7 @@ public class Consumer implements IApplication {
 	@Override
 	public Object start(IApplicationContext context) throws Exception {
 	
-		final Map      args          = context.getArguments();
+		final Map<?, ?>      args    = context.getArguments();
 		final String[] configuration = (String[])args.get("application.args");
         
 		Map<String, String> conf = new HashMap<String, String>(7);

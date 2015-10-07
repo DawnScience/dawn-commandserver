@@ -164,7 +164,6 @@ public class Broadcaster {
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
 	              	
-	            	@SuppressWarnings("unchecked")
 					final StatusBean qbean = mapper.readValue(t.getText(), bean.getClass());
 	            	if (qbean==null)               continue;
 	            	if (qbean.getUniqueId()==null) continue; // Definitely not our bean

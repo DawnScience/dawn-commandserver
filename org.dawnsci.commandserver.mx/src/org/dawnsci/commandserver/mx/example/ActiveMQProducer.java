@@ -12,6 +12,7 @@ import java.util.Enumeration;
 
 import javax.jms.Connection;
 import javax.jms.DeliveryMode;
+import javax.jms.JMSException;
 import javax.jms.Message;
 import javax.jms.MessageProducer;
 import javax.jms.ObjectMessage;
@@ -26,6 +27,7 @@ import javax.jms.TextMessage;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.mx.beans.SweepBean;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
@@ -51,7 +53,7 @@ public class ActiveMQProducer {
 
 	private static boolean REQUIRE_PEAK = false;
 
-	public static void main(String[] args) throws Exception {
+	public static void main(String[] args) throws JMSException, JsonProcessingException {
 		
 		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory("tcp://ws097.diamond.ac.uk:61616");
 		Connection send = connectionFactory.createConnection();
@@ -94,10 +96,11 @@ public class ActiveMQProducer {
 			qCon.start();
 			
 		    QueueBrowser qb = qSes.createBrowser(queue);
-		    Enumeration  e  = qb.getEnumeration();
+		    @SuppressWarnings("unchecked")
+			Enumeration<Message> e  = qb.getEnumeration();
 	    	if (e.hasMoreElements()) System.out.println("Peak at queue:");
 		    while(e.hasMoreElements()) {
-		    	Message m = (Message)e.nextElement();
+		    	Message m = e.nextElement();
 		    	if (m==null) continue;
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
@@ -112,8 +115,5 @@ public class ActiveMQProducer {
 			qSes.close();
 			qCon.close();
 		}
-			
 	}
-
-
 }

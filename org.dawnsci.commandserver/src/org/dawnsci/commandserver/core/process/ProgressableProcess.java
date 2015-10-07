@@ -248,7 +248,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
     	final Topic           topic    = session.createTopic(statusTName);
     	final MessageConsumer consumer = session.createConsumer(topic);
 
-    	final Class        clazz  = bean.getClass();
+    	final Class<? extends StatusBean> clazz = bean.getClass();
     	final ObjectMapper mapper = new ObjectMapper();
 
     	MessageListener listener = new MessageListener() {

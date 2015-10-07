@@ -319,7 +319,6 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	            	TextMessage t = (TextMessage)m;
 	              	
 	            	try {
-		            	@SuppressWarnings("unchecked")
 						final StatusBean qbean = mapper.readValue(t.getText(), getBeanClass());
 		            	if (qbean==null)               continue;
 		            	if (qbean.getStatus()==null)   continue;

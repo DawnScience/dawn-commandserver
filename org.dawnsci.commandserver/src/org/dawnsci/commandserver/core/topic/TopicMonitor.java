@@ -54,7 +54,7 @@ public class TopicMonitor<T> {
 		
 		final BeanChangeEvent<T> evt = new BeanChangeEvent<T>(bean);
 		@SuppressWarnings("unchecked")
-		final BeanChangeListener<T>[] snapshot = (BeanChangeListener<T>[]) listeners.toArray();
+		final BeanChangeListener<T>[] snapshot = (BeanChangeListener<T>[]) listeners.toArray(new BeanChangeListener[listeners.size()]);
 		for (BeanChangeListener<T> l : snapshot) {
 			l.beanChangePerformed(evt);
 		}

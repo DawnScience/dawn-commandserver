@@ -53,13 +53,14 @@ public class TopicMonitor<T> {
 	public void fireBeanChangeListeners(final T bean) {
 		
 		final BeanChangeEvent<T> evt = new BeanChangeEvent<T>(bean);
-		final BeanChangeListener<T>[] snapshot = listeners.toArray(new BeanChangeListener[listeners.size()]);
+		@SuppressWarnings("unchecked")
+		final BeanChangeListener<T>[] snapshot = (BeanChangeListener<T>[]) listeners.toArray();
 		for (BeanChangeListener<T> l : snapshot) {
 			l.beanChangePerformed(evt);
 		}
 	}
 
-	public void connect() throws Exception {
+	public void connect() throws JMSException {
 		
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 	    topicConnection = connectionFactory.createConnection();

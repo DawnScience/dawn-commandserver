@@ -136,7 +136,7 @@ public class RemoteSubmission {
 		Queue queue   = qSes.createQueue(queueName);
 		qCon.start();
 		
-    	Class        clazz  = obean.getClass();
+    	Class<? extends StatusBean> clazz = obean.getClass();
     	ObjectMapper mapper = new ObjectMapper();
 	   
     	try {

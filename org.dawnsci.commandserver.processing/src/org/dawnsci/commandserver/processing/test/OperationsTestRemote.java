@@ -10,9 +10,20 @@ package org.dawnsci.commandserver.processing.test;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.jms.Message;
+import javax.jms.Queue;
+import javax.jms.QueueBrowser;
+import javax.jms.QueueConnection;
+import javax.jms.QueueConnectionFactory;
+import javax.jms.QueueSession;
+import javax.jms.Session;
+import javax.jms.TextMessage;
+
+import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.processing.OperationSubmission;
@@ -40,6 +51,8 @@ import uk.ac.diamond.scisoft.analysis.fitting.functions.FunctionFactory;
 import uk.ac.diamond.scisoft.analysis.processing.operations.FunctionModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.SectorIntegrationModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.ValueModel;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Class to test that we can run an operation pipeline remotely.
@@ -146,7 +159,7 @@ public class OperationsTestRemote {
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
 		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
-		final StatusBean bean = factory.monitor(obean);
+		final StatusBean bean = monitor(obean, factory.getUri(), factory.getQueueName());
 
 		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
 		System.out.println(bean);		
@@ -197,7 +210,7 @@ public class OperationsTestRemote {
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
 		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
-		final StatusBean bean = factory.monitor(obean);
+		final StatusBean bean = monitor(obean, factory.getUri(), factory.getQueueName());
 
 		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
 		System.out.println(bean);		
@@ -249,10 +262,71 @@ public class OperationsTestRemote {
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
 		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
-		final StatusBean bean = factory.monitor(b);
+		final StatusBean bean = monitor(b, factory.getUri(), factory.getQueueName());
 
 		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
 		System.out.println(bean);	
+	}
+
+	
+	/**
+	 * Monitors a given bean in the status queue. 
+	 * If the bean is not there throws exception.
+	 * If the bean is in a final state, returns the bean straight away.
+	 * 
+	 * Polls the queue for the unique id of the bean we want until it
+	 * encounters a final state of that bean.
+	 * 
+	 * Polling rate is less than 1s
+	 * 
+	 * NOTE this class can poll forever if the job it is looking at never finishes.
+	 * 
+	 * @param obean
+	 * @param string
+	 * @return the bean once it is in a final state.
+	 * @throws exception if broker or queue absent
+	 */
+	public StatusBean monitor(StatusBean obean, URI uri, String queueName) throws Exception {
+		
+		if (queueName==null || "".equals(queueName)) throw new Exception("Please specify a queue name!");
+		
+		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
+		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+		Queue queue   = qSes.createQueue(queueName);
+		qCon.start();
+		
+    	Class<? extends StatusBean> clazz = obean.getClass();
+    	ObjectMapper mapper = new ObjectMapper();
+	   
+    	try {
+	    	POLL: while(true) {
+	    		
+	    		Thread.sleep(500);
+	    		QueueBrowser qb = qSes.createBrowser(queue);
+		    	@SuppressWarnings("rawtypes")
+		    	Enumeration  e  = qb.getEnumeration();
+	
+		    	while(e.hasMoreElements()) { // We must final the bean somewhere.
+		    		Message m = (Message)e.nextElement();
+		    		if (m==null) continue;
+		    		if (m instanceof TextMessage) {
+		    			TextMessage t = (TextMessage)m;
+		    			final StatusBean bean = mapper.readValue(t.getText(), clazz);
+
+		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
+		    				if (bean.getStatus().isFinal()) return bean;
+		    				continue POLL;
+		    			}
+		    		}
+		    	}
+		    	
+		    	throw new Exception("The bean with id "+obean.getUniqueId()+" does not exist in "+queueName+"!");
+	
+		    }
+    	} finally {
+    		qCon.close();
+    	}
 	}
 
 }

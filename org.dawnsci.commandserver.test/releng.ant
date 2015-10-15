@@ -25,6 +25,7 @@
 				<pathelement location="${workspace.git.loc}/dawn-commandserver.git/org.dawnsci.commandserver/bin" />
 				<pathelement location="${workspace.git.loc}/dawn-commandserver.git/org.dawnsci.commandserver/lib/*" />
 				<pathelement location="${workspace.git.loc}/dawn-commandserver.git/org.dawnsci.commandserver.mx/bin" />
+				<pathelement location="${workspace.git.loc}/dawn-commandserver.git/uk.ac.diamond.org.apache.activemq/" />
 				<pathelement location="${workspace.loc}/tp/plugins/*" />
 			</classpath>
 			<batchtest todir="@{report.dir}">

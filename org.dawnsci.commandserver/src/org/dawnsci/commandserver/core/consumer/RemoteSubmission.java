@@ -54,7 +54,7 @@ public class RemoteSubmission {
 	 * @param uri
 	 * @param bean
 	 */
-	public synchronized TextMessage submit(StatusBean bean, boolean prepareBean) throws Exception {
+	public synchronized void submit(StatusBean bean, boolean prepareBean) throws Exception {
 
 		
 		if (getQueueName()==null || "".equals(getQueueName())) throw new Exception("Please specify a queue name!");
@@ -97,7 +97,7 @@ public class RemoteSubmission {
 			
 			producer.send(message);
 			
-			return message;
+			return;
 			
 		} finally {
 			if (send!=null)     send.close();

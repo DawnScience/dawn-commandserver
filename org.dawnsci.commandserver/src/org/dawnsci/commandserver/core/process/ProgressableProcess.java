@@ -29,16 +29,15 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.fasterxml.jackson.core.JsonGenerationException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.sun.jna.Platform;
 
 
@@ -170,13 +169,14 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 	protected void writeProjectBean(final File dir, final String fileName) throws Exception {
 		
 		final File beanFile = new File(dir, fileName);
-    	ObjectMapper mapper = new ObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
     	beanFile.getParentFile().mkdirs();
     	if (!beanFile.exists()) beanFile.createNewFile();
     	
     	final FileOutputStream stream = new FileOutputStream(beanFile);
     	try {
-    	    mapper.writeValue(stream, bean);
+    		String json = service.marshal(stream);
+    		stream.write(json.getBytes("UTF-8"));
     	} finally {
     		stream.close();
     	}
@@ -249,14 +249,14 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
     	final MessageConsumer consumer = session.createConsumer(topic);
 
     	final Class<? extends StatusBean> clazz = bean.getClass();
-    	final ObjectMapper mapper = new ObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 
     	MessageListener listener = new MessageListener() {
     		public void onMessage(Message message) {		            	
     			try {
     				if (message instanceof TextMessage) {
     					TextMessage t = (TextMessage) message;
-    					final StatusBean tbean = mapper.readValue(t.getText(), clazz);
+    					final StatusBean tbean = service.unmarshal(t.getText(), clazz);
 
     					if (bean.getStatus().isFinal()) { // Something else already happened
     						topicConnection.close();

@@ -15,7 +15,8 @@ Require-Bundle: org.dawnsci.commandserver;bundle-version="1.0.0",
  com.fasterxml.jackson.core.jackson-annotations;bundle-version="2.2.0",
  com.fasterxml.jackson.core.jackson-core;bundle-version="2.2.0",
  com.fasterxml.jackson.core.jackson-databind;bundle-version="2.2.0"
-Import-Package: org.junit;version="4.10.0",
+Import-Package: javax.jms,
+ org.junit;version="4.10.0",
  org.slf4j;version="1.7.6"
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy

@@ -9,11 +9,12 @@
 package org.dawnsci.commandserver.core;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
 import javax.jms.JMSException;
 import javax.jms.QueueConnectionFactory;
 
-import org.apache.activemq.ActiveMQConnectionFactory;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 
 /**
  * Class exists to avoid dependency on org.apache.activemq leaking around the code
@@ -29,9 +30,10 @@ public class ConnectionFactoryFacade {
 	 * @param uri
 	 * @return
 	 * @throws JMSException
+	 * @throws URISyntaxException 
 	 */
-	public static QueueConnectionFactory createConnectionFactory(final String uri) throws JMSException {
-		return new ActiveMQConnectionFactory(uri);
+	public static QueueConnectionFactory createConnectionFactory(final String uri) throws JMSException, URISyntaxException {
+		return createConnectionFactory(new URI(uri));
 	}
 
 	/**
@@ -41,6 +43,7 @@ public class ConnectionFactoryFacade {
 	 * @throws JMSException
 	 */
 	public static QueueConnectionFactory createConnectionFactory(final URI uri) throws JMSException {
-		return new ActiveMQConnectionFactory(uri);
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
+		return (QueueConnectionFactory)service.createConnectionFactory(uri);
 	}
 }

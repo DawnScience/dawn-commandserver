@@ -24,12 +24,12 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Reads a Queue of json beans from the activemq queue and deserializes the 
@@ -82,7 +82,7 @@ public class QueueReader<T> {
 		    @SuppressWarnings("rawtypes")
 			Enumeration  e  = qb.getEnumeration();
 		    
-			ObjectMapper mapper = new ObjectMapper();
+	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 			
 			final Collection<T> list;
 			if (comparator!=null) {
@@ -97,7 +97,7 @@ public class QueueReader<T> {
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
 					@SuppressWarnings("unchecked")
-					final T bean = (T)mapper.readValue(t.getText(), clazz);
+					final T bean = (T)service.unmarshal(t.getText(), clazz);
 	              	list.add(bean);
 	        	}
 		    }
@@ -130,7 +130,7 @@ public class QueueReader<T> {
 			final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
 			final MessageConsumer consumer = session.createConsumer(topic);
 
-			final ObjectMapper mapper = new ObjectMapper();
+	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 
 			MessageListener listener = new MessageListener() {
 				public void onMessage(Message message) {		            	
@@ -138,7 +138,7 @@ public class QueueReader<T> {
 						if (message instanceof TextMessage) {
 							TextMessage t = (TextMessage) message;
 							@SuppressWarnings("unchecked")
-							final T bean = (T)mapper.readValue(t.getText(), clazz);
+							final T bean = (T)service.unmarshal(t.getText(), clazz);
 							Method nameMethod = bean.getClass().getMethod("getName");
 							ret.put((String)nameMethod.invoke(bean), bean);
 						}

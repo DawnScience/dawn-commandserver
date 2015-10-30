@@ -11,7 +11,7 @@ package org.dawnsci.commandserver.mx.beans;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * Bean to serialise with JSON and be sent to the server.

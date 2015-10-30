@@ -1,6 +1,6 @@
 package org.dawnsci.commandserver.core.process;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * Broadcast a bean, usually over a JMS topic.

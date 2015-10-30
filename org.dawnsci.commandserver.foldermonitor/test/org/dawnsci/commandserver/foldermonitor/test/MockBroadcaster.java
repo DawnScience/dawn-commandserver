@@ -1,7 +1,7 @@
 package org.dawnsci.commandserver.foldermonitor.test;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 class MockBroadcaster extends Broadcaster {
 

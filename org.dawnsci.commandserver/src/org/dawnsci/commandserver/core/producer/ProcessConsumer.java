@@ -30,18 +30,16 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.exc.UnrecognizedPropertyException;
 
 /**
  * This consumer monitors a queue and starts runs based
@@ -90,7 +88,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	public void start() throws Exception {
 		
 		startHeartbeat();
-		createTerminateListener();
+		createKillListener();
 		
 		processStatusQueue(getUri(), statusQName);
 		
@@ -155,7 +153,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 		logger.warn("Starting consumer for submissions to queue "+submitQName);
 		
-    	ObjectMapper mapper = createObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 		long waitTime = 0;
    	
         while (isActive()) { // You have to kill it or call stop() to stop it!
@@ -173,17 +171,18 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	            	TextMessage t = (TextMessage)m;
 	            	
 	            	final String     str  = t.getText();
-	            	final StatusBean bean = mapper.readValue(str, getBeanClass());
+	            	final StatusBean bean = service.unmarshal(str, getBeanClass());
 	            	sendBean(uri, t, bean);
 	            	
 	            }
        		
-        	} catch (JsonMappingException fatal) {
-        		logger.error("Fatal except deserializing object!", fatal);
         		
         	} catch (Throwable ne) {
         		
-        		if (ne instanceof UnrecognizedPropertyException) {
+        		if (ne.getClass().getSimpleName().endsWith("JsonMappingException")) {
+            		logger.error("Fatal except deserializing object!", ne);
+        		}
+        		if (ne.getClass().getSimpleName().endsWith("UnrecognizedPropertyException")) {
         			logger.error("Cannot deserialize bean!", ne);
         		}
         		if (!isDurable()) break;
@@ -201,15 +200,6 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		
 	}
 	
-	/**
-	 * Override to define an alternative object mapper to deal with the objects
-	 * in the bean type.
-	 * @return
-	 */
-	protected ObjectMapper createObjectMapper() {
-		return new ObjectMapper();
-	}
-
 	private void sendBean(URI uri, TextMessage t, StatusBean bean) throws Exception {
 		
 		if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
@@ -308,7 +298,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		    @SuppressWarnings("rawtypes")
 			Enumeration  e  = qb.getEnumeration();
 		    
-			ObjectMapper mapper = new ObjectMapper();
+	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 			
 			Map<String, StatusBean> failIds = new LinkedHashMap<String, StatusBean>(7);
 			List<String>          removeIds = new ArrayList<String>(7);
@@ -319,7 +309,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	            	TextMessage t = (TextMessage)m;
 	              	
 	            	try {
-						final StatusBean qbean = mapper.readValue(t.getText(), getBeanClass());
+						final StatusBean qbean = service.unmarshal(t.getText(), getBeanClass());
 		            	if (qbean==null)               continue;
 		            	if (qbean.getStatus()==null)   continue;
 		            	if (!qbean.getStatus().isStarted()) {
@@ -379,7 +369,7 @@ public abstract class ProcessConsumer extends AliveConsumer {
 		        		MessageProducer producer = qSes.createProducer(queue);
 		        		final StatusBean    bean = failIds.get(jMSMessageID);
 		        		bean.setStatus(Status.FAILED);
-		        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
+		        		producer.send(qSes.createTextMessage(service.marshal(bean)));
 		        		
 		        		logger.warn("Failed job "+bean.getName()+" messageid("+jMSMessageID+")");
 

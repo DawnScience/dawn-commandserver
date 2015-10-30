@@ -11,11 +11,11 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Checks for the heartbeat of a named consumer.
@@ -52,7 +52,7 @@ public class HeartbeatChecker {
 
 	        ok = false;
 	        
-	        final ObjectMapper mapper = new ObjectMapper();
+	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 	        final Thread runnerThread = Thread.currentThread();
 	        
         	MessageListener listener = new MessageListener() {
@@ -60,7 +60,7 @@ public class HeartbeatChecker {
         			try {
         				if (message instanceof TextMessage) {
         					TextMessage t = (TextMessage) message;
-        					ConsumerBean  b = mapper.readValue(t.getText(), ConsumerBean.class);
+        					ConsumerBean  b = service.unmarshal(t.getText(), ConsumerBean.class);
         					if (!consumerName.equals(b.getName())) {
         						return;
         					}

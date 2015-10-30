@@ -10,9 +10,9 @@ import java.util.Map;
 
 import org.dawb.workbench.jmx.service.IWorkflowService;
 import org.dawb.workbench.jmx.service.WorkflowFactory;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

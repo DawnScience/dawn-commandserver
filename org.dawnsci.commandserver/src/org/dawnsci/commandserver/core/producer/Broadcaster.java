@@ -26,11 +26,11 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * Class which can broadcast a status bean to a queue and a topic
@@ -68,10 +68,10 @@ public class Broadcaster {
 		    updateQueue(bean);  // For clients connecting in future or after a refresh - persistence.
 		}
         
-		final ObjectMapper mapper = new ObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 
 		// Here we are sending the message out to the topic
-		TextMessage temp = session.createTextMessage(mapper.writeValueAsString(bean));
+		TextMessage temp = session.createTextMessage(service.marshal(bean));
 		topicProducer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
 
 		if (out!=null) {
@@ -156,7 +156,7 @@ public class Broadcaster {
 		    @SuppressWarnings("rawtypes")
 			Enumeration  e  = qb.getEnumeration();
 		    
-			ObjectMapper mapper = new ObjectMapper();
+	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 			String jMSMessageID = null;
 	        while(e.hasMoreElements()) {
 		    	Message m = (Message)e.nextElement();
@@ -164,7 +164,7 @@ public class Broadcaster {
 	        	if (m instanceof TextMessage) {
 	            	TextMessage t = (TextMessage)m;
 	              	
-					final StatusBean qbean = mapper.readValue(t.getText(), bean.getClass());
+					final StatusBean qbean = service.unmarshal(t.getText(), bean.getClass());
 	            	if (qbean==null)               continue;
 	            	if (qbean.getUniqueId()==null) continue; // Definitely not our bean
 	            	if (qbean.getUniqueId().equals(bean.getUniqueId())) {
@@ -181,7 +181,7 @@ public class Broadcaster {
 	        	Message m = consumer.receive(1000);
 	        	if (m!=null && m instanceof TextMessage) {
 	        		MessageProducer producer = qSes.createProducer(queue);
-	        		producer.send(qSes.createTextMessage(mapper.writeValueAsString(bean)));
+	        		producer.send(qSes.createTextMessage(service.marshal(bean)));
 	        	}
 	        }
 		} finally {

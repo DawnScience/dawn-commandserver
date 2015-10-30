@@ -10,12 +10,12 @@ package org.dawnsci.commandserver.mx.consumer;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.core.server.FilePermissionServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * This consumer monitors a queue and starts runs based

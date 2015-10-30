@@ -4,8 +4,8 @@ import java.util.Properties;
 
 import org.dawb.workbench.jmx.IRemoteServiceProvider;
 import org.dawb.workbench.jmx.IRemoteWorkbench;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.eclipse.core.resources.ResourcesPlugin;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public class WorkflowProvider implements IRemoteServiceProvider {
 

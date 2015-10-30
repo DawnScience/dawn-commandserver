@@ -12,9 +12,9 @@ import java.io.FileNotFoundException;
 import java.net.URI;
 import java.net.URL;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.python.util.PythonInterpreter;
 
 import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;

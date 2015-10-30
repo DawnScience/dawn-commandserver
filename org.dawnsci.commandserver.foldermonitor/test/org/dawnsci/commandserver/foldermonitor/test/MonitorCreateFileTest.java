@@ -6,8 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.foldermonitor.Monitor;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;

@@ -8,9 +8,9 @@
  */
 package org.dawnsci.commandserver.mx.example;
 
-import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.beans.SweepBean;
+import org.eclipse.scanning.api.event.status.Status;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 

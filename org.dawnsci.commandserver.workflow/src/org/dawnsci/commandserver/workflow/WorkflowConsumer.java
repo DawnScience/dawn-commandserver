@@ -3,9 +3,9 @@ package org.dawnsci.commandserver.workflow;
 import java.io.File;
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public class WorkflowConsumer extends ProcessConsumer {
 

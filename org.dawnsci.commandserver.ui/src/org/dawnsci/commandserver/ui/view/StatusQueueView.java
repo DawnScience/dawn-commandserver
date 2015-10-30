@@ -38,7 +38,6 @@ import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.beans.AdministratorMessage;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.QueueReader;
 import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
@@ -75,6 +74,7 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
 import org.eclipse.swt.events.MouseEvent;
@@ -313,7 +313,7 @@ public class StatusQueueView extends ViewPart {
 					
 					if (!ok) return;
 					
-					bean.setStatus(org.dawnsci.commandserver.core.beans.Status.REQUEST_TERMINATE);
+					bean.setStatus(org.eclipse.scanning.api.event.status.Status.REQUEST_TERMINATE);
 					bean.setMessage("Requesting a termination of "+bean.getName());
 					JSONUtils.sendTopic(bean, getTopicName(), getUri());
 					

@@ -18,9 +18,9 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 
 public class JSONUtils {
 
@@ -59,10 +59,10 @@ public class JSONUtils {
 	
 			MessageProducer producer = session.createProducer(topic);
 	
-			final ObjectMapper mapper = new ObjectMapper();
+			final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 	
 			// Here we are sending the message out to the topic
-			TextMessage temp = session.createTextMessage(mapper.writeValueAsString(message));
+			TextMessage temp = session.createTextMessage(service.marshal(message));
 			producer.send(temp, DeliveryMode.NON_PERSISTENT, 1, 5000);
 			
 		} finally {

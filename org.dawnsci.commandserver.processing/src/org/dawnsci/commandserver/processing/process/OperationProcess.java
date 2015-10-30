@@ -15,9 +15,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.application.ApplicationProcess;
-import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.eclipse.scanning.api.event.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

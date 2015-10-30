@@ -13,9 +13,9 @@ import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.beans.Status;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
+import org.eclipse.scanning.api.event.status.Status;
 
 /**
  * Rerun of several collections as follows:

@@ -13,11 +13,11 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Class to monitor a topic a notify listener(s) with the deserialized bean.
@@ -60,7 +60,7 @@ public class TopicMonitor<T> {
 		}
 	}
 
-	public void connect() throws JMSException {
+	public void connect() throws Exception {
 		
 		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
 	    topicConnection = connectionFactory.createConnection();
@@ -71,14 +71,14 @@ public class TopicMonitor<T> {
 	    final Topic           topic    = session.createTopic(topicId);
 	    final MessageConsumer consumer = session.createConsumer(topic);
 	
-	    final ObjectMapper mapper = new ObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 	    
 	    MessageListener listener = new MessageListener() {
 	        public void onMessage(Message message) {		            	
 	            try {
 	                if (message instanceof TextMessage) {
 	                    TextMessage t = (TextMessage) message;
-	    				final T bean = (T)mapper.readValue(t.getText(), beanClass);
+	    				final T bean = (T)service.unmarshal(t.getText(), beanClass);
 	    				fireBeanChangeListeners(bean);
 	                }
 	            } catch (Exception e) {
@@ -89,7 +89,7 @@ public class TopicMonitor<T> {
 	    consumer.setMessageListener(listener);
 	}
 	
-	public void close() throws JMSException {
+	public void close() throws Exception {
 		topicConnection.close();
 	}
 

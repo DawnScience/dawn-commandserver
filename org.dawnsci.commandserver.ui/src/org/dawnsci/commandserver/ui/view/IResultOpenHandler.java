@@ -8,7 +8,7 @@
  */
 package org.dawnsci.commandserver.ui.view;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public interface IResultOpenHandler {
 

@@ -10,8 +10,8 @@ package org.dawnsci.commandserver.processing.beans;
 
 import java.util.Map;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * Bean to serialise with JSON and be sent to the server.

@@ -2,9 +2,9 @@ package org.dawnsci.commandserver.bubbles;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public class BubblesProcess extends ProgressableProcess {
 

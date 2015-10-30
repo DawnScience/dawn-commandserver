@@ -44,10 +44,10 @@ import javax.jms.Connection;
 import javax.jms.ConnectionFactory;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.core.producer.AliveConsumer;
 import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * Class which monitors a folder location and publishes a topic and
@@ -100,7 +100,7 @@ public class Monitor extends AliveConsumer {
 	public void start() throws Exception {
 		
 		startHeartbeat(); // Tell the GUI that we are alive
-		createTerminateListener();
+		createKillListener();
 		startMonitor();
 	}
 	

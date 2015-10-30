@@ -1,6 +1,6 @@
 package org.dawnsci.commandserver.foldermonitor.test;
 
-import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public interface StatusBroadcastListener {
 

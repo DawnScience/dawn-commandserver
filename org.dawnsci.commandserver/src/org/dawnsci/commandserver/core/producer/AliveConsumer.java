@@ -25,15 +25,15 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 import javax.jms.Topic;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.consumer.Constants;
 import org.dawnsci.commandserver.core.consumer.ConsumerBean;
 import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 public abstract class AliveConsumer implements IConsumerExtension {
 	
@@ -89,13 +89,13 @@ public abstract class AliveConsumer implements IConsumerExtension {
 
 				long waitTime = 0;
 				
-				final ObjectMapper mapper = new ObjectMapper();
+		        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 				// Here we are sending the message out to the topic
 				while(isActive()) {
 					try {
 
 						Thread.sleep(Constants.NOTIFICATION_FREQUENCY);							
-						sendBeat(mapper.writeValueAsString(cbean));
+						sendBeat(service.marshal(cbean));
 						waitTime = 0;
 
 						if (ConsumerStatus.STARTING.equals(cbean.getStatus())) {
@@ -166,7 +166,7 @@ public abstract class AliveConsumer implements IConsumerExtension {
 		return producer;
 	}
 
-    protected void createTerminateListener() throws Exception {
+    protected void createKillListener() throws Exception {
 		
     	ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
     	this.terminateConnection = connectionFactory.createConnection();
@@ -177,14 +177,14 @@ public abstract class AliveConsumer implements IConsumerExtension {
     	final Topic           topic    = session.createTopic(Constants.TERMINATE_CONSUMER_TOPIC);
     	final MessageConsumer consumer = session.createConsumer(topic);
 
-    	final ObjectMapper mapper = new ObjectMapper();
+        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
 
     	MessageListener listener = new MessageListener() {
     		public void onMessage(Message message) {		            	
     			try {
     				if (message instanceof TextMessage) {
     					TextMessage t = (TextMessage) message;
-    					final ConsumerBean bean = mapper.readValue(t.getText(), ConsumerBean.class);
+    					final ConsumerBean bean = service.unmarshal(t.getText(), ConsumerBean.class);
 
     					if (bean.getStatus().isFinal()) { // Something else already happened
     						terminateConnection.close();

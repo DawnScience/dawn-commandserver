@@ -7,8 +7,8 @@ import org.dawb.workbench.jmx.IRemoteWorkbench;
 import org.dawb.workbench.jmx.UserDebugBean;
 import org.dawb.workbench.jmx.UserInputBean;
 import org.dawb.workbench.jmx.UserPlotBean;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

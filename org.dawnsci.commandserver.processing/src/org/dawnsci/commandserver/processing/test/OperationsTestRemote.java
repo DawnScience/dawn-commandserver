@@ -24,8 +24,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.Status;
-import org.dawnsci.commandserver.core.beans.StatusBean;
 import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -43,6 +41,8 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
+import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.status.StatusBean;
 import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;

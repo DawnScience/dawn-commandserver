@@ -19,10 +19,10 @@ import javax.jms.QueueConnectionFactory;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.beans.StatusBean;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.status.StatusBean;
 
 public class RemoteSubmission {
 	
@@ -36,13 +36,14 @@ public class RemoteSubmission {
 	private long   lifeTime;
 	private long   timestamp;
 	
-	private ObjectMapper objectMapper;
+	private IEventConnectorService service;
 	
 	RemoteSubmission() {
-		
+        service = ActiveMQServiceHolder.getEventConnectorService();
 	}
 	
 	public RemoteSubmission(URI uri) {
+		this();
 	    this.uri       = uri;
 	    this.uniqueId = System.currentTimeMillis()+"_"+UUID.randomUUID();
 	}
@@ -74,8 +75,6 @@ public class RemoteSubmission {
 			producer = session.createProducer(queue);
 			producer.setDeliveryMode(DeliveryMode.PERSISTENT);
 
-			ObjectMapper mapper = getObjectMapper();
-
 			if (getTimestamp()<1) setTimestamp(System.currentTimeMillis());
 			if (getPriority()<1)  setPriority(1);
 			if (getLifeTime()<1)  setLifeTime(7*24*60*60*1000); // 7 days in ms
@@ -85,7 +84,7 @@ public class RemoteSubmission {
 				bean.setUniqueId(uniqueId);
 				bean.setSubmissionTime(getTimestamp());
 			}
-			String   jsonString = mapper.writeValueAsString(bean);
+			String   jsonString = service.marshal(bean);
 			
 			TextMessage message = session.createTextMessage(jsonString);
 			
@@ -202,11 +201,6 @@ public class RemoteSubmission {
 
 	public void setUniqueId(String uniqueId) {
 		this.uniqueId = uniqueId;
-	}
-
-	private ObjectMapper getObjectMapper() {
-		if (objectMapper == null) objectMapper = new ObjectMapper();
-		return objectMapper;
 	}
 
 }

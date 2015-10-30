@@ -204,19 +204,9 @@ public class RemoteSubmission {
 		this.uniqueId = uniqueId;
 	}
 
-	public ObjectMapper getObjectMapper() {
+	private ObjectMapper getObjectMapper() {
 		if (objectMapper == null) objectMapper = new ObjectMapper();
 		return objectMapper;
 	}
 
-	/**
-	 * Call to ovrride the mapper used to ensure that the objects you would
-	 * like to send are serializable. 
-	 * 
-	 * @param objectMapper
-	 */
-	public void setObjectMapper(ObjectMapper objectMapper) {
-		this.objectMapper = objectMapper;
-	}
-	
 }

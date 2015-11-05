@@ -9,22 +9,21 @@
 package org.dawnsci.commandserver.jython;
 
 import java.io.FileNotFoundException;
-import java.net.URI;
 import java.net.URL;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
-import org.eclipse.scanning.api.event.status.StatusBean;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.python.util.PythonInterpreter;
 
 import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;
 
-public class JythonConsumer extends ProcessConsumer {
+public class JythonConsumer extends ProcessConsumer<JythonBean> {
 	
 	protected PythonInterpreter interpreter;
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<JythonBean> getBeanClass() {
 		return JythonBean.class;
 	}
 	
@@ -59,8 +58,8 @@ public class JythonConsumer extends ProcessConsumer {
 
 
 	@Override
-	protected ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception {
-		return new JythonProcess(uri, statusTName, statusQName, config, (JythonBean)bean, interpreter);
+	protected ProgressableProcess<JythonBean> createProcess(JythonBean bean, IPublisher<JythonBean> status) throws Exception {
+		return new JythonProcess((JythonBean)bean, interpreter, status);
 	}
 
 	private static final long TWO_DAYS = 48*60*60*1000; // ms

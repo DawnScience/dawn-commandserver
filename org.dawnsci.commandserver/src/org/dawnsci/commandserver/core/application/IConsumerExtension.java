@@ -38,4 +38,10 @@ public interface IConsumerExtension {
 	 */
 	public void stop() throws Exception;
 
+	/**
+	 * The name of the consumer to appear in the consumer list.
+	 * @return
+	 */
+	String getName();
+
 }

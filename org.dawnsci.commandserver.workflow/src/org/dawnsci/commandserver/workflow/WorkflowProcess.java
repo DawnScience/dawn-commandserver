@@ -5,12 +5,13 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.net.URI;
 import java.util.Map;
 
 import org.dawb.workbench.jmx.service.IWorkflowService;
 import org.dawb.workbench.jmx.service.WorkflowFactory;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
@@ -18,7 +19,7 @@ import org.slf4j.LoggerFactory;
 
 import com.isencia.passerelle.workbench.model.launch.ModelRunner;
 
-public class WorkflowProcess extends ProgressableProcess {
+public class WorkflowProcess extends ProgressableProcess<StatusBean> {
 	
 	private static final Logger logger = LoggerFactory.getLogger(WorkflowProcess.class);
 
@@ -27,15 +28,11 @@ public class WorkflowProcess extends ProgressableProcess {
 
 	private Map<String, String> arguments;
 
-	public WorkflowProcess(URI                uri, 
+	public WorkflowProcess(StatusBean         bean, 
 			               final String       processName,
-	                       String             statusTName, 
-	                       String             statusQName, 			           
-	                       Map<String,String> arguments,
-                           StatusBean         sbean) throws IOException {
+	                       final IPublisher<StatusBean> status) throws IOException {
 		
-		super(uri, statusTName, statusQName, sbean);
-		this.arguments = arguments;
+		super(bean, status, false);
 		
 		File newFile = null;
 		if (bean.getProperties().containsKey("file_path")) {
@@ -83,48 +80,57 @@ public class WorkflowProcess extends ProgressableProcess {
 	private PrintWriter out, err;
 
 	@Override
-	public void execute() throws Exception {
-			
-        final WorkflowProvider prov = new WorkflowProvider(this, bean);
+	public void execute() throws EventException {
 		
-		boolean sameVM = "true".equals(arguments.get("sameVM"));
-		if (sameVM) {
-	        final ModelRunner runner = new ModelRunner();
-	        runner.runModel(prov.getModelPath(), false);
-		} else {
-			this.service = WorkflowFactory.createWorkflowService(prov);
+		try {
+	        final WorkflowProvider prov = new WorkflowProvider(this, bean);
 			
-	        this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
-	        this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
-	        service.setLoggingStreams(out, err);
-
-			final Process workflow = service.start();
-			
-			// Normally is it not blocking, many workflows may run at the same time.
-			if (isBlocking()) {
-				workflow.waitFor(); // Waits until it is finished.
-				// Release any memory used by the object
-				service.clear();
+			boolean sameVM = "true".equals(arguments.get("sameVM"));
+			if (sameVM) {
+		        final ModelRunner runner = new ModelRunner();
+		        runner.runModel(prov.getModelPath(), false);
+			} else {
+				this.service = WorkflowFactory.createWorkflowService(prov);
 				
-				bean.setStatus(Status.COMPLETE);
-				bean.setPercentComplete(100d);
-				bean.setMessage("Ran "+bean.getProperty("momlLocation"));
-				broadcast(bean);
+		        this.out = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_out.txt"))));
+		        this.err = new PrintWriter(new BufferedWriter(new FileWriter(new File(runDir, "workflow_err.txt"))));
+		        service.setLoggingStreams(out, err);
+	
+				final Process workflow = service.start();
 				
-				if (out!=null) out.close();
-				if (err!=null) err.close();
-
+				// Normally is it not blocking, many workflows may run at the same time.
+				if (isBlocking()) {
+					workflow.waitFor(); // Waits until it is finished.
+					// Release any memory used by the object
+					service.clear();
+					
+					bean.setStatus(Status.COMPLETE);
+					bean.setPercentComplete(100d);
+					bean.setMessage("Ran "+bean.getProperty("momlLocation"));
+					broadcast(bean);
+					
+					if (out!=null) out.close();
+					if (err!=null) err.close();
+	
+				}
+	
 			}
-
+	        
+		} catch (Exception ne) {
+			throw new EventException("Unable to execute workflows!", ne);
 		}
-        
+
 	}
 
 	@Override
-	public void terminate() throws Exception {
-		if (service!=null) service.stop(-101);
-		if (out!=null) out.close();
-		if (err!=null) err.close();
+	public void terminate() throws EventException {
+		try {
+			if (service!=null) service.stop(-101);
+			if (out!=null) out.close();
+			if (err!=null) err.close();
+		} catch (Exception ne) {
+			throw new EventException("Unable to terminate workflows!", ne);
+		}
 	}
 
 	/**

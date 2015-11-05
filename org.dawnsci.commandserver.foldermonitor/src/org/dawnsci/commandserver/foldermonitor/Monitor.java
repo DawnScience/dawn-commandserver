@@ -40,14 +40,21 @@ import java.util.Properties;
 import java.util.UUID;
 import java.util.regex.Pattern;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.producer.AliveConsumer;
-import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
+import org.dawnsci.commandserver.core.application.IConsumerExtension;
+import org.dawnsci.commandserver.core.consumer.Constants;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.alive.HeartbeatBean;
+import org.eclipse.scanning.api.event.alive.KillBean;
+import org.eclipse.scanning.api.event.bean.BeanEvent;
+import org.eclipse.scanning.api.event.bean.IBeanListener;
+import org.eclipse.scanning.api.event.core.IPublisher;
+import org.eclipse.scanning.api.event.core.ISubscriber;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Class which monitors a folder location and publishes a topic and
@@ -59,18 +66,21 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class Monitor extends AliveConsumer {
+public class Monitor implements IConsumerExtension{
+	
+	private static final Logger logger = LoggerFactory.getLogger(Monitor.class);
 	
 	private boolean       stopped;
+	private URI           uri;
 	
 	private Path          dir;
-	private Connection    connection;
 	private String        location;
-	private Broadcaster   broadcaster;
 	private Map<String, String> config;
 	private Pattern       filePattern;
 
 	private WatchService watcher;
+	
+	private IPublisher<StatusBean> broadcaster;
 
 	@Override
 	public void init(Map<String, String> configuration) throws Exception {
@@ -80,13 +90,12 @@ public class Monitor extends AliveConsumer {
 		String queue = configuration.get("status");
 		String topic = configuration.get("topic");
 		
-		this.broadcaster   = new Broadcaster(getUri(), queue, topic);
+		IEventService service = ActiveMQServiceHolder.getEventService();
+		this.broadcaster   = service.createPublisher(getUri(), topic);
+		broadcaster.setQueueName(queue);
 		System.out.println("Folder monitor topic is '"+broadcaster.getTopicName()+"'");
 		System.out.println("Folder monitor queue is '"+broadcaster.getQueueName()+"'");
 
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(getUri());		
-		connection = connectionFactory.createConnection();
-		connection.start();
 
 		this.location = configuration.get("location");
 		final File   fdir     = new File(configuration.get("location"));
@@ -95,12 +104,51 @@ public class Monitor extends AliveConsumer {
 		this.dir       = Paths.get(location);
 		
 	}
+
+	private ISubscriber<IBeanListener<KillBean>> killer;
+	private IPublisher<HeartbeatBean>            alive;
 	
 	@Override
 	public void start() throws Exception {
 		
-		startHeartbeat(); // Tell the GUI that we are alive
-		createKillListener();
+		
+		final UUID consumerId = UUID.randomUUID();
+		
+		IEventService service = ActiveMQServiceHolder.getEventService();
+		
+		this.alive  = service.createPublisher(uri, Constants.ALIVE_TOPIC,  null);
+		alive.setConsumerId(consumerId);
+		alive.setConsumerName(getName());
+
+		this.killer = service.createSubscriber(uri, Constants.TERMINATE_CONSUMER_TOPIC, null);
+		killer.addListener(new IBeanListener<KillBean>() {
+			@Override
+			public Class<KillBean> getBeanClass() {
+				return KillBean.class;
+			}
+
+			@Override
+			public void beanChangePerformed(BeanEvent<KillBean> evt) {
+				KillBean kbean = evt.getBean();
+				if (kbean.getConsumerId().equals(consumerId)) {
+					try {
+						stop();
+						if (kbean.isDisconnect()) disconnect();
+					} catch (EventException e) {
+						logger.error("An internal error occurred trying to terminate the consumer "+getName()+" "+consumerId);
+					}
+					if (kbean.isExitProcess()) {
+						try {
+							Thread.sleep(2500);
+						} catch (InterruptedException e) {
+							logger.error("Unable to pause before exit", e);
+						}
+						System.exit(0); // Normal orderly exit
+					}
+				}
+			}
+		});
+
 		startMonitor();
 	}
 	
@@ -156,7 +204,7 @@ public class Monitor extends AliveConsumer {
 						
 						if (!oldTime.equals(newTime)) {
 			                System.out.format("%s: %s\n", ENTRY_MODIFY, path);
-							broadcaster.broadcast(bean(ENTRY_MODIFY, path), true);
+							broadcaster.broadcast(bean(ENTRY_MODIFY, path));
 						}
 					}
 				}
@@ -173,7 +221,7 @@ public class Monitor extends AliveConsumer {
 		
 	    for (Path path : fileList.keySet()) {
             System.out.format("%s: %s\n", type, path);
-		    broadcaster.broadcast(bean(type, path), true);
+		    broadcaster.broadcast(bean(type, path));
 	    }
 	}
 
@@ -242,7 +290,7 @@ public class Monitor extends AliveConsumer {
 					System.out.format("%s: %s\n", kind, child);
 					StatusBean bean = bean(kind, child);
 
-					broadcaster.broadcast(bean, true);
+					broadcaster.broadcast(bean);
 
 				} finally {
 
@@ -331,18 +379,29 @@ public class Monitor extends AliveConsumer {
 
 
 	@Override
-	public void stop() throws Exception {
+	public void stop() throws EventException {
 		
-		System.out.println("Stopping folder monitor @ '"+dir+"'");
-		if (watcher!=null) watcher.close();
-		stopped = true;
-		Thread.sleep(2000);
-		if (connection!=null) connection.close();
-		setActive(false);
+		try {
+			System.out.println("Stopping folder monitor @ '"+dir+"'");
+			if (watcher!=null) watcher.close();
+			stopped = true;
+			disconnect();
+			Thread.sleep(2000);
+		} catch (EventException ne) {
+			throw ne;
+		} catch (Exception e) {
+			throw new EventException("Cannot stop consumer "+getName(), e);
+		}
 	}
 
  
-    /**
+    private void disconnect() throws EventException {
+    	broadcaster.disconnect();
+    	alive.disconnect();
+    	killer.disconnect();
+    }
+
+	/**
      * Register the given directory, and all its sub-directories, with the
      * WatchService.
      */
@@ -403,8 +462,16 @@ public class Monitor extends AliveConsumer {
 		monitorThread.setDaemon(true);
 		monitorThread.start();
 	}
-	
-	public void setBroadcaster(Broadcaster testCaster) {
-		this.broadcaster = testCaster;
+
+	public URI getUri() {
+		return uri;
+	}
+
+	public void setUri(URI uri) {
+		this.uri = uri;
+	}
+
+	public void setBroadcaster(IPublisher<StatusBean> b) {
+		this.broadcaster = b;
 	}
 }

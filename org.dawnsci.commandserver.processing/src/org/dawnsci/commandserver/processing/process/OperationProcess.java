@@ -17,6 +17,8 @@ import java.util.Map;
 import org.dawnsci.commandserver.core.application.ApplicationProcess;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,12 +31,10 @@ import org.slf4j.LoggerFactory;
  * @author Matthew Gerring
  *
  */
-public class OperationProcess extends ProgressableProcess {	
+public class OperationProcess extends ProgressableProcess<OperationBean> {	
 	
 	private String   processingDir;
     private Process  process;
-	private Map<String, String> conf;
-
 	
 	/**
 	 * Used to run a process without a bean and for OSGi to inject
@@ -44,15 +44,9 @@ public class OperationProcess extends ProgressableProcess {
 		super();
 	}
 
-	public OperationProcess(URI        uri, 
-			                String     statusTName, 
-			                String     statusQName,
-			                Map<String,String> conf,
-			                OperationBean bean) {
+	public OperationProcess(OperationBean bean, IPublisher<OperationBean> status) {
 		
-		super(uri, statusTName, statusQName, bean);
-		this.conf = conf;
-		setBlocking(false);
+		super(bean, status, false);
 		
         final String runDir;
 		if (isWindowsOS()) {
@@ -84,22 +78,20 @@ public class OperationProcess extends ProgressableProcess {
 	}
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
 		
 		// Right we a starting the reconstruction, tell them.
 		bean.setStatus(Status.RUNNING);
 		bean.setPercentComplete(0d);
 		broadcast(bean);
-		
-		createTerminateListener();
-		
+				
 		try {
 			// TODO Run as process out of DAWN similar to how workflows run
 			File path = new File(processingDir, "operationBean.json");
 			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
 			
 			final Map<String,String> args = createApplicationArgs(path);
-			ApplicationProcess process = new ApplicationProcess(args, conf);
+			ApplicationProcess process = new ApplicationProcess(args, arguments);
 			process.setApplicationName("org.dawnsci.commandserver.processing.processing");
 			process.setOutFileName("operation_out.txt");
 			process.setErrFileName("operation_err.txt");
@@ -130,7 +122,7 @@ public class OperationProcess extends ProgressableProcess {
 	}
     
 	@Override
-	public void terminate() throws Exception {
+	public void terminate() throws EventException {
 		if (process!=null) process.destroy();
 	}
 

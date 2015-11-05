@@ -7,7 +7,10 @@ import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.Options;
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.ISubmitter;
+import org.eclipse.scanning.api.event.core.ISubscriber;
 
 public class RunJythonConsumer {
 	
@@ -64,9 +67,11 @@ public class RunJythonConsumer {
 		//Finally set up the submission system
 		try{ 
 			commandServerUri = new URI("tcp://sci-serv5.diamond.ac.uk:61616");
-			final RemoteSubmission queueSub = new RemoteSubmission(commandServerUri);
-			queueSub.setQueueName("scisoft.jython.SUBMISSION_QUEUE");
-			queueSub.submit(jBean, true);
+			
+			IEventService service = ActiveMQServiceHolder.getEventService();
+			final ISubmitter<JythonBean> queueSub = service.createSubmitter(commandServerUri, "scisoft.jython.SUBMISSION_QUEUE");
+			queueSub.submit(jBean);
+			
 		} catch (Exception e) {
 			System.out.println("Failed to start connect to the submission system!\n"+e);
 		}

@@ -4,21 +4,19 @@ import java.net.URI;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
-public class BubblesConsumer extends ProcessConsumer {
+public class BubblesConsumer extends ProcessConsumer<BubblesBean> {
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<BubblesBean> getBeanClass() {
 		return BubblesBean.class;
 	}
 
 	@Override
-	protected ProgressableProcess createProcess(URI        uri,
-			                                    String     statusTName,
-			                                    String     statusQName, 
-			                                    StatusBean bean) throws Exception {
-		return new BubblesProcess(uri, statusTName, statusQName, bean);
+	protected ProgressableProcess createProcess(BubblesBean bean, IPublisher<BubblesBean> publisher) throws Exception {
+		return new BubblesProcess(bean, publisher);
 	}
 
 	@Override

@@ -14,6 +14,7 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
 import org.dawnsci.commandserver.tomo.process.TomoProcess;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -23,7 +24,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class TomoSubmissionConsumer extends ProcessConsumer {
+public class TomoSubmissionConsumer extends ProcessConsumer<TomoBean> {
 
 
 	@Override
@@ -32,18 +33,15 @@ public class TomoSubmissionConsumer extends ProcessConsumer {
 	}
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<TomoBean> getBeanClass() {
 		return TomoBean.class;
 	}
 
 
 	@Override
-	protected ProgressableProcess createProcess(URI uri, 
-			                                    String statusTName,
-			                                    String statusQName, 
-			                                    StatusBean bean) throws Exception {
+	protected ProgressableProcess<TomoBean> createProcess(TomoBean bean, IPublisher<TomoBean> status) throws Exception {
 
-		return new TomoProcess(uri, statusTName, statusQName, (TomoBean)bean);
+		return new TomoProcess(bean, status);
 	}
 
 }

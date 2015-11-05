@@ -16,36 +16,19 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
 
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.QueueConnection;
-import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
-import javax.jms.Session;
-
 import org.dawb.common.ui.util.EclipseUtils;
 import org.dawb.common.ui.util.GridUtils;
 import org.dawb.common.util.io.PropUtils;
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.consumer.Constants;
-import org.dawnsci.commandserver.core.consumer.QueueReader;
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
-import org.dawnsci.commandserver.core.topic.BeanChangeEvent;
-import org.dawnsci.commandserver.core.topic.BeanChangeListener;
-import org.dawnsci.commandserver.core.topic.TopicMonitor;
 import org.dawnsci.commandserver.core.util.CmdUtils;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.dialog.PropertiesDialog;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
@@ -74,6 +57,13 @@ import org.eclipse.jface.viewers.SelectionChangedEvent;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.bean.BeanEvent;
+import org.eclipse.scanning.api.event.bean.IBeanListener;
+import org.eclipse.scanning.api.event.core.IQueueConnection;
+import org.eclipse.scanning.api.event.core.ISubmitter;
+import org.eclipse.scanning.api.event.core.ISubscriber;
 import org.eclipse.scanning.api.event.status.StatusBean;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.MouseAdapter;
@@ -133,10 +123,16 @@ public class StatusQueueView extends ViewPart {
 	private Map<String, StatusBean>           queue;
 	private boolean                           showEntireQueue = false;
 
-	private TopicMonitor<StatusBean>           topicMonitor;
-	private TopicMonitor<AdministratorMessage> adminMonitor;
+	private ISubscriber<IBeanListener<StatusBean>>           topicMonitor;
+	private ISubscriber<IBeanListener<AdministratorMessage>> adminMonitor;
+	private IQueueConnection<StatusBean>                     queueReader;
 
 	private Action kill;
+	private IEventService service;
+	
+	public StatusQueueView() {
+		this.service = ActiveMQServiceHolder.getEventService();
+	}
 
 	@Override
 	public void createPartControl(Composite content) {
@@ -193,27 +189,30 @@ public class StatusQueueView extends ViewPart {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {
-			        final Class  clazz  = getBeanClass();
-					topicMonitor = new TopicMonitor<StatusBean>(uri, clazz, getTopicName());
-					topicMonitor.addBeanChangeListener(new BeanChangeListener<StatusBean>() {
+					topicMonitor = service.createSubscriber(uri, getTopicName());
+					topicMonitor.addListener(new IBeanListener<StatusBean>() {
 						@Override
-						public void beanChangePerformed(BeanChangeEvent<StatusBean> event) {
-							final StatusBean bean = event.getBean();
+						public void beanChangePerformed(BeanEvent<StatusBean> evt) {
+							final StatusBean bean = evt.getBean();
 	                        try {
 								mergeBean(bean);
 							} catch (Exception e) {
 								logger.error("Cannot merge changed bean!");
 							}
 						}
+
+						@Override
+						public Class<StatusBean> getBeanClass() {
+							return StatusBean.class;
+						}
 					});
-					topicMonitor.connect();
 
 			        
-					adminMonitor = new TopicMonitor<AdministratorMessage>(uri, AdministratorMessage.class, Constants.ADMIN_MESSAGE_TOPIC);
-					adminMonitor.addBeanChangeListener(new BeanChangeListener<AdministratorMessage>() {
+					adminMonitor = service.createSubscriber(uri, Constants.ADMIN_MESSAGE_TOPIC);
+					adminMonitor.addListener(new IBeanListener<AdministratorMessage>() {
 						@Override
-						public void beanChangePerformed(BeanChangeEvent<AdministratorMessage> event) {
-							final AdministratorMessage bean = event.getBean();
+						public void beanChangePerformed(BeanEvent<AdministratorMessage> evt) {
+							final AdministratorMessage bean = evt.getBean();
 	        				getSite().getShell().getDisplay().syncExec(new Runnable() {
 	        					public void run() {
 	                                   MessageDialog.openError(getViewSite().getShell(), 
@@ -224,9 +223,16 @@ public class StatusQueueView extends ViewPart {
 	        					}
 	        				});
 						}
-					});
-					adminMonitor.connect();
 
+						@Override
+						public Class<AdministratorMessage> getBeanClass() {
+							return AdministratorMessage.class;
+						}
+					});
+
+					// We just use this submiter to read the queue
+					queueReader = service.createSubmitter(getUri(), getQueueName());
+					
 			        return Status.OK_STATUS;
 			        
 				} catch (Exception ne) {
@@ -247,8 +253,8 @@ public class StatusQueueView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 		try {
-			if (topicMonitor!=null) topicMonitor.close();
-			if (adminMonitor!=null) adminMonitor.close();
+			if (topicMonitor!=null) topicMonitor.disconnect();
+			if (adminMonitor!=null) adminMonitor.disconnect();
 		} catch (Exception ne) {
 			logger.warn("Problem stopping topic listening for "+getTopicName(), ne);
 		}
@@ -315,7 +321,9 @@ public class StatusQueueView extends ViewPart {
 					
 					bean.setStatus(org.eclipse.scanning.api.event.status.Status.REQUEST_TERMINATE);
 					bean.setMessage("Requesting a termination of "+bean.getName());
-					JSONUtils.sendTopic(bean, getTopicName(), getUri());
+					
+					ISubmitter<StatusBean> submit = service.createSubmitter(getUri(), getTopicName());
+					submit.submit(bean);
 					
 				} catch (Exception e) {
 					ErrorDialog.openError(getViewSite().getShell(), "Cannot terminate "+bean.getName(), "Cannot terminate "+bean.getName()+"\n\nPlease contact your support representative.",
@@ -385,7 +393,11 @@ public class StatusQueueView extends ViewPart {
 		
 		final Action clearQueue = new Action("Clear Queue") {
 			public void run() {
-				purgeQueues();
+				try {
+					purgeQueues();
+				} catch (EventException e) {
+					e.printStackTrace();
+				}
 			}
 		};
 		menuMan.add(new Separator());
@@ -396,53 +408,17 @@ public class StatusQueueView extends ViewPart {
 		viewer.getControl().setMenu(menuMan.createContextMenu(viewer.getControl()));
 	}
 
-	protected void purgeQueues() {
+	protected void purgeQueues() throws EventException {
 
 		boolean ok = MessageDialog.openQuestion(getSite().getShell(), "Confirm Clear Queues", "Are you sure you would like to remove all items from the queue "+getQueueName()+" and "+getSubmissionQueueName()+"?\n\nThis could abort or disconnect runs of other users.");
 		if (!ok) return;
 
-        purgeQueue(getQueueName());
-        purgeQueue(getSubmissionQueueName());
+        queueReader.clearQueue(getQueueName());
+        queueReader.clearQueue(getSubmissionQueueName());
 		
 		reconnect();		
 
 	}
-
-	private void purgeQueue(String qName) {
-		
-		QueueConnection qCon = null;
-		try {
-			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(getUri());
-			qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
-			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-			Queue queue   = qSes.createQueue(qName);
-			qCon.start();
-			
-		    QueueBrowser qb = qSes.createBrowser(queue);
-	    
-		    @SuppressWarnings("rawtypes")
-			Enumeration  e  = qb.getEnumeration();					
-			while(e.hasMoreElements()) {
-				Message msg = (Message)e.nextElement();
-	        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+msg.getJMSMessageID()+"'");
-	        	Message rem = consumer.receive(1000);	
-	        	if (rem!=null) System.out.println("Removed "+rem);
-			    consumer.close();
-			}
-			
-		} catch (Exception ne) {
-			logger.error("Cannot clear queue!", ne);
-			
-		} finally {
-			if (qCon!=null) {
-			    try {
-					qCon.close();
-				} catch (JMSException e) {
-					logger.error("Cannot close queue!", e);
-				}
-			}
-		}
- 	}
 
 	protected void rerunSelection() {
 		
@@ -488,8 +464,7 @@ public class StatusQueueView extends ViewPart {
 			IPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.commandserver.ui");
 			final URI    uri       = new URI(store.getString("org.dawnsci.commandserver.URI"));
 			
-			final RemoteSubmission factory = new RemoteSubmission(uri);
-			factory.setQueueName(getSubmissionQueueName());
+			final ISubmitter<StatusBean> factory = service.createSubmitter(uri, getSubmissionQueueName());
 			
 			factory.submit(copy, true);
 			
@@ -588,11 +563,10 @@ public class StatusQueueView extends ViewPart {
 					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
 						}
 					};
-					final QueueReader<StatusBean> reader = new QueueReader<StatusBean>(c);
-					Collection<StatusBean> runningList = reader.getBeans(uri, getQueueName(), getBeanClass(), monitor);
+					Collection<StatusBean> runningList = queueReader.getQueue(getQueueName());
 					monitor.worked(1);
 			        
-					Collection<StatusBean> submittedList = reader.getBeans(uri, getSubmissionQueueName(), getBeanClass(), monitor);
+					Collection<StatusBean> submittedList = queueReader.getQueue(getSubmissionQueueName());
 					monitor.worked(1);
 
 					// We reverse the queue because it comes out date ascending and we

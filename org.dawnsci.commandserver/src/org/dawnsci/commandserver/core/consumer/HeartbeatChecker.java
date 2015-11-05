@@ -2,18 +2,12 @@ package org.dawnsci.commandserver.core.consumer;
 
 import java.net.URI;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.jms.Topic;
-
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.alive.HeartbeatBean;
+import org.eclipse.scanning.api.event.alive.HeartbeatEvent;
+import org.eclipse.scanning.api.event.alive.IHeartbeatListener;
+import org.eclipse.scanning.api.event.core.ISubscriber;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,41 +34,28 @@ public class HeartbeatChecker {
 	
 	public void checkPulse() throws Exception {
 		
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		Connection topicConnection = connectionFactory.createConnection();
+		final IEventService service = ActiveMQServiceHolder.getEventService();
+		ISubscriber<IHeartbeatListener>	subscriber = service.createSubscriber(uri, Constants.ALIVE_TOPIC);
+        ok = false;
+        
         try {
-        	topicConnection.start();
-
-        	Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-        	final Topic           topic    = session.createTopic(Constants.ALIVE_TOPIC);
-        	final MessageConsumer consumer = session.createConsumer(topic);
-
-	        ok = false;
-	        
-	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
-	        final Thread runnerThread = Thread.currentThread();
-	        
-        	MessageListener listener = new MessageListener() {
-        		public void onMessage(Message message) {		            	
-        			try {
-        				if (message instanceof TextMessage) {
-        					TextMessage t = (TextMessage) message;
-        					ConsumerBean  b = service.unmarshal(t.getText(), ConsumerBean.class);
-        					if (!consumerName.equals(b.getName())) {
-        						return;
-        					}
-        					logger.trace(b.getName()+ " is alive and well.");
-        					ok = true;
-        				}
-        			} catch (Exception e) {
-        				ok = false;
-        				e.printStackTrace();
-        				runnerThread.interrupt(); // Stop it sleeping...
-        			}
+        	subscriber.addListener(new IHeartbeatListener() {
+        		@Override
+        		public Class<HeartbeatBean> getBeanClass() {
+        			return HeartbeatBean.class;
         		}
-        	};
-        	consumer.setMessageListener(listener);
+
+        		@Override
+        		public void heartbeatPerformed(HeartbeatEvent evt) {
+        			HeartbeatBean bean = evt.getBean();
+        			if (!consumerName.equals(bean.getConsumerName())) {
+        				return;
+        			}
+        			logger.trace(bean.getConsumerName()+ " is alive and well.");
+        			ok = true;
+
+        		}
+        	});
 
             Thread.sleep(listenTime);
             
@@ -82,7 +63,7 @@ public class HeartbeatChecker {
         	
 
         } finally {
-            topicConnection.close();
+        	subscriber.disconnect();
         }
 	}
 

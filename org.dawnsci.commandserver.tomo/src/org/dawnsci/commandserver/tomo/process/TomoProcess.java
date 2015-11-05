@@ -11,10 +11,11 @@ package org.dawnsci.commandserver.tomo.process;
 import java.io.File;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.net.URI;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 
 /**
@@ -27,7 +28,7 @@ import org.eclipse.scanning.api.event.status.Status;
  * @author Matthew Gerring
  *
  */
-public class TomoProcess extends ProgressableProcess{
+public class TomoProcess extends ProgressableProcess<TomoBean>{
 	
 	private static String SETUP_COMMAND = "module load tomo"; // Change by setting org.dawnsci.commandserver.tomo.moduleCommand
 	private static String TOMO_COMMAND  = "tomo ... "; // TODO  Change by setting org.dawnsci.commandserver.tomo.reconstructionCommand
@@ -35,11 +36,9 @@ public class TomoProcess extends ProgressableProcess{
 
 	private String processingDir;
 	
-	public TomoProcess(URI        uri, 
-			           String     statusTName, 
-			           String     statusQName,
-			           TomoBean bean) {
-		super(uri, statusTName, statusQName, bean);
+	public TomoProcess(TomoBean bean, IPublisher<TomoBean> status) {
+		
+		super(bean, status, false);
 		
         final String runDir;
 		if (isWindowsOS()) {
@@ -71,7 +70,7 @@ public class TomoProcess extends ProgressableProcess{
 	}
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
 		
 		// Right we a starting the reconstruction, tell them.
 		bean.setStatus(Status.RUNNING);
@@ -82,7 +81,6 @@ public class TomoProcess extends ProgressableProcess{
 		writeFile();
 		
 		// TODO Remove this, it is just to give an idea of how something can report progress to the UI.
-		createTerminateListener();
 		dryRun();
 		
 		// TODO Actually run something?
@@ -137,7 +135,7 @@ public class TomoProcess extends ProgressableProcess{
 	
 
 	@Override
-	public void terminate() throws Exception {
+	public void terminate() throws EventException {
 		// Please implement to clean up on the cluster.
 	}
 
@@ -161,7 +159,7 @@ public class TomoProcess extends ProgressableProcess{
 	    return setupCmd+xia2Cmd;
 	}
 
-	private void writeFile() throws Exception {
+	private void writeFile() throws EventException {
 		
         // TODO Does tomo need a file to drive its running?
 	}

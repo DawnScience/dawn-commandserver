@@ -2,8 +2,10 @@ package org.dawnsci.commandserver.tomo;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.ISubmitter;
 
 public class TomoClient {
 
@@ -17,8 +19,8 @@ public class TomoClient {
 		tbean.setMessage("A test jython execution");
 		tbean.setRunDirectory("C:/tmp/");
 
-		final RemoteSubmission factory = new RemoteSubmission(uri);
-		factory.setQueueName("scisoft.tomo.SUBMISSION_QUEUE");
+		IEventService service = ActiveMQServiceHolder.getEventService();
+		ISubmitter<TomoBean> factory = service.createSubmitter(uri, "scisoft.tomo.SUBMISSION_QUEUE");
 
 		factory.submit(tbean, true);
 	}

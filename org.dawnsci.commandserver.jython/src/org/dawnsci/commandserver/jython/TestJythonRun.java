@@ -10,7 +10,9 @@ package org.dawnsci.commandserver.jython;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.ISubmitter;
 
 /**
  * Class to test that we can run 
@@ -32,10 +34,10 @@ public class TestJythonRun {
 		jbean.setRunDirectory("C:/tmp/");
 		jbean.setJythonCode("/scratch/dawn-ws_git/dawn-commandserver.git/org.dawnsci.commandserver.jython/test_scripts/report_paths.py");
 
-		final RemoteSubmission factory = new RemoteSubmission(uri);
-		factory.setQueueName("scisoft.jython.SUBMISSION_QUEUE");
+		IEventService service = ActiveMQServiceHolder.getEventService();
+		final ISubmitter<JythonBean> queueSub = service.createSubmitter(uri, "scisoft.jython.SUBMISSION_QUEUE");
 		
-		factory.submit(jbean, true);
+		queueSub.submit(jbean);
 		
 		JythonBean jbean2 = new JythonBean();
 		jbean2.setName("Test Jython2");
@@ -43,10 +45,8 @@ public class TestJythonRun {
 		jbean2.setJythonClass("org.dawnsci.some.jython.Class");
 		jbean2.setRunDirectory("C:/tmp/");
 		jbean2.setJythonCode("/scratch/dawn-ws_git/dawn-commandserver.git/org.dawnsci.commandserver.jython/test_scripts/later_run.py");
-		
-		factory.setQueueName("scisoft.jython.SUBMISSION_QUEUE");
-		
-		factory.submit(jbean2, true);
+				
+		queueSub.submit(jbean2);
 
 	}
 }

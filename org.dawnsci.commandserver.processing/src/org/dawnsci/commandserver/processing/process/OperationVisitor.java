@@ -1,16 +1,14 @@
 package org.dawnsci.commandserver.processing.process;
 
-import org.dawnsci.commandserver.core.process.IBroadcaster;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
+import org.eclipse.scanning.api.event.core.IPublisher;
 
 /**
  * Deals with sending percent complete from the pipeline
@@ -22,11 +20,11 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 public class OperationVisitor implements IExecutionVisitor {
 
 	private OperationBean obean;
-	private IBroadcaster  broadcaster;
+	private IPublisher<OperationBean>  broadcaster;
 	private int           total;
 	private int           count;
 
-	public OperationVisitor(ILazyDataset lz, OperationBean obean, IBroadcaster broadcaster) throws Exception {
+	public OperationVisitor(ILazyDataset lz, OperationBean obean, IPublisher<OperationBean> broadcaster) throws Exception {
 		this.obean       = obean;
 		this.broadcaster = broadcaster;
 		this.total       = Slicer.getSize(lz, obean.getSlicing());

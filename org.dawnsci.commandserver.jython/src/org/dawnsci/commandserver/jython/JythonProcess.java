@@ -9,27 +9,25 @@
 package org.dawnsci.commandserver.jython;
 
 import java.io.File;
-import java.net.URI;
-import java.util.Map;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.python.util.PythonInterpreter;
 
 //import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;
 
-public class JythonProcess extends ProgressableProcess {
+public class JythonProcess extends ProgressableProcess<JythonBean> {
 
-	private Map<String, String> args;
 	private JythonBean          jybean;
 	private PythonInterpreter jythonInterpreter;
 
 
-	public JythonProcess(URI uri, String statusTName, String statusQName, Map<String, String> args, JythonBean bean, PythonInterpreter interpreter) {
+	public JythonProcess(JythonBean bean, PythonInterpreter interpreter, IPublisher<JythonBean> status) {
 		
-		super(uri, statusTName, statusQName, bean);
+		super(bean, status, false);
 		
-		this.args  = args;
 		this.jybean = bean;
 		this.jythonInterpreter = interpreter;
 		
@@ -66,7 +64,7 @@ public class JythonProcess extends ProgressableProcess {
 	}
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
 		
 		jybean.setStatus(Status.RUNNING);
 		jybean.setPercentComplete(1);
@@ -97,7 +95,7 @@ public class JythonProcess extends ProgressableProcess {
 	}
 
 	@Override
-	public void terminate() throws Exception {
+	public void terminate() throws EventException {
 		// TODO Auto-generated method stub
 	    out.println("terminate Jython!");
 	}

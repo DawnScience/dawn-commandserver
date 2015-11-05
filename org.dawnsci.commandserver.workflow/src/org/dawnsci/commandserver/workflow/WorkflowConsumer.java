@@ -5,12 +5,13 @@ import java.net.URI;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
-public class WorkflowConsumer extends ProcessConsumer {
+public class WorkflowConsumer extends ProcessConsumer<StatusBean> {
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<StatusBean> getBeanClass() {
   	    return StatusBean.class;
 	}
 
@@ -25,17 +26,14 @@ public class WorkflowConsumer extends ProcessConsumer {
 	}
 
 	@Override
-	protected ProgressableProcess createProcess(URI uri,
-			                                    String statusTName,
-			                                    String statusQName, 
-			                                    StatusBean bean) throws Exception {
+	protected ProgressableProcess<StatusBean> createProcess(StatusBean bean, IPublisher<StatusBean> status) throws Exception {
 		// We are only interested in new files
 		if (bean.getProperties().containsKey("event_type")) {
 			final String type = bean.getProperty("event_type");
 			if (!type.equals("ENTRY_CREATE")) return null; // Only interested in new files.
 		}
 				
-		WorkflowProcess process = new WorkflowProcess(uri, config.get("processName"), statusTName, statusQName, config, bean);
+		WorkflowProcess process = new WorkflowProcess(bean, config.get("processName"), status);
 		if (config.containsKey("blocking")) {
 			process.setBlocking(Boolean.parseBoolean(config.get("blocking")));
 		} else {

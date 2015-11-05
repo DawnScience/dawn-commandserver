@@ -2,8 +2,6 @@ package org.dawnsci.commandserver.bubbles;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
-
 public class ExampleSubmit {
 
 	public static void main(String[] args) throws Exception {
@@ -29,8 +27,8 @@ public class ExampleSubmit {
 		
 		// Object in Java that submits to JMS queue, same thing can be done
 		// in just about any language.
-		final RemoteSubmission factory = new RemoteSubmission(uri);
-		factory.setQueueName("scisoft.bubbles.SUBMISSION_QUEUE");
-		factory.submit(bbean, true);
+//		final RemoteSubmission factory = new RemoteSubmission(uri);
+//		factory.setQueueName("scisoft.bubbles.SUBMISSION_QUEUE");
+//		factory.submit(bbean, true);
 	}
 }

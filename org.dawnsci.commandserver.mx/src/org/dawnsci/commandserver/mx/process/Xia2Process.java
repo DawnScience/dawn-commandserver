@@ -13,9 +13,7 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
-import java.net.URI;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -23,6 +21,8 @@ import java.util.regex.Pattern;
 import org.dawnsci.commandserver.core.process.POSIX;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -37,7 +37,7 @@ import org.slf4j.LoggerFactory;
  * @author Matthew Gerring
  *
  */
-public class Xia2Process extends ProgressableProcess{
+public class Xia2Process extends ProgressableProcess<ProjectBean>{
 	
 	private static final Logger logger = LoggerFactory.getLogger(Xia2Process.class);
 
@@ -61,13 +61,9 @@ public class Xia2Process extends ProgressableProcess{
 	private String scriptLocation;
 	private Process process;
 	
-	public Xia2Process(URI        uri, 
-			           String     statusTName, 
-			           String     statusQName,
-			           Map<String,String> arguments,
-			           ProjectBean bean) {
+	public Xia2Process(ProjectBean bean, IPublisher<ProjectBean> status) {
 		
-		super(uri, statusTName, statusQName, bean);
+		super(bean, status, false);
 		
         final String runDir;
 		if (isWindowsOS()) {
@@ -109,15 +105,19 @@ public class Xia2Process extends ProgressableProcess{
  	}
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
 		
-		writeFile();
-		
-		bean.setStatus(Status.RUNNING);
-		bean.setPercentComplete(1);
-		broadcast(bean);
-		
-		runXia2();
+		try {
+			writeFile();
+
+			bean.setStatus(Status.RUNNING);
+			bean.setPercentComplete(1);
+			broadcast(bean);
+
+			runXia2();
+		} catch (Exception ne) {
+			throw new EventException("Unable to execute Xia2 Process!", ne);
+		}
 	}
 
 	/**
@@ -130,14 +130,17 @@ public class Xia2Process extends ProgressableProcess{
 	 * @param p
 	 * @throws Exception
 	 */
-	public void terminate() throws Exception {
+	public void terminate() throws EventException {
 
-	    final int pid = getPid(process);
-	    
-	    out.println("killing pid "+pid);
-	    // Not sure if this works
-	    POSIX.INSTANCE.kill(pid, 9);
-	    
+		try {
+		    final int pid = getPid(process);
+		    
+		    out.println("killing pid "+pid);
+		    // Not sure if this works
+		    POSIX.INSTANCE.kill(pid, 9);
+		} catch (Exception ne) {
+			throw new EventException("Unable to terminate Xia2 Process!", ne);
+		}
 	}
 
 
@@ -173,7 +176,6 @@ public class Xia2Process extends ProgressableProcess{
 
 		// Now we monitor the output file. Then we wait for the process, then we check for errors again.
 		startProgressMonitor();
-		createTerminateListener();
 		process.waitFor();
 		checkXia2Errors();						
 

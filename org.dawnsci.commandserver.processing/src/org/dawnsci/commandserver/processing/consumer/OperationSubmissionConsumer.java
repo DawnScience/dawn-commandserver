@@ -14,6 +14,7 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.dawnsci.commandserver.processing.process.OperationProcess;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -23,7 +24,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class OperationSubmissionConsumer extends ProcessConsumer {
+public class OperationSubmissionConsumer extends ProcessConsumer<OperationBean> {
 
 
 	@Override
@@ -32,18 +33,15 @@ public class OperationSubmissionConsumer extends ProcessConsumer {
 	}
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<OperationBean> getBeanClass() {
 		return OperationBean.class;
 	}
 
 
 	@Override
-	protected ProgressableProcess createProcess(URI uri, 
-			                                    String statusTName,
-			                                    String statusQName, 
-			                                    StatusBean bean) throws Exception {
+	protected ProgressableProcess<OperationBean> createProcess(OperationBean bean, IPublisher<OperationBean> status) throws Exception {
 
-		return new OperationProcess(uri, statusTName, statusQName, config, (OperationBean)bean);
+		return new OperationProcess(bean, status);
 	}
 
 

@@ -15,6 +15,8 @@ import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.core.server.FilePermissionServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -26,7 +28,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class MXSubmissionConsumer extends ProcessConsumer {
+public class MXSubmissionConsumer extends ProcessConsumer<ProjectBean> {
 
 	public final static String NAME = "Multi-crystal Reprocessing Consumer";
 	
@@ -63,17 +65,13 @@ public class MXSubmissionConsumer extends ProcessConsumer {
 	}
 
 	@Override
-	protected Class<? extends StatusBean> getBeanClass() {
+	protected Class<ProjectBean> getBeanClass() {
 		return ProjectBean.class;
 	}
 	
 	@Override
-	protected ProgressableProcess createProcess(URI uri, 
-			                                    String statusTName,
-			                                    String statusQName, 
-			                                    StatusBean bean) throws Exception {
-
-		return new Xia2Process(uri, statusTName, statusQName, config, (ProjectBean)bean);
+	protected ProgressableProcess<ProjectBean> createProcess(ProjectBean bean, IPublisher<ProjectBean> status) throws Exception {
+		return new Xia2Process(bean, status);
 	}
 
 	

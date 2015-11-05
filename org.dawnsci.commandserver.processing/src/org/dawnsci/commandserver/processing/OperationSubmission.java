@@ -3,11 +3,14 @@ package org.dawnsci.commandserver.processing;
 import java.io.File;
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.ISubmitter;
 
 /**
  * This class submits an IOperationContext for remote execution.
@@ -29,7 +32,7 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
  * @author fcp94556
  *
  */
-public class OperationSubmission extends RemoteSubmission {
+public class OperationSubmission {
 	
 	private static IPersistenceService  pservice;
 
@@ -37,9 +40,16 @@ public class OperationSubmission extends RemoteSubmission {
 	public static void setPersistenceService(IPersistenceService s) {
 		pservice = s;
 	}
+	
+	private ISubmitter<OperationBean> submitter;
+
 
 	private String runDirectory;
 	private String name;
+	private String queueName;
+
+
+	private URI uri;
 	
 	public OperationSubmission() {
 		this(null);
@@ -56,8 +66,9 @@ public class OperationSubmission extends RemoteSubmission {
 	 *        and client can see.
 	 */
 	public OperationSubmission(URI uri, String sharedDirectory) {
-		super(uri);
-		setQueueName("scisoft.operation.SUBMISSION_QUEUE");
+		
+		this.uri = uri;
+		this.queueName = "scisoft.operation.SUBMISSION_QUEUE";
 		runDirectory = sharedDirectory;
 		name = "Operation pipeline";
 	}
@@ -72,7 +83,12 @@ public class OperationSubmission extends RemoteSubmission {
 	public OperationBean submit(IOperationContext context) throws Exception {
 		
 		OperationBean obean = prepare(context);
-		super.submit(obean, true);
+		
+		if (submitter==null) {
+			IEventService service = ActiveMQServiceHolder.getEventService();
+			this.submitter = service.createSubmitter(uri, queueName);
+		}
+		submitter.submit(obean, true);
 		
 		return obean;
 	}
@@ -170,6 +186,27 @@ public class OperationSubmission extends RemoteSubmission {
 		} else {
 			return "/scratch/operationPipelineTest";
 		}
+	}
+
+	public String getQueueName() {
+		return queueName;
+	}
+
+	public void setQueueName(String queueName) throws EventException {
+		this.queueName = queueName;
+		if (submitter!=null) submitter.setSubmitQueueName(queueName);
+	}
+
+	public URI getUri() {
+		return uri;
+	}
+
+	public void directSubmit(OperationBean obean) throws EventException {
+		if (submitter==null) {
+			IEventService service = ActiveMQServiceHolder.getEventService();
+			this.submitter = service.createSubmitter(uri, queueName);
+		}
+		submitter.submit(obean, true);
 	}
 
 }

@@ -17,22 +17,14 @@ import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
-import java.net.URI;
 import java.net.UnknownHostException;
-
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageListener;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-import javax.jms.Topic;
+import java.util.Map;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
-import org.dawnsci.commandserver.core.producer.Broadcaster;
+import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.core.IConsumerProcess;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
 import org.slf4j.Logger;
@@ -51,18 +43,16 @@ import com.sun.jna.Platform;
  * @author Matthew Gerring
  *
  */
-public abstract class ProgressableProcess implements Runnable, IBroadcaster {
+public abstract class ProgressableProcess<T extends StatusBean> implements Runnable, IConsumerProcess<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProgressableProcess.class);
 
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
-	protected StatusBean       bean;
-	protected URI              uri;
-	protected String           statusTName;
-	protected String           statusQName;
-	private Broadcaster        broadcaster;
+	protected T       bean;
+	private IPublisher<T> statusPublisher;
+	protected Map<String, String> arguments;
 	
 	protected PrintStream out = System.out;
 
@@ -70,13 +60,12 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		super();
 	}
 	
-	public ProgressableProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
+	public ProgressableProcess(T bean, IPublisher<T> statusPublisher, boolean blocking) {
 		
-		this.uri           = uri;
-		this.statusTName   = statusTName;
-		this.statusQName   = statusQName;
-		this.bean          = bean;
-		this.broadcaster   = new Broadcaster(uri, statusQName, statusTName);
+		this.bean            = bean;
+		this.statusPublisher = statusPublisher;
+		this.blocking        = blocking;
+		
 		bean.setStatus(Status.QUEUED);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
@@ -85,6 +74,19 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		}
 		broadcast(bean);
 	}
+	
+
+	@Override
+	public T getBean() {
+		return bean;
+	}
+
+
+	@Override
+	public IPublisher<T> getPublisher() {
+		return statusPublisher;
+	}
+
 	
 	protected void setLoggingFile(File logFile) throws IOException {
 		setLoggingFile(logFile, false);
@@ -99,7 +101,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 	protected void setLoggingFile(File logFile, boolean append) throws IOException {
 		if (!logFile.exists()) logFile.createNewFile();
 		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile, append)), true, "UTF-8");
-		broadcaster.setLoggingStream(out);
+		statusPublisher.setLoggingStream(out);
 	}
 	
 	@Override
@@ -127,7 +129,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 	 * 
 	 * @throws Exception
 	 */
-	public abstract void execute() throws Exception;
+	public abstract void execute() throws EventException;
 	
 	/**
 	 * Please provide a termination for the process by implementing this method.
@@ -136,7 +138,7 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 	 * 
 	 * @throws Exception
 	 */
-	public abstract void terminate() throws Exception;
+	public abstract void terminate() throws EventException;
 	
 	/**
 	 * @return true if windows
@@ -205,90 +207,14 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 	 * Notify any clients of the beans status
 	 * @param bean
 	 */
-	@Override
 	public void broadcast(StatusBean tbean) {
 		try {
 			bean.merge(tbean);
-			cancelMonitor();
-			broadcaster.broadcast(bean, false);
+			statusPublisher.broadcast(bean);
 		} catch (Exception e) {
 			logger.error("Cannot broadcast", e);
 		}
  	}
-
-	/**
-	 * Cancels the current topic monitor, if there is one. Prints exception if cannot.
-	 */
-	private void cancelMonitor() {
-		if (bean.getStatus().isFinal() && topicConnection!=null) {
-			try {
-			    topicConnection.close();
-			} catch (Exception ne) {
-				logger.error("Cannot close topic", ne);
-			}
-		}
-	}
-
-	protected Connection topicConnection;
-
-	/**
-	 * Starts a connection which listens to the topic and if
-	 * a cancel is found published, tries to terminate the subprocess.
-	 * 
-	 * @param p
-	 */
-    protected void createTerminateListener() throws Exception {
-		
-    	ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-    	ProgressableProcess.this.topicConnection = connectionFactory.createConnection();
-    	topicConnection.start();
-
-    	Session session = topicConnection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-
-    	final Topic           topic    = session.createTopic(statusTName);
-    	final MessageConsumer consumer = session.createConsumer(topic);
-
-    	final Class<? extends StatusBean> clazz = bean.getClass();
-        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
-
-    	MessageListener listener = new MessageListener() {
-    		public void onMessage(Message message) {		            	
-    			try {
-    				if (message instanceof TextMessage) {
-    					TextMessage t = (TextMessage) message;
-    					final StatusBean tbean = service.unmarshal(t.getText(), clazz);
-
-    					if (bean.getStatus().isFinal()) { // Something else already happened
-    						topicConnection.close();
-    						return;
-    					}
-
-    					if (bean.getUniqueId().equals(tbean.getUniqueId())) {
-    						if (tbean.getStatus() == Status.REQUEST_TERMINATE) {
-    							bean.merge(tbean);
-    							out.println("Terminating job '"+tbean.getName()+"'");
-
-    							terminate();
-    							topicConnection.close();
-
-    							bean.setStatus(Status.TERMINATED);
-    							bean.setMessage("Foricibly terminated before finishing.");
-    							broadcast(bean);
-
-    							return;
-    						}
-    					}
-
-    				}
-    			} catch (Exception e) {
-    				logger.error("Cannot deal with message "+message, e);
-    			}
-    		}
-
-    	};
-    	consumer.setMessageListener(listener);
-
-    }
 
     protected void pkill(int pid, String dir) throws Exception {
     	
@@ -402,6 +328,14 @@ public abstract class ProgressableProcess implements Runnable, IBroadcaster {
 		name = name.replace(" ", "_");
 		name = name.replaceAll("[^a-zA-Z0-9_]", "");
         return name;
+	}
+
+	public Map<String, String> getArguments() {
+		return arguments;
+	}
+
+	public void setArguments(Map<String, String> arguments) {
+		this.arguments = arguments;
 	}
 
 

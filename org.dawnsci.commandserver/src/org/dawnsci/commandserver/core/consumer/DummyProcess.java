@@ -11,6 +11,8 @@ package org.dawnsci.commandserver.core.consumer;
 import java.net.URI;
 
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
@@ -33,16 +35,13 @@ public class DummyProcess extends ProgressableProcess {
 	 * @param queuedMessage
 	 * @param bean
 	 */
-	public DummyProcess(final URI   uri, 
-			            final String   statusTName, 
-			            final String   statusQName, 
-                        StatusBean     bean) {	
-		super(uri, statusTName, statusQName, bean);
+	public DummyProcess(StatusBean bean, IPublisher<StatusBean> statusPublisher) {	
+		super(bean, statusPublisher, false);
 	}
 
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
 		
         bean.setStatus(Status.RUNNING);
         bean.setPercentComplete(1);
@@ -53,7 +52,7 @@ public class DummyProcess extends ProgressableProcess {
 
 
 	@Override
-	public void terminate() throws Exception {
+	public void terminate() throws EventException {
 		// We do nothing here, normally the dryRun() will now exit because
 		// the status changed.
 	}

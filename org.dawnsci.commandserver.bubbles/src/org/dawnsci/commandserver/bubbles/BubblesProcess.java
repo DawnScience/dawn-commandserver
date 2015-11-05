@@ -1,19 +1,18 @@
 package org.dawnsci.commandserver.bubbles;
 
-import java.net.URI;
-
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
-import org.eclipse.scanning.api.event.status.StatusBean;
 
-public class BubblesProcess extends ProgressableProcess {
+public class BubblesProcess extends ProgressableProcess<BubblesBean> {
 
-	public BubblesProcess(final URI uri, final String statusTName, final String statusQName, StatusBean bean) {
-		super(uri, statusTName, statusQName, bean);
+	public BubblesProcess(BubblesBean bean, IPublisher<BubblesBean> status) {
+		super(bean, status, true);
 	}
 
 	@Override
-	public void execute() throws Exception {
+	public void execute() throws EventException {
         bean.setStatus(Status.RUNNING);
         bean.setPercentComplete(1);
         broadcast(bean);
@@ -22,9 +21,8 @@ public class BubblesProcess extends ProgressableProcess {
 	}
 
 	@Override
-	public void terminate() throws Exception {
-		// TODO Auto-generated method stub
-
+	public void terminate() throws EventException {
+		throw new EventException("Terminate not implemented!");
 	}
 
 }

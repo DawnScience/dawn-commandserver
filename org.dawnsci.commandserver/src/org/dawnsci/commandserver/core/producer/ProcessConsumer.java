@@ -9,37 +9,20 @@
 package org.dawnsci.commandserver.core.producer;
 
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Enumeration;
-import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
-import javax.jms.Connection;
-import javax.jms.ConnectionFactory;
-import javax.jms.JMSException;
-import javax.jms.Message;
-import javax.jms.MessageConsumer;
-import javax.jms.MessageProducer;
-import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.QueueConnection;
-import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.consumer.Constants;
-import org.dawnsci.commandserver.core.consumer.RemoteSubmission;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.eclipse.scanning.api.event.IEventConnectorService;
-import org.eclipse.scanning.api.event.status.Status;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.IConsumer;
+import org.eclipse.scanning.api.event.core.IConsumerProcess;
+import org.eclipse.scanning.api.event.core.IProcessCreator;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * This consumer monitors a queue and starts runs based
@@ -53,14 +36,21 @@ import org.slf4j.LoggerFactory;
  * @author Matthew Gerring
  *
  */
-public abstract class ProcessConsumer extends AliveConsumer {
-	
-	private static final Logger logger = LoggerFactory.getLogger(ProcessConsumer.class);
-
+public abstract class ProcessConsumer<T extends StatusBean> implements IConsumerExtension {
 
 	private String submitQName, statusTName, statusQName;
 	protected Map<String, String> config;
 
+	protected boolean durable = true;
+	protected URI     uri;
+	
+	private IConsumer<T> consumer;
+	protected String             consumerVersion;
+	
+	public ProcessConsumer() {
+		this.consumerVersion = "1.0";
+	}
+	
 	/**
 	 * Method which configures the submission consumer for the queues and topics required.
 	 * 
@@ -87,13 +77,26 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 */
 	public void start() throws Exception {
 		
-		startHeartbeat();
-		createKillListener();
+		IEventService service = ActiveMQServiceHolder.getEventService();
+		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, Constants.ALIVE_TOPIC, Constants.TERMINATE_CONSUMER_TOPIC, null);
+		consumer.setBeanClass(getBeanClass());
+		consumer.setRunner(new IProcessCreator<T>() {
+			@Override
+			public IConsumerProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {
+				try {
+					ProgressableProcess<T> process = ProcessConsumer.this.createProcess(bean, publisher);
+					process.setArguments(config);
+					return process;
+				} catch (Exception ne) {
+					throw new EventException("Problem creating process!", ne);
+				}
+			}
+		});
 		
-		processStatusQueue(getUri(), statusQName);
+		consumer.cleanQueue(statusQName);
 		
 		// This is the blocker
-		monitorSubmissionQueue(getUri(), submitQName, statusTName, statusQName);
+		consumer.start();
 	}
 	
 	/**
@@ -102,16 +105,21 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 * @throws JMSException 
 	 */
 	public void stop() throws Exception {
-		
-		setActive(false);
-		super.stop();
+		consumer.stop();
+		consumer.disconnect();
 	}
+
+	/**
+	 * 
+	 * @return the name which the user will see for this consumer.
+	 */
+	public abstract String getName();
 
 	/**
 	 * Implement to return the actual bean class in the queue
 	 * @return
 	 */
-	protected abstract Class<? extends StatusBean> getBeanClass();
+	protected abstract Class<T> getBeanClass();
 	
 	/**
 	 * Implement to create the required command server process.
@@ -122,151 +130,11 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	 * @param bean
 	 * @return the process or null if the message should be consumed and nothing done.
 	 */
-	protected abstract ProgressableProcess createProcess(URI uri, String statusTName, String statusQName, StatusBean bean) throws Exception;
+	protected abstract ProgressableProcess<T> createProcess(T bean, IPublisher<T> publisher) throws Exception;
 	
 	// TODO FIXME
 	protected volatile int processCount;
 
-    /**
-     * A consumer of the submitQ which can get recreated
-     * Should activeMQ go down.
-     */
-	private MessageConsumer consumer;
-
-    /**
-     * The connection which is active and should be closed.
-     */
-	private Connection connection;
-
-	/**
-	 * WARNING - starts infinite loop - you have to kill 
-	 * @param uri
-	 * @param submitQName
-	 * @param statusTName
-	 * @param statusQName
-	 * @throws Exception
-	 */
-	private void monitorSubmissionQueue(URI uri, 
-										String submitQName,
-										String statusTName, 
-										String statusQName) throws Exception {
-		
-		logger.warn("Starting consumer for submissions to queue "+submitQName);
-		
-        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
-		long waitTime = 0;
-   	
-        while (isActive()) { // You have to kill it or call stop() to stop it!
-            
-        	try {
-        		
-        		// Consumes messages from the queue.
-	        	Message m = getMessage(uri, submitQName);
-	            if (m!=null) {
-		        	waitTime = 0; // We got a message
-	            	
-	            	// TODO FIXME Check if we have the max number of processes
-	            	// exceeded and wait until we don't...
-	            	
-	            	TextMessage t = (TextMessage)m;
-	            	
-	            	final String     str  = t.getText();
-	            	final StatusBean bean = service.unmarshal(str, getBeanClass());
-	            	sendBean(uri, t, bean);
-	            	
-	            }
-       		
-        		
-        	} catch (Throwable ne) {
-        		
-        		if (ne.getClass().getSimpleName().endsWith("JsonMappingException")) {
-            		logger.error("Fatal except deserializing object!", ne);
-        		}
-        		if (ne.getClass().getSimpleName().endsWith("UnrecognizedPropertyException")) {
-        			logger.error("Cannot deserialize bean!", ne);
-        		}
-        		if (!isDurable()) break;
-        		        		
-       			Thread.sleep(Constants.NOTIFICATION_FREQUENCY);
-       			waitTime+=Constants.NOTIFICATION_FREQUENCY;
-    			checkTime(waitTime); 
-    			
-        		logger.warn(getName()+" ActiveMQ connection to "+uri+" lost.");
-        		logger.warn("We will check every 2 seconds for 24 hours, until it comes back.");
-
-        		continue;
-        	}
-		}
-		
-	}
-	
-	private void sendBean(URI uri, TextMessage t, StatusBean bean) throws Exception {
-		
-		if (bean!=null) { // We add this to the status list so that it can be rendered in the UI
-        	
-        	if (!isHandled(bean)) return; // Consume it and move on
-        	
-        	// Now we put the bean in the status queue and we 
-        	// start the process
-        	RemoteSubmission factory = new RemoteSubmission(uri);
-        	factory.setLifeTime(t.getJMSExpiration());
-        	factory.setPriority(t.getJMSPriority());
-        	factory.setTimestamp(t.getJMSTimestamp());
-        	factory.setQueueName(statusQName); // Move the message over to a status queue.
-        	
-        	factory.submit(bean, false);
-        	
-        	final ProgressableProcess process = createProcess(uri, statusTName, statusQName, bean);
-        	if (process!=null) {
-        		if (process.isBlocking()) {
-        			logger.info("About to run job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-        		}
-        		processCount++;
-        		process.start();
-        		if (process.isBlocking()) {
-        			logger.info("Ran job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-        		} else {
-        			logger.info("Started job "+bean.getName()+" messageid("+t.getJMSMessageID()+")");
-        		}
-        	}
-        	
-        }
-	}
-
-	private Message getMessage(URI uri, String submitQName) throws InterruptedException, JMSException {
-		
-		try {
-			if (this.consumer == null) {
-				this.consumer = createConsumer(uri, submitQName);
-			}
-			
-			return consumer.receive(1000);
-			
-		} catch (Exception ne) {
-			consumer = null;
-			try {
-				connection.close();
-			} catch (Exception expected) {
-				logger.info("Cannot close old connection", ne);
-			}
-			throw ne;
-		}
-	}
-
-	private MessageConsumer createConsumer(URI uri, String submitQName) throws JMSException {
-		
-		ConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-		this.connection = connectionFactory.createConnection();
-		Session   session = connection.createSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue queue = session.createQueue(submitQName);
-
-		final MessageConsumer consumer = session.createConsumer(queue);
-		connection.start();
-		
-		logger.warn(getName()+" Submission ActiveMQ connection to "+uri+" made.");
-		
-		return consumer;
-	}
 
 	/**
 	 * Override to stop handling certain events in the queue.
@@ -276,112 +144,6 @@ public abstract class ProcessConsumer extends AliveConsumer {
 	protected boolean isHandled(StatusBean bean) {
 		return true;
 	}
-
-	/**
-	 * Parse the queue for stale jobs and things that should be rerun.
-	 * @param bean
-	 * @throws Exception 
-	 */
-	private void processStatusQueue(URI uri, String statusQName) throws Exception {
-		
-		QueueConnection qCon = null;
-		
-		try {
-	 	    QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
-			qCon  = connectionFactory.createQueueConnection(); 
-			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-			Queue queue   = qSes.createQueue(statusQName);
-			qCon.start();
-			
-		    QueueBrowser qb = qSes.createBrowser(queue);
-		    
-		    @SuppressWarnings("rawtypes")
-			Enumeration  e  = qb.getEnumeration();
-		    
-	        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
-			
-			Map<String, StatusBean> failIds = new LinkedHashMap<String, StatusBean>(7);
-			List<String>          removeIds = new ArrayList<String>(7);
-	        while(e.hasMoreElements()) {
-		    	Message m = (Message)e.nextElement();
-		    	if (m==null) continue;
-	        	if (m instanceof TextMessage) {
-	            	TextMessage t = (TextMessage)m;
-	              	
-	            	try {
-						final StatusBean qbean = service.unmarshal(t.getText(), getBeanClass());
-		            	if (qbean==null)               continue;
-		            	if (qbean.getStatus()==null)   continue;
-		            	if (!qbean.getStatus().isStarted()) {
-		            		failIds.put(t.getJMSMessageID(), qbean);
-		            		continue;
-		            	}
-		            	
-		            	// If it has failed, we clear it up
-		            	if (qbean.getStatus()==Status.FAILED) {
-		            		removeIds.add(t.getJMSMessageID());
-		            		continue;
-		            	}
-		            	if (qbean.getStatus()==Status.NONE) {
-		            		removeIds.add(t.getJMSMessageID());
-		            		continue;
-		            	}
-		            	
-		            	// If it is running and older than a certain time, we clear it up
-		            	if (qbean.getStatus()==Status.RUNNING) {
-		            		final long submitted = qbean.getSubmissionTime();
-		            		final long current   = System.currentTimeMillis();
-		            		if (current-submitted > getMaximumRunningAge()) {
-		            			removeIds.add(t.getJMSMessageID());
-		            			continue;
-		            		}
-		            	}
-		            	
-		            	if (qbean.getStatus().isFinal()) {
-		            		final long submitted = qbean.getSubmissionTime();
-		            		final long current   = System.currentTimeMillis();
-		            		if (current-submitted > getMaximumCompleteAge()) {
-		            			removeIds.add(t.getJMSMessageID());
-		            		}
-		            	}
-
-	            	} catch (Exception ne) {
-	            		logger.warn("Message "+t.getText()+" is not legal and will be removed.", ne);
-	            		removeIds.add(t.getJMSMessageID());
-	            	}
-	        	}
-		    }
-	        
-	        // We fail the non-started jobs now - otherwise we could
-	        // actually start them late. TODO check this
-        	final List<String> ids = new ArrayList<String>();
-        	ids.addAll(failIds.keySet());
-        	ids.addAll(removeIds);
-        	
-	        if (ids.size()>0) {
-	        	
-	        	for (String jMSMessageID : ids) {
-		        	MessageConsumer consumer = qSes.createConsumer(queue, "JMSMessageID = '"+jMSMessageID+"'");
-		        	Message m = consumer.receive(1000);
-		        	if (removeIds.contains(jMSMessageID)) continue; // We are done
-		        	
-		        	if (m!=null && m instanceof TextMessage) {
-		        		MessageProducer producer = qSes.createProducer(queue);
-		        		final StatusBean    bean = failIds.get(jMSMessageID);
-		        		bean.setStatus(Status.FAILED);
-		        		producer.send(qSes.createTextMessage(service.marshal(bean)));
-		        		
-		        		logger.warn("Failed job "+bean.getName()+" messageid("+jMSMessageID+")");
-
-		        	}
-				}
-	        }
-		} finally {
-			if (qCon!=null) qCon.close();
-		}
-		
-	}
-
 		
 	protected static final long TWO_DAYS = 48*60*60*1000; // ms
 	protected static final long A_WEEK   = 7*24*60*60*1000; // ms
@@ -414,6 +176,32 @@ public abstract class ProcessConsumer extends AliveConsumer {
 			return Long.parseLong(System.getProperty("org.dawnsci.commandserver.core.maximumCompleteAge"));
 		}
 		return A_WEEK;
+	}
+
+
+
+	public boolean isDurable() {
+		return durable;
+	}
+
+	public void setDurable(boolean durable) {
+		this.durable = durable;
+	}
+
+	public URI getUri() {
+		return uri;
+	}
+
+	public void setUri(URI uri) {
+		this.uri = uri;
+	}
+
+	public String getConsumerVersion() {
+		return consumerVersion;
+	}
+
+	public void setConsumerVersion(String consumerVersion) {
+		this.consumerVersion = consumerVersion;
 	}
 
 }

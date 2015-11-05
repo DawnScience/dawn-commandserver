@@ -23,7 +23,7 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -205,7 +205,7 @@ public class OperationsTestRemote {
 		// Run the model
 		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"));
 		factory.prepare(obean);
-		factory.submit(obean, true);
+		factory.directSubmit(obean);
 
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
@@ -257,7 +257,7 @@ public class OperationsTestRemote {
 		// Run the model
 		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"),b.getRunDirectory());
 		factory.prepare(b);
-		factory.submit(b, true);
+		factory.directSubmit(b);
 
 		// Blocks until a final state is reached
 		Thread.sleep(2000); 
@@ -290,7 +290,7 @@ public class OperationsTestRemote {
 		
 		if (queueName==null || "".equals(queueName)) throw new Exception("Please specify a queue name!");
 		
-		QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+		QueueConnectionFactory connectionFactory = (QueueConnectionFactory)ActiveMQServiceHolder.getEventConnectorService().createConnectionFactory(uri);
 		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
 		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 		Queue queue   = qSes.createQueue(queueName);

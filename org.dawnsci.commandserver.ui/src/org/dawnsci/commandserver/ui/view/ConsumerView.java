@@ -15,16 +15,12 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.Map;
 import java.util.TreeMap;
+import java.util.UUID;
 
 import org.dawb.common.ui.util.GridUtils;
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.beans.AdministratorMessage;
 import org.dawnsci.commandserver.core.consumer.Constants;
-import org.dawnsci.commandserver.core.consumer.ConsumerBean;
-import org.dawnsci.commandserver.core.consumer.ConsumerStatus;
-import org.dawnsci.commandserver.core.topic.BeanChangeEvent;
-import org.dawnsci.commandserver.core.topic.BeanChangeListener;
-import org.dawnsci.commandserver.core.topic.TopicMonitor;
-import org.dawnsci.commandserver.core.util.JSONUtils;
 import org.dawnsci.commandserver.ui.Activator;
 import org.dawnsci.commandserver.ui.preference.CommandConstants;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -43,6 +39,14 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.viewers.TableViewer;
 import org.eclipse.jface.viewers.TableViewerColumn;
 import org.eclipse.jface.viewers.Viewer;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.alive.ConsumerStatus;
+import org.eclipse.scanning.api.event.alive.HeartbeatBean;
+import org.eclipse.scanning.api.event.alive.HeartbeatEvent;
+import org.eclipse.scanning.api.event.alive.IHeartbeatListener;
+import org.eclipse.scanning.api.event.alive.KillBean;
+import org.eclipse.scanning.api.event.core.IPublisher;
+import org.eclipse.scanning.api.event.core.ISubscriber;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -67,9 +71,15 @@ public class ConsumerView extends ViewPart {
 	private TableViewer                       viewer;
 	
 	// Data
-	private Map<String, ConsumerBean>         consumers;
+	private Map<UUID, HeartbeatBean>        consumers;
 
-	private TopicMonitor<ConsumerBean>        topicMon;
+	private ISubscriber<IHeartbeatListener>   topicMon;
+
+	private IEventService service;
+	
+	public ConsumerView() {
+		this.service = ActiveMQServiceHolder.getEventService();
+	}
 
 	@Override
 	public void createPartControl(Composite content) {
@@ -85,7 +95,7 @@ public class ConsumerView extends ViewPart {
 		createColumns();
 		viewer.setContentProvider(createContentProvider());
 		
-		consumers = new TreeMap<String, ConsumerBean>(Collections.reverseOrder());
+		consumers = new TreeMap<>(Collections.reverseOrder());
 		viewer.setInput(consumers);	
 		
         createActions();
@@ -132,17 +142,16 @@ public class ConsumerView extends ViewPart {
 
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				try {
-					topicMon = new TopicMonitor<ConsumerBean>(uri, ConsumerBean.class, Constants.ALIVE_TOPIC);
-					topicMon.addBeanChangeListener(new BeanChangeListener<ConsumerBean>() {
+				try {					
+					topicMon = service.createSubscriber(uri, Constants.ALIVE_TOPIC);
+					topicMon.addListener(new IHeartbeatListener.Stub() {
 						@Override
-						public void beanChangePerformed(BeanChangeEvent<ConsumerBean> event) {
-	        				final ConsumerBean bean = event.getBean();
+						public void heartbeatPerformed(HeartbeatEvent evt) {
+							HeartbeatBean bean = evt.getBean();
 	        				bean.setLastAlive(System.currentTimeMillis());
 	                        consumers.put(bean.getConsumerId(), bean);
 						}
 					});
-					topicMon.connect();
 					return Status.OK_STATUS;
 			        
 				} catch (Exception ne) {
@@ -163,7 +172,7 @@ public class ConsumerView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 		try {
-			if (topicMon!=null) topicMon.close();
+			if (topicMon!=null) topicMon.disconnect();
 		} catch (Exception ne) {
 			logger.warn("Problem stopping topic listening for "+Constants.ALIVE_TOPIC, ne);
 		}
@@ -185,7 +194,7 @@ public class ConsumerView extends ViewPart {
 				
 				if (  viewer.getSelection() == null || viewer.getSelection().isEmpty()) return;
 				
-			    ConsumerBean bean = (ConsumerBean)((IStructuredSelection)viewer.getSelection()).getFirstElement();
+			    HeartbeatBean bean = (HeartbeatBean)((IStructuredSelection)viewer.getSelection()).getFirstElement();
 
 			    boolean ok = MessageDialog.openConfirm(getSite().getShell(), "Confirm Stop", "If you stop this consumer it will have to be restarted by an administrator.\n\n"
 						                                                                      + "Are you sure that you want to do this?\n\n"
@@ -198,26 +207,29 @@ public class ConsumerView extends ViewPart {
                 if (notify) {
                 	
                 	final AdministratorMessage msg = new AdministratorMessage();
-                	msg.setTitle("'"+bean.getName()+"' will shutdown.");
-                	msg.setMessage("'"+bean.getName()+"' is about to shutdown.\n\n"+
+                	msg.setTitle("'"+bean.getConsumerName()+"' will shutdown.");
+                	msg.setMessage("'"+bean.getConsumerName()+"' is about to shutdown.\n\n"+
                 	               "Any runs corrently running may loose progress notification,\n"+
                 			       "however they should complete.\n\n"+
                 	               "Runs yet to be started will be picked up when\n"+
-                	               "'"+bean.getName()+"' restarts.");
+                	               "'"+bean.getConsumerName()+"' restarts.");
                 	try {
-						JSONUtils.sendTopic(msg, Constants.ADMIN_MESSAGE_TOPIC, getUri());
+                		final IPublisher<AdministratorMessage> send = service.createPublisher(getUri(), Constants.ADMIN_MESSAGE_TOPIC);
+                		send.broadcast(msg);
 					} catch (Exception e) {
 						logger.error("Cannot notify of shutdown!", e);
 					}
                 }
 
-			    
-				bean.setStatus(ConsumerStatus.REQUEST_TERMINATE);
-				bean.setMessage("Requesting a termination of "+bean.getName());
-				try {
-					JSONUtils.sendTopic(bean, Constants.TERMINATE_CONSUMER_TOPIC, getUri());
+			    final KillBean kbean = new KillBean();
+				kbean.setMessage("Requesting a termination of "+bean.getConsumerName());
+			    kbean.setConsumerId(bean.getConsumerId());
+				
+ 				try {
+ 		       		final IPublisher<KillBean> send = service.createPublisher(getUri(), Constants.TERMINATE_CONSUMER_TOPIC);
+					send.broadcast(kbean);
 				} catch (Exception e) {
-					logger.error("Cannot terminate consumer "+bean.getName(), e);
+					logger.error("Cannot terminate consumer "+bean.getConsumerName(), e);
 				}
 
 			}
@@ -247,8 +259,8 @@ public class ConsumerView extends ViewPart {
 			
 			@Override
 			public Object[] getElements(Object inputElement) {
-				if (consumers==null) return new ConsumerBean[]{ConsumerBean.EMPTY};
-				return consumers.values().toArray(new ConsumerBean[consumers.size()]);
+				if (consumers==null) return new HeartbeatBean[]{HeartbeatBean.EMPTY};
+				return consumers.values().toArray(new HeartbeatBean[consumers.size()]);
 			}
 		};
 	}
@@ -260,7 +272,7 @@ public class ConsumerView extends ViewPart {
 		name.getColumn().setWidth(300);
 		name.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				return ((ConsumerBean)element).getName();
+				return ((HeartbeatBean)element).getConsumerName();
 			}
 		});
 		
@@ -269,8 +281,8 @@ public class ConsumerView extends ViewPart {
 		status.getColumn().setWidth(100);
 		status.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
-				final ConsumerBean cbean = (ConsumerBean)element;
-				ConsumerStatus status = cbean.getStatus();
+				final HeartbeatBean cbean = (HeartbeatBean)element;
+				ConsumerStatus status = cbean.getConsumerStatus();
 				if (cbean.getLastAlive()>(System.currentTimeMillis()-Constants.NOTIFICATION_FREQUENCY*10) && 
 					cbean.getLastAlive()<(System.currentTimeMillis()-Constants.NOTIFICATION_FREQUENCY*2)) {
 					status = ConsumerStatus.STOPPING;
@@ -288,7 +300,7 @@ public class ConsumerView extends ViewPart {
 		startDate.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-					return DateFormat.getDateTimeInstance().format(new Date(((ConsumerBean)element).getStartTime()));
+					return DateFormat.getDateTimeInstance().format(new Date(((HeartbeatBean)element).getConceptionTime()));
 				} catch (Exception e) {
 					return e.getMessage();
 				}
@@ -301,7 +313,7 @@ public class ConsumerView extends ViewPart {
 		host.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-					return ((ConsumerBean)element).getHostName();
+					return ((HeartbeatBean)element).getHostName();
 				} catch (Exception e) {
 					return e.getMessage();
 				}
@@ -315,7 +327,7 @@ public class ConsumerView extends ViewPart {
 		lastAlive.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-					return DateFormat.getDateTimeInstance().format(new Date(((ConsumerBean)element).getLastAlive()));
+					return DateFormat.getDateTimeInstance().format(new Date(((HeartbeatBean)element).getLastAlive()));
 				} catch (Exception e) {
 					return e.getMessage();
 				}
@@ -328,8 +340,8 @@ public class ConsumerView extends ViewPart {
 		age.setLabelProvider(new ColumnLabelProvider() {
 			public String getText(Object element) {
 				try {
-					final ConsumerBean cbean = (ConsumerBean)element;
-					return (new SimpleDateFormat("dd'd' mm'm' ss's'")).format(new Date(cbean.getLastAlive()-cbean.getStartTime()));
+					final HeartbeatBean cbean = (HeartbeatBean)element;
+					return (new SimpleDateFormat("dd'd' mm'm' ss's'")).format(new Date(cbean.getLastAlive()-cbean.getConceptionTime()));
 				} catch (Exception e) {
 					return e.getMessage();
 				}

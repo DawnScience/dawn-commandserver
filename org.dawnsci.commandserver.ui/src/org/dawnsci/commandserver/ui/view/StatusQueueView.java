@@ -150,6 +150,7 @@ public class StatusQueueView extends ViewPart {
 		viewer.setContentProvider(createContentProvider());
 		
         try {
+    		queueReader = service.createSubmitter(getUri(), getQueueName());
     		updateQueue(getUri());
     		
     		String name = getSecondaryIdAttribute("partName");
@@ -157,6 +158,7 @@ public class StatusQueueView extends ViewPart {
     		
             createActions();
 
+    		// We just use this submitter to read the queue
             createTopicListener(getUri());
             
 		} catch (Exception e) {
@@ -203,7 +205,7 @@ public class StatusQueueView extends ViewPart {
 
 						@Override
 						public Class<StatusBean> getBeanClass() {
-							return StatusBean.class;
+							return StatusQueueView.this.getBeanClass();
 						}
 					});
 
@@ -229,9 +231,6 @@ public class StatusQueueView extends ViewPart {
 							return AdministratorMessage.class;
 						}
 					});
-
-					// We just use this submiter to read the queue
-					queueReader = service.createSubmitter(getUri(), getQueueName());
 					
 			        return Status.OK_STATUS;
 			        
@@ -413,6 +412,7 @@ public class StatusQueueView extends ViewPart {
 		boolean ok = MessageDialog.openQuestion(getSite().getShell(), "Confirm Clear Queues", "Are you sure you would like to remove all items from the queue "+getQueueName()+" and "+getSubmissionQueueName()+"?\n\nThis could abort or disconnect runs of other users.");
 		if (!ok) return;
 
+		queueReader.setBeanClass(getBeanClass());
         queueReader.clearQueue(getQueueName());
         queueReader.clearQueue(getSubmissionQueueName());
 		
@@ -563,6 +563,8 @@ public class StatusQueueView extends ViewPart {
 					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
 						}
 					};
+					
+					queueReader.setBeanClass(getBeanClass());
 					Collection<StatusBean> runningList = queueReader.getQueue(getQueueName());
 					monitor.worked(1);
 			        
@@ -615,13 +617,18 @@ public class StatusQueueView extends ViewPart {
 	}
 
 
-	private Class<? extends StatusBean> getBeanClass() throws ClassNotFoundException {
+	private Class<StatusBean> getBeanClass() {
 	    String beanBundleName = getSecondaryIdAttribute("beanBundleName");
 	    String beanClassName  = getSecondaryIdAttribute("beanClassName");
-	    
-	    @SuppressWarnings("rawtypes")
-	    Bundle bundle = Platform.getBundle(beanBundleName);
-		return (Class<? extends StatusBean>)bundle.loadClass(beanClassName);
+		try {
+		    
+		    @SuppressWarnings("rawtypes")
+		    Bundle bundle = Platform.getBundle(beanBundleName);
+			return (Class<StatusBean>)bundle.loadClass(beanClassName);
+		} catch (Exception ne) {
+			logger.error("Cannot get class "+beanClassName+". Defaulting to StatusBean. This will probably not work though.", ne);
+			return StatusBean.class;
+		}
 	}
 
 	protected void createColumns() {

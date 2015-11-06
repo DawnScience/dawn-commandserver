@@ -73,7 +73,7 @@ public class ConsumerView extends ViewPart {
 	// Data
 	private Map<UUID, HeartbeatBean>        consumers;
 
-	private ISubscriber<IHeartbeatListener>   topicMon;
+	private ISubscriber<IHeartbeatListener>   heartMonitor;
 
 	private IEventService service;
 	
@@ -143,8 +143,8 @@ public class ConsumerView extends ViewPart {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				try {					
-					topicMon = service.createSubscriber(uri, Constants.ALIVE_TOPIC);
-					topicMon.addListener(new IHeartbeatListener.Stub() {
+					heartMonitor = service.createSubscriber(uri, Constants.ALIVE_TOPIC);
+					heartMonitor.addListener(new IHeartbeatListener.Stub() {
 						@Override
 						public void heartbeatPerformed(HeartbeatEvent evt) {
 							HeartbeatBean bean = evt.getBean();
@@ -172,7 +172,7 @@ public class ConsumerView extends ViewPart {
 	public void dispose() {
 		super.dispose();
 		try {
-			if (topicMon!=null) topicMon.disconnect();
+			if (heartMonitor!=null) heartMonitor.disconnect();
 		} catch (Exception ne) {
 			logger.warn("Problem stopping topic listening for "+Constants.ALIVE_TOPIC, ne);
 		}

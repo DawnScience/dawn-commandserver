@@ -10,8 +10,8 @@ package org.dawnsci.commandserver.processing.consumer;
 
 import java.net.URI;
 
+import org.dawnsci.commandserver.core.process.ProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.dawnsci.commandserver.processing.process.OperationProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;

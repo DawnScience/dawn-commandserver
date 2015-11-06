@@ -2,8 +2,8 @@ package org.dawnsci.commandserver.bubbles;
 
 import java.net.URI;
 
+import org.dawnsci.commandserver.core.process.ProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 

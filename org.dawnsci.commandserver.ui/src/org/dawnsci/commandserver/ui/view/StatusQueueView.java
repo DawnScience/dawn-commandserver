@@ -61,6 +61,7 @@ import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.bean.BeanEvent;
 import org.eclipse.scanning.api.event.bean.IBeanListener;
+import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.core.IQueueConnection;
 import org.eclipse.scanning.api.event.core.ISubmitter;
 import org.eclipse.scanning.api.event.core.ISubscriber;
@@ -321,8 +322,8 @@ public class StatusQueueView extends ViewPart {
 					bean.setStatus(org.eclipse.scanning.api.event.status.Status.REQUEST_TERMINATE);
 					bean.setMessage("Requesting a termination of "+bean.getName());
 					
-					ISubmitter<StatusBean> submit = service.createSubmitter(getUri(), getTopicName());
-					submit.submit(bean);
+					IPublisher<StatusBean> terminate = service.createPublisher(getUri(), getTopicName());
+					terminate.broadcast(bean);
 					
 				} catch (Exception e) {
 					ErrorDialog.openError(getViewSite().getShell(), "Cannot terminate "+bean.getName(), "Cannot terminate "+bean.getName()+"\n\nPlease contact your support representative.",
@@ -553,22 +554,11 @@ public class StatusQueueView extends ViewPart {
 					monitor.beginTask("Connect to command server", 10);
 					monitor.worked(1);
 					
-					// Date sorted
-					Comparator<StatusBean> c = new Comparator<StatusBean>() {		
-						@Override
-						public int compare(StatusBean o1, StatusBean o2) {
-							// Newest first!
-					        long t1 = o2.getSubmissionTime();
-					        long t2 = o1.getSubmissionTime();
-					        return (t1<t2 ? -1 : (t1==t2 ? 0 : 1));
-						}
-					};
-					
 					queueReader.setBeanClass(getBeanClass());
-					Collection<StatusBean> runningList = queueReader.getQueue(getQueueName());
+					Collection<StatusBean> runningList = queueReader.getQueue(getQueueName(), "submissionTime");
 					monitor.worked(1);
 			        
-					Collection<StatusBean> submittedList = queueReader.getQueue(getSubmissionQueueName());
+					Collection<StatusBean> submittedList = queueReader.getQueue(getSubmissionQueueName(), "submissionTime");
 					monitor.worked(1);
 
 					// We reverse the queue because it comes out date ascending and we
@@ -867,6 +857,10 @@ public class StatusQueueView extends ViewPart {
 		final String qName =  getSecondaryIdAttribute("submissionQueueName");
 		if (qName != null) return qName;
 		return "scisoft.default.SUBMISSION_QUEUE";
+	}
+
+	protected String getSubmitOverrideSetName() {
+		return getSubmissionQueueName()+".overrideSet";
 	}
 	
 	private String getSecondaryIdAttribute(String key) {

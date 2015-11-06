@@ -11,8 +11,8 @@ package org.dawnsci.commandserver.jython;
 import java.io.FileNotFoundException;
 import java.net.URL;
 
+import org.dawnsci.commandserver.core.process.ProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.python.util.PythonInterpreter;
 

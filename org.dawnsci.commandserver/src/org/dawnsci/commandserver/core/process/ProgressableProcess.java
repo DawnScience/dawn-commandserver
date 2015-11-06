@@ -272,8 +272,14 @@ public abstract class ProgressableProcess<T extends StatusBean> implements Runna
 	}
 	
 	protected void dryRun(int size, boolean complete) {
+		
 		for (int i = 0; i < size; i++) {
 			
+			if (isCancelled) {
+				bean.setStatus(Status.TERMINATED);
+				broadcast(bean);
+				return;
+			}
 			if (bean.getStatus()==Status.REQUEST_TERMINATE ||
 			    bean.getStatus()==Status.TERMINATED) {
 				return;

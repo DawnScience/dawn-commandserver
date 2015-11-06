@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver.core.producer;
+package org.dawnsci.commandserver.core.process;
 
 import java.net.URI;
 import java.util.Collections;
@@ -15,7 +15,6 @@ import java.util.Map;
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.dawnsci.commandserver.core.consumer.Constants;
-import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.core.IConsumer;

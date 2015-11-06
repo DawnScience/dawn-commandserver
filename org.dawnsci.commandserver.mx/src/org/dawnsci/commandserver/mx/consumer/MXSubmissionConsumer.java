@@ -10,8 +10,8 @@ package org.dawnsci.commandserver.mx.consumer;
 
 import java.net.URI;
 
+import org.dawnsci.commandserver.core.process.ProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
-import org.dawnsci.commandserver.core.producer.ProcessConsumer;
 import org.dawnsci.commandserver.core.server.FilePermissionServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
 import org.dawnsci.commandserver.mx.process.Xia2Process;

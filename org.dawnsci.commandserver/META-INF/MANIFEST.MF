@@ -19,7 +19,6 @@ Export-Package: org.dawnsci.commandserver.core,
  org.dawnsci.commandserver.core.beans,
  org.dawnsci.commandserver.core.consumer,
  org.dawnsci.commandserver.core.process,
- org.dawnsci.commandserver.core.producer,
  org.dawnsci.commandserver.core.server,
  org.dawnsci.commandserver.core.util
 Import-Package: javax.servlet;version="2.6.0",

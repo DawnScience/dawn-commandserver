@@ -19,8 +19,10 @@ import javax.jms.QueueSession;
 import javax.jms.Session;
 import javax.jms.TextMessage;
 
-import org.dawnsci.commandserver.core.ConnectionFactoryFacade;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.junit.Test;
+
+import uk.ac.diamond.daq.activemq.connector.ActivemqConnectorService;
 
 /**
  * Sorry for all the repeated code in this test!
@@ -63,7 +65,8 @@ public class ReorderQueueTest {
 		
 		QueueConnection qCon = null;
 		try {
-			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			IEventConnectorService service           = new ActivemqConnectorService();
+			QueueConnectionFactory connectionFactory = (QueueConnectionFactory)service.createConnectionFactory(uri);
 			qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
 			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 			Queue queue   = qSes.createQueue(qName);
@@ -114,7 +117,8 @@ public class ReorderQueueTest {
 		
 		QueueConnection qCon = null;
 		try {
-			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			IEventConnectorService service           = new ActivemqConnectorService();
+			QueueConnectionFactory connectionFactory = (QueueConnectionFactory)service.createConnectionFactory(uri);
 			qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
 			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 			Queue queue   = qSes.createQueue(qName);
@@ -144,7 +148,8 @@ public class ReorderQueueTest {
 		
 		Connection      send     = null;
 		try {
-			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			IEventConnectorService service           = new ActivemqConnectorService();
+			QueueConnectionFactory connectionFactory = (QueueConnectionFactory)service.createConnectionFactory(uri);
 			send              = connectionFactory.createConnection();
 
 			Session session = send.createSession(false, Session.AUTO_ACKNOWLEDGE);
@@ -168,7 +173,8 @@ public class ReorderQueueTest {
 		
 		QueueConnection qCon = null;
 		try {
-			QueueConnectionFactory connectionFactory = ConnectionFactoryFacade.createConnectionFactory(uri);
+			IEventConnectorService service           = new ActivemqConnectorService();
+			QueueConnectionFactory connectionFactory = (QueueConnectionFactory)service.createConnectionFactory(uri);
 			qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
 			QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
 			Queue queue   = qSes.createQueue(qName);

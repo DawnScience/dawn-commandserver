@@ -35,7 +35,7 @@ public class HeartbeatChecker {
 	public void checkPulse() throws Exception {
 		
 		final IEventService service = ActiveMQServiceHolder.getEventService();
-		ISubscriber<IHeartbeatListener>	subscriber = service.createSubscriber(uri, Constants.ALIVE_TOPIC);
+		ISubscriber<IHeartbeatListener>	subscriber = service.createSubscriber(uri, IEventService.HEARTBEAT_TOPIC);
         ok = false;
         
         try {

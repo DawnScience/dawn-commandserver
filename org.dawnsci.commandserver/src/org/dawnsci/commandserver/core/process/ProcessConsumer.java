@@ -14,7 +14,6 @@ import java.util.Map;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
-import org.dawnsci.commandserver.core.consumer.Constants;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.core.IConsumer;
@@ -77,7 +76,7 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 	public void start() throws Exception {
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, Constants.ALIVE_TOPIC, Constants.TERMINATE_CONSUMER_TOPIC, null);
+		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, IEventService.HEARTBEAT_TOPIC, IEventService.KILL_TOPIC, null);
 		consumer.setBeanClass(getBeanClass());
 		consumer.setRunner(new IProcessCreator<T>() {
 			@Override
@@ -91,7 +90,7 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 				}
 			}
 		});
-		
+		consumer.setName(getName());
 		consumer.cleanQueue(statusQName);
 		
 		// This is the blocker

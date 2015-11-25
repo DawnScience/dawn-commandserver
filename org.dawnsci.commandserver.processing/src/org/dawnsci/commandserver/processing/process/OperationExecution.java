@@ -82,8 +82,7 @@ public class OperationExecution {
 		    // We create a monitor which publishes information about what
 		    // operation was completed.
 		    int[] shape = lz.getShape();
-		    int work = getTotalWork(Slicer.getSliceArrayFromSliceDimensions(context.getSlicing(), shape), shape,
-		    		Slicer.getDataDimensions(shape, context.getSlicing()));
+		    int work = getTotalWork(context.getSlicing().convertToSlice(), shape,context.getDataDimensions());
 		    context.setMonitor(new OperationMonitor(obean, work));
 		    
 		    oservice.execute(context);

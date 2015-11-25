@@ -10,6 +10,7 @@ package org.dawnsci.commandserver.processing.beans;
 
 import java.util.Map;
 
+import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
@@ -27,9 +28,10 @@ public class OperationBean extends StatusBean {
 	// The data
 	private String               filePath;              
 	private String               datasetPath;
-	private Map<Integer, String> slicing;
+	private SliceND slicing;
 	private Map<Integer, String> axesNames;
 	private String 				 outputFilePath;
+	private int[] 				 dataDimensions;
 	
 	// The pipeline that we need to run
 	// The pipeline is saved shared disk at
@@ -88,11 +90,11 @@ public class OperationBean extends StatusBean {
 		this.datasetPath = datasetPath;
 	}
 
-	public Map<Integer, String> getSlicing() {
+	public SliceND getSlicing() {
 		return slicing;
 	}
 
-	public void setSlicing(Map<Integer, String> slicing) {
+	public void setSlicing(SliceND slicing) {
 		this.slicing = slicing;
 	}
 
@@ -199,5 +201,13 @@ public class OperationBean extends StatusBean {
 
 	public void setXmx(String xmx) {
 		this.xmx = xmx;
+	}
+
+	public int[] getDataDimensions() {
+		return dataDimensions;
+	}
+
+	public void setDataDimensions(int[] dataDimensions) {
+		this.dataDimensions = dataDimensions;
 	}
 }

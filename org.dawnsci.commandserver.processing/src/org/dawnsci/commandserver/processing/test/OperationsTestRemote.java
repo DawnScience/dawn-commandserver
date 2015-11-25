@@ -104,7 +104,8 @@ public class OperationsTestRemote {
 			
 			context.setFilePath(file.getPath());
 			context.setDatasetPath(dataset);
-			context.setSlicing("all"); // The 10 in the first dimension.
+//			context.setSlicing("all"); // The 10 in the first dimension.
+			context.setDataDimensions(new int[]{1,2});
 			
 		} finally {
 			file.close();
@@ -175,7 +176,8 @@ public class OperationsTestRemote {
 		con.setSeries(ops);
 		con.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
 		con.setDatasetPath("/entry1/pixium10_tif/image_data");
-		con.setSlicing("all");
+//		con.setSlicing("all");
+		context.setDataDimensions(new int[]{1,2});
 		Map<Integer, String> axesNames = new HashMap<Integer, String>();
 		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
 		
@@ -193,7 +195,9 @@ public class OperationsTestRemote {
 		con.setSeries(ops);
 		con.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/big/42016.nxs");
 		con.setDatasetPath("/entry1/instrument/pixium10_tif/image_data");
-		con.setSlicing("0:20");
+//		con.setSlicing("0:20");
+		context.setDataDimensions(new int[]{1,2});
+
 //		Map<Integer, String> axesNames = new HashMap<Integer, String>();
 //		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
 		
@@ -227,7 +231,8 @@ public class OperationsTestRemote {
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
 		Map<Integer,String> s = new HashMap<Integer,String>();
 		s.put(0, "all");
-		b.setSlicing(s);
+//		b.setSlicing(s);
+		context.setDataDimensions(new int[]{1,2});
 		Map<Integer, String> axesNames = new HashMap<Integer, String>();
 		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
 		b.setAxesNames(axesNames);
@@ -246,7 +251,8 @@ public class OperationsTestRemote {
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
 		Map<Integer,String> s = new HashMap<Integer,String>();
 		s.put(0, "all");
-		b.setSlicing(s);
+//		b.setSlicing(s);
+		context.setDataDimensions(new int[]{1,2});
 		b.setXmx("4096m");
 		b.setExecutionType(ExecutionType.PARALLEL);
 		Map<Integer, String> axesNames = new HashMap<Integer, String>();

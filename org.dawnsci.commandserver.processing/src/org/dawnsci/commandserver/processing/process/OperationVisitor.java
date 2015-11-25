@@ -7,6 +7,7 @@ import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
+import org.eclipse.dawnsci.analysis.dataset.slicer.SliceViewIterator;
 import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 import org.eclipse.scanning.api.event.core.IPublisher;
 
@@ -27,7 +28,8 @@ public class OperationVisitor implements IExecutionVisitor {
 	public OperationVisitor(ILazyDataset lz, OperationBean obean, IPublisher<OperationBean> broadcaster) throws Exception {
 		this.obean       = obean;
 		this.broadcaster = broadcaster;
-		this.total       = Slicer.getSize(lz, obean.getSlicing());
+		SliceViewIterator generator = new SliceViewIterator(lz, obean.getSlicing(), obean.getDataDimensions());
+		this.total       = generator.getTotal();
 	}
 
 

@@ -74,6 +74,7 @@ public class OperationExecution {
 		    
 		    context.setData(lz);
 		    context.setSlicing(obean.getSlicing());
+		    context.setDataDimensions(obean.getDataDimensions());
 		    
 		    //Create visitor to save data
 		    final IExecutionVisitor visitor = new HierarchicalFileExecutionVisitor(obean.getOutputFilePath());
@@ -82,7 +83,9 @@ public class OperationExecution {
 		    // We create a monitor which publishes information about what
 		    // operation was completed.
 		    int[] shape = lz.getShape();
-		    int work = getTotalWork(context.getSlicing().convertToSlice(), shape,context.getDataDimensions());
+		    SliceND s = context.getSlicing();
+		    if (s == null) s = new SliceND(lz.getShape());
+		    int work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
 		    context.setMonitor(new OperationMonitor(obean, work));
 		    
 		    oservice.execute(context);

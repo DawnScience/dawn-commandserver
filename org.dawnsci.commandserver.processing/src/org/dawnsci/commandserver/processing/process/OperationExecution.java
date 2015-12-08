@@ -21,6 +21,8 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.eclipse.dawnsci.hdf5.operation.HierarchicalFileExecutionVisitor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class OperationExecution {
 
@@ -42,7 +44,8 @@ public class OperationExecution {
 	}
 
 	private IOperationContext context;
-	
+
+	private final static Logger logger = LoggerFactory.getLogger(OperationExecution.class);
 
 	/**
 	 * Can be used to execute an operation process.
@@ -89,7 +92,8 @@ public class OperationExecution {
 		    context.setMonitor(new OperationMonitor(obean, work));
 		    
 		    oservice.execute(context);
-		    
+		} catch (Exception e){
+			logger.error("Error running processing", e);
 		} finally {
 			file.close();
 			

@@ -18,11 +18,11 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
-import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
-import org.eclipse.dawnsci.hdf5.operation.HierarchicalFileExecutionVisitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import uk.ac.diamond.scisoft.analysis.processing.visitor.NexusFileExecutionVisitor;
 
 public class OperationExecution {
 
@@ -80,7 +80,9 @@ public class OperationExecution {
 		    context.setDataDimensions(obean.getDataDimensions());
 		    
 		    //Create visitor to save data
-		    final IExecutionVisitor visitor = new HierarchicalFileExecutionVisitor(obean.getOutputFilePath());
+		    
+
+		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable());
 		    context.setVisitor(visitor);
 		    
 		    // We create a monitor which publishes information about what

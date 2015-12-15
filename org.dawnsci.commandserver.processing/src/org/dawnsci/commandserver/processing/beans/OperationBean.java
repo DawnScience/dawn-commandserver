@@ -43,6 +43,7 @@ public class OperationBean extends StatusBean {
 	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
 	private String 				 xmx;
+	private boolean				 readable = false;
 	
 	// Tidying stuff
 	private boolean deletePersistenceFile = true;
@@ -209,5 +210,13 @@ public class OperationBean extends StatusBean {
 
 	public void setDataDimensions(int[] dataDimensions) {
 		this.dataDimensions = dataDimensions;
+	}
+
+	public boolean isReadable() {
+		return readable;
+	}
+
+	public void setReadable(boolean readable) {
+		this.readable = readable;
 	}
 }

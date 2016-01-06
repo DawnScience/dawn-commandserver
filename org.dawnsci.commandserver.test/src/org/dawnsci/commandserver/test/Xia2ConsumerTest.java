@@ -11,7 +11,7 @@ import org.junit.Test;
  * fails if it is not. If the consumer is not available, it should
  * be restarted.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class Xia2ConsumerTest {

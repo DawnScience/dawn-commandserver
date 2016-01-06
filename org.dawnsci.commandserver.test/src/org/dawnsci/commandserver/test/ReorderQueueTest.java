@@ -28,7 +28,7 @@ import uk.ac.diamond.daq.activemq.connector.ActivemqConnectorService;
  * Sorry for all the repeated code in this test!
  * Not a serious test, just trying to play around with queues.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ReorderQueueTest {

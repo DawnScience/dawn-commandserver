@@ -4,7 +4,7 @@ package org.dawnsci.commandserver.core.beans;
  * Class used by administrator to send messages about 
  * servers being restarted.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class AdministratorMessage {

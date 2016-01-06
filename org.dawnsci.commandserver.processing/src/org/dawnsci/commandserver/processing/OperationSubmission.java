@@ -29,7 +29,7 @@ import org.eclipse.scanning.api.event.core.ISubmitter;
  * </code></usage>
  *
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class OperationSubmission {

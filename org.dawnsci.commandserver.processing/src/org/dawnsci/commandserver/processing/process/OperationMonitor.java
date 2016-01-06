@@ -8,7 +8,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Simply logs the message returned from the operations.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class OperationMonitor implements IMonitor {

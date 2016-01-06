@@ -15,7 +15,7 @@ import org.eclipse.scanning.api.event.core.IPublisher;
  * Deals with sending percent complete from the pipeline
  * over the notification topic.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class OperationVisitor implements IExecutionVisitor {

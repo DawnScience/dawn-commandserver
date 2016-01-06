@@ -7,7 +7,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * The bean to be used in the queue for 
  * monitoring status and submitting a job.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class BubblesBean extends StatusBean {

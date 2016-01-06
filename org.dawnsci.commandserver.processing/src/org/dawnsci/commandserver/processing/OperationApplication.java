@@ -18,7 +18,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
  * which should work on the cluster:
  *    module load dawn/nightly ; $DAWN_RELEASE_DIRECTORY/dawn -noSplash -application org.dawnsci.commandserver.processing.processing -data ~/Operation_Consumer -path /<beanpath>/operationBean.json >> someLogFile.txt
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class OperationApplication implements IApplication {

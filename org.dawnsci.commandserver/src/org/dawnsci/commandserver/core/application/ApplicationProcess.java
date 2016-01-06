@@ -16,7 +16,7 @@ import org.slf4j.LoggerFactory;
  * 
  * This class will create a separate process which can be started 
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class ApplicationProcess {

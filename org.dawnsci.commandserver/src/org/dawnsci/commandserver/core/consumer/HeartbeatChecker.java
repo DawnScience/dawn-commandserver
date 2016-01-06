@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Checks for the heartbeat of a named consumer.
  * 
- * @author fcp94556
+ * @author Matthew Gerring
  *
  */
 public class HeartbeatChecker {

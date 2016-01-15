@@ -41,11 +41,6 @@ public class HeartbeatChecker {
         try {
         	subscriber.addListener(new IHeartbeatListener() {
         		@Override
-        		public Class<HeartbeatBean> getBeanClass() {
-        			return HeartbeatBean.class;
-        		}
-
-        		@Override
         		public void heartbeatPerformed(HeartbeatEvent evt) {
         			HeartbeatBean bean = evt.getBean();
         			if (!consumerName.equals(bean.getConsumerName())) {
@@ -53,7 +48,6 @@ public class HeartbeatChecker {
         			}
         			logger.trace(bean.getConsumerName()+ " is alive and well.");
         			ok = true;
-
         		}
         	});
 

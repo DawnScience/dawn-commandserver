@@ -121,10 +121,6 @@ public class Monitor implements IConsumerExtension{
 
 		this.killer = service.createSubscriber(uri, IEventService.KILL_TOPIC, null);
 		killer.addListener(new IBeanListener<KillBean>() {
-			@Override
-			public Class<KillBean> getBeanClass() {
-				return KillBean.class;
-			}
 
 			@Override
 			public void beanChangePerformed(BeanEvent<KillBean> evt) {

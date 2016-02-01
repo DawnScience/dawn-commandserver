@@ -115,11 +115,11 @@ public class Monitor implements IConsumerExtension{
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
 		
-		this.alive  = service.createPublisher(uri, IEventService.HEARTBEAT_TOPIC,  null);
+		this.alive  = service.createPublisher(uri, IEventService.HEARTBEAT_TOPIC);
 		alive.setConsumerId(consumerId);
 		alive.setConsumerName(getName());
 
-		this.killer = service.createSubscriber(uri, IEventService.KILL_TOPIC, null);
+		this.killer = service.createSubscriber(uri, IEventService.KILL_TOPIC);
 		killer.addListener(new IBeanListener<KillBean>() {
 
 			@Override

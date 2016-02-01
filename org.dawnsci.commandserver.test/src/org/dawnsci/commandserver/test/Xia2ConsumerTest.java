@@ -2,8 +2,8 @@ package org.dawnsci.commandserver.test;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.consumer.HeartbeatChecker;
 import org.dawnsci.commandserver.mx.consumer.MXSubmissionConsumer;
+import org.eclipse.scanning.api.event.alive.HeartbeatChecker;
 import org.junit.Test;
 
 /**

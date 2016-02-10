@@ -110,6 +110,7 @@ public class Xia2Process extends ProgressableProcess<ProjectBean>{
 		try {
 			writeFile();
 
+			bean.setPreviousStatus(Status.QUEUED);
 			bean.setStatus(Status.RUNNING);
 			bean.setPercentComplete(1);
 			broadcast(bean);
@@ -184,17 +185,20 @@ public class Xia2Process extends ProgressableProcess<ProjectBean>{
 			String line = getLine(new File(processingDir, "xia2.txt"), "Status:");
 			
 			if (line!=null && line.toLowerCase().contains("normal")) {
+				bean.setPreviousStatus(Status.RUNNING);
 				bean.setStatus(Status.COMPLETE);
 				bean.setMessage("Xia2 run completed normally");
 				bean.setPercentComplete(100);
 				broadcast(bean);
 				
 			} else if (line!=null && line.toLowerCase().contains("error")) {
+				bean.setPreviousStatus(Status.RUNNING);
 				bean.setStatus(Status.FAILED);
 				bean.setMessage(line);
 				broadcast(bean);
 				
 			} else {
+				bean.setPreviousStatus(Status.RUNNING);
 				bean.setStatus(Status.UNFINISHED);
 				if (line!=null) {
 					bean.setMessage("Xia2 run ended with "+line);
@@ -242,6 +246,7 @@ public class Xia2Process extends ProgressableProcess<ProjectBean>{
 								}
 								
 								if (line.contains("No images assigned for crystal test")) {
+									bean.setPreviousStatus(Status.RUNNING);
 									bean.setStatus(Status.FAILED);
 									bean.setMessage(line);
 									bean.setPercentComplete(0);

@@ -66,6 +66,7 @@ public abstract class ProgressableProcess<T extends StatusBean> implements Runna
 		this.statusPublisher = statusPublisher;
 		this.blocking        = blocking;
 		
+		bean.setPreviousStatus(Status.SUBMITTED);
 		bean.setStatus(Status.QUEUED);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());

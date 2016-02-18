@@ -115,6 +115,7 @@ public class OperationSubmission {
 		
 		// Data stuff
 		obean.setSlicing(context.getSlicing());
+		obean.setDataDimensions(context.getDataDimensions());
 		obean.setFilePath(context.getFilePath());
 		obean.setDatasetPath(context.getDatasetPath());
 		

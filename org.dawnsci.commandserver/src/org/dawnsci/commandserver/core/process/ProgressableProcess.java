@@ -178,8 +178,11 @@ public abstract class ProgressableProcess<T extends StatusBean> implements Runna
     	
     	final FileOutputStream stream = new FileOutputStream(beanFile);
     	try {
-    		String json = service.marshal(stream);
+    		String json = service.marshal(bean);
     		stream.write(json.getBytes("UTF-8"));
+    	}
+    	catch (Exception e) {
+    		e.printStackTrace();
     	} finally {
     		stream.close();
     	}

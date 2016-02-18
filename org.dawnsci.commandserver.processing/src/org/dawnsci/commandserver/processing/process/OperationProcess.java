@@ -9,8 +9,8 @@
 package org.dawnsci.commandserver.processing.process;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -20,8 +20,8 @@ import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Runs the OperationPipeline by executing a dawn command.
@@ -91,6 +91,10 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
 			
 			final Map<String,String> args = createApplicationArgs(path);
+			String workSpace = bean.getRunDirectory() + File.separator + "workspace";
+			new File(workSpace).mkdirs();
+			args.put("data", workSpace);
+			
 			ApplicationProcess process = new ApplicationProcess(args, arguments);
 			process.setApplicationName("org.dawnsci.commandserver.processing.processing");
 			process.setOutFileName("operation_out.txt");
@@ -118,6 +122,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	private Map<String, String> createApplicationArgs(File path) {
 		final Map<String,String> args = new HashMap<String, String>(1);
 		args.put("path", path.getAbsolutePath());
+//		args.put("data","@none");
 		return args;
 	}
     
@@ -132,6 +137,26 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 
 	public void setProcessingDir(String processingDir) {
 		this.processingDir = processingDir;
+	}
+	
+	@Override
+	protected void writeProjectBean(final File dir, final String fileName) throws Exception {
+		
+		final File beanFile = new File(dir, fileName);
+		ObjectMapper mapper = new ObjectMapper();
+    	beanFile.getParentFile().mkdirs();
+    	if (!beanFile.exists()) beanFile.createNewFile();
+    	
+    	final FileOutputStream stream = new FileOutputStream(beanFile);
+    	try {
+    		String json = mapper.writeValueAsString(bean);
+    		stream.write(json.getBytes("UTF-8"));
+    	}
+    	catch (Exception e) {
+    		e.printStackTrace();
+    	} finally {
+    		stream.close();
+    	}
 	}
 
 }

@@ -121,19 +121,25 @@ public class Xia2Writer extends BufferedWriter {
 		}
 		newLine();
 
-		
-		write("BEGIN WAVELENGTH NATIVE");
+		if (bean.isAnomalous()) {
+			write("BEGIN HA_INFO");
+			newLine();			
+			write("ATOM X");
+			newLine();			
+			write("END HA_INFO");
+			newLine();			
+			newLine();			
+		}
+	
+		String wavelengthType = bean.isAnomalous() ? "SAD" : "NATIVE";
+		write("BEGIN WAVELENGTH "+wavelengthType);
 		newLine();
 		if (bean.getResolution()!=null && !"".equals(bean.getResolution().trim())) {
 			write("RESOLUTION ");
             write(bean.getResolution());
             newLine();
 		}
-		if (bean.isAnomalous()) {
-			write("ATOM X");
-			newLine();			
-		}
-		write("END WAVELENGTH NATIVE");
+		write("END WAVELENGTH "+wavelengthType);
 		newLine();
 		newLine();
 

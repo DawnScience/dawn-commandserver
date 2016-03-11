@@ -11,5 +11,5 @@ Require-Bundle: org.eclipse.core.runtime,
  uk.ac.diamond.scisoft.python
 Bundle-ActivationPolicy: lazy
 Import-Package: org.apache.commons.cli,
- org.slf4j;version="1.7.6"
+ org.slf4j;version="[1.7.2,2.0.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7

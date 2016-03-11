@@ -22,6 +22,6 @@ Export-Package: org.dawnsci.commandserver.core,
  org.dawnsci.commandserver.core.util
 Import-Package: javax.servlet;version="2.6.0",
  javax.servlet.http;version="2.6.0",
- org.slf4j;version="1.7.6"
+ org.slf4j;version="[1.7.2,2.0.0)"
 Service-Component: OSGI-INF/*.xml
 Bundle-ActivationPolicy: lazy

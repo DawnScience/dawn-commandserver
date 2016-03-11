@@ -72,7 +72,7 @@ public class OperationExecution {
 		   
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), obean.getDatasetPath(), lz);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
-		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames());
+		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), false);
 			lz.setMetadata(axm);
 		    
 		    context.setData(lz);

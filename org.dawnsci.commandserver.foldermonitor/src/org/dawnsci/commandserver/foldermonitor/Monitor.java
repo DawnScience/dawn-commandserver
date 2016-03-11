@@ -119,7 +119,7 @@ public class Monitor implements IConsumerExtension{
 		alive.setConsumerId(consumerId);
 		alive.setConsumerName(getName());
 
-		this.killer = service.createSubscriber(uri, IEventService.KILL_TOPIC);
+		this.killer = service.createSubscriber(uri, IEventService.CMD_TOPIC);
 		killer.addListener(new IBeanListener<KillBean>() {
 
 			@Override

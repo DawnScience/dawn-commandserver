@@ -76,7 +76,7 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 	public void start() throws Exception {
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, IEventService.HEARTBEAT_TOPIC, IEventService.KILL_TOPIC);
+		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, IEventService.HEARTBEAT_TOPIC, IEventService.CMD_TOPIC);
 		consumer.setRunner(new IProcessCreator<T>() {
 			@Override
 			public IConsumerProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {

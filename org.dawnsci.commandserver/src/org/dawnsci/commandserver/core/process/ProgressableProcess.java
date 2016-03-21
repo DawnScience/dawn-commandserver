@@ -43,7 +43,7 @@ import com.sun.jna.Platform;
  * @author Matthew Gerring
  *
  */
-public abstract class ProgressableProcess<T extends StatusBean> implements Runnable, IConsumerProcess<T> {
+public abstract class ProgressableProcess<T extends StatusBean> implements IConsumerProcess<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProgressableProcess.class);
 
@@ -105,8 +105,7 @@ public abstract class ProgressableProcess<T extends StatusBean> implements Runna
 		statusPublisher.setLoggingStream(out);
 	}
 	
-	@Override
-	public final void run() {
+	private final void executeInternal() {
         try {
         	execute();
         	if (out!=System.out) {
@@ -198,9 +197,13 @@ public abstract class ProgressableProcess<T extends StatusBean> implements Runna
 	public void start() {
 		
 		if (isBlocking()) {
-			run(); // Block until process has run.
+			executeInternal(); // Block until process has run.
 		} else {
-			final Thread thread = new Thread(this);
+			final Thread thread = new Thread(new Runnable() {
+				public void run() {
+					executeInternal();
+				}
+			}, "Run "+bean.getName());
 			thread.setDaemon(true);
 			thread.setPriority(Thread.MAX_PRIORITY);
 			thread.start();

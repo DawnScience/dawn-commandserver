@@ -23,7 +23,7 @@ import java.util.Map;
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventConnectorService;
-import org.eclipse.scanning.api.event.core.IConsumerProcess;
+import org.eclipse.scanning.api.event.core.AbstractPausableProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
@@ -43,27 +43,22 @@ import com.sun.jna.Platform;
  * @author Matthew Gerring
  *
  */
-public abstract class ProgressableProcess<T extends StatusBean> implements IConsumerProcess<T> {
+public abstract class ProgressableProcess<T extends StatusBean> extends AbstractPausableProcess<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProgressableProcess.class);
 
 
 	private boolean            blocking    = false;
 	private boolean            isCancelled = false;
-	protected T       bean;
-	private IPublisher<T> statusPublisher;
 	protected Map<String, String> arguments;
 	
 	protected PrintStream out = System.out;
 
-	protected ProgressableProcess() {
-		super();
-	}
+	protected Thread thread;
 	
 	public ProgressableProcess(T bean, IPublisher<T> statusPublisher, boolean blocking) {
 		
-		this.bean            = bean;
-		this.statusPublisher = statusPublisher;
+		super(bean,statusPublisher);
 		this.blocking        = blocking;
 		
 		bean.setPreviousStatus(Status.SUBMITTED);
@@ -75,20 +70,7 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 		}
 		broadcast(bean);
 	}
-	
-
-	@Override
-	public T getBean() {
-		return bean;
-	}
-
-
-	@Override
-	public IPublisher<T> getPublisher() {
-		return statusPublisher;
-	}
-
-	
+		
 	protected void setLoggingFile(File logFile) throws IOException {
 		setLoggingFile(logFile, false);
 	}
@@ -102,11 +84,12 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 	protected void setLoggingFile(File logFile, boolean append) throws IOException {
 		if (!logFile.exists()) logFile.createNewFile();
 		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile, append)), true, "UTF-8");
-		statusPublisher.setLoggingStream(out);
+		publisher.setLoggingStream(out);
 	}
 	
 	private final void executeInternal() {
         try {
+			thread = Thread.currentThread();
         	execute();
         	if (out!=System.out) {
         		out.close();
@@ -122,14 +105,7 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 			broadcast(bean);
         }
 	}
-	
-	/**
-	 * Execute the process, if an exception is thrown the process is set to 
-	 * failed and the message is the message of the exception.
-	 * 
-	 * @throws Exception
-	 */
-	public abstract void execute() throws EventException;
+
 	
 	/**
 	 * Please provide a termination for the process by implementing this method.
@@ -138,7 +114,9 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 	 * 
 	 * @throws Exception
 	 */
-	public abstract void terminate() throws EventException;
+	public void terminate() throws EventException {
+		if (thread!=null) thread.interrupt(); // In case it is paused.
+	}
 	
 	/**
 	 * @return true if windows
@@ -197,9 +175,9 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 	public void start() {
 		
 		if (isBlocking()) {
-			executeInternal(); // Block until process has run.
+			executeInternal(); // Block until process has run, uses the calling thread.
 		} else {
-			final Thread thread = new Thread(new Runnable() {
+			this.thread = new Thread(new Runnable() {
 				public void run() {
 					executeInternal();
 				}
@@ -217,7 +195,7 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 	public void broadcast(StatusBean tbean) {
 		try {
 			bean.merge(tbean);
-			statusPublisher.broadcast(bean);
+			publisher.broadcast(bean);
 		} catch (Exception e) {
 			logger.error("Cannot broadcast", e);
 		}
@@ -271,17 +249,18 @@ public abstract class ProgressableProcess<T extends StatusBean> implements ICons
 		this.isCancelled = isCancelled;
 	}
 	
-	protected void dryRun() {
+	protected void dryRun() throws EventException {
 		dryRun(100);
 	}
-	protected void dryRun(int size) {
+	protected void dryRun(int size) throws EventException {
         dryRun(size, true);
 	}
 	
-	protected void dryRun(int size, boolean complete) {
+	protected void dryRun(int size, boolean complete) throws EventException {
 		
 		for (int i = 0; i < size; i++) {
 			
+			checkPaused();
 			if (isCancelled) {
 				bean.setStatus(Status.TERMINATED);
 				broadcast(bean);

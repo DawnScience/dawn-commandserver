@@ -36,13 +36,6 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	private String   processingDir;
     private Process  process;
 	
-	/**
-	 * Used to run a process without a bean and for OSGi to inject
-	 * services as required.
-	 */
-	public OperationProcess() {
-		super();
-	}
 
 	public OperationProcess(OperationBean bean, IPublisher<OperationBean> status) {
 		

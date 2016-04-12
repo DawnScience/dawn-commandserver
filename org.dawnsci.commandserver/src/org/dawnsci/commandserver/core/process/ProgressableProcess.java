@@ -8,12 +8,10 @@
  */
 package org.dawnsci.commandserver.core.process;
 
-import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.PrintStream;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
@@ -49,11 +47,8 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 
 
 	private boolean            blocking    = false;
-	private boolean            isCancelled = false;
 	protected Map<String, String> arguments;
 	
-	protected PrintStream out = System.out;
-
 	protected Thread thread;
 	
 	public ProgressableProcess(T bean, IPublisher<T> statusPublisher, boolean blocking) {
@@ -69,22 +64,6 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 			logger.warn("Cannot find local host!", e);
 		}
 		broadcast(bean);
-	}
-		
-	protected void setLoggingFile(File logFile) throws IOException {
-		setLoggingFile(logFile, false);
-	}
-	/**
-	 * Calling this method redirects the logging of this Java object
-	 * which is available through the field 'out' to a known file.
-	 * 
-	 * @param logFile
-	 * @throws IOException 
-	 */
-	protected void setLoggingFile(File logFile, boolean append) throws IOException {
-		if (!logFile.exists()) logFile.createNewFile();
-		this.out = new PrintStream(new BufferedOutputStream(new FileOutputStream(logFile, append)), true, "UTF-8");
-		publisher.setLoggingStream(out);
 	}
 	
 	private final void executeInternal() {
@@ -118,53 +97,6 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 		if (thread!=null) thread.interrupt(); // In case it is paused.
 	}
 	
-	/**
-	 * @return true if windows
-	 */
-	static public final boolean isWindowsOS() {
-		return (System.getProperty("os.name").indexOf("Windows") == 0);
-	}
-
-	/**
-	 * Writes the project bean at the point where it is run.
-	 * 
-	 * @param processingDir2
-	 * @param fileName - name of file
-	 * @throws IOException 
-	 * @throws FileNotFoundException 
-	 * @throws JsonMappingException 
-	 * @throws JsonGenerationException 
-	 */
-	protected void writeProjectBean(final String dir, final String fileName) throws Exception {
-		
-		writeProjectBean(new File(dir), fileName);
-	}
-	
-	/**
-	 * 
-	 * @param dir
-	 * @param fileName
-	 * @throws Exception
-	 */
-	protected void writeProjectBean(final File dir, final String fileName) throws Exception {
-		
-		final File beanFile = new File(dir, fileName);
-        final IEventConnectorService service = ActiveMQServiceHolder.getEventConnectorService();
-    	beanFile.getParentFile().mkdirs();
-    	if (!beanFile.exists()) beanFile.createNewFile();
-    	
-    	final FileOutputStream stream = new FileOutputStream(beanFile);
-    	try {
-    		String json = service.marshal(bean);
-    		stream.write(json.getBytes("UTF-8"));
-    	}
-    	catch (Exception e) {
-    		e.printStackTrace();
-    	} finally {
-    		stream.close();
-    	}
-	}
-
 
 	/**
 	 * Call to start the process and broadcast status
@@ -187,19 +119,6 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 			thread.start();
 		}
 	}
-
-	/**
-	 * Notify any clients of the beans status
-	 * @param bean
-	 */
-	public void broadcast(StatusBean tbean) {
-		try {
-			bean.merge(tbean);
-			publisher.broadcast(bean);
-		} catch (Exception e) {
-			logger.error("Cannot broadcast", e);
-		}
- 	}
 
     protected void pkill(int pid, String dir) throws Exception {
     	
@@ -238,74 +157,6 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 			throw new Exception("Cannot currently process pid for "+System.getProperty("os.name"));
 		}
 	}
-
-
-	public boolean isCancelled() {
-		return isCancelled;
-	}
-
-
-	public void setCancelled(boolean isCancelled) {
-		this.isCancelled = isCancelled;
-	}
-	
-	protected void dryRun() throws EventException {
-		dryRun(100);
-	}
-	protected void dryRun(int size) throws EventException {
-        dryRun(size, true);
-	}
-	
-	protected void dryRun(int size, boolean complete) throws EventException {
-		
-		for (int i = 0; i < size; i++) {
-			
-			checkPaused();
-			if (isCancelled) {
-				bean.setStatus(Status.TERMINATED);
-				broadcast(bean);
-				return;
-			}
-			if (bean.getStatus()==Status.REQUEST_TERMINATE ||
-			    bean.getStatus()==Status.TERMINATED) {
-				return;
-			}
-			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				logger.error("Dry run sleeping failed", e);
-			}
-			System.out.println("Dry run : "+bean.getPercentComplete());
-			bean.setPercentComplete(i);
-			broadcast(bean);
-		}
-
-		bean.setStatus(Status.COMPLETE);
-		bean.setPercentComplete(100);
-		bean.setMessage("Dry run complete (no software run)");
-		broadcast(bean);
-	}
-
-	
-
-
-	/**
-	 * @param dir
-	 * @param template
-	 * @param ext
-	 * @param i
-	 * @return file
-	 */
-	protected final static File getUnique(final File dir, final String template, int i) {
-		
-		final File file = new File(dir, template + i );
-		if (!file.exists()) {
-			return file;
-		}
-
-		return getUnique(dir, template, ++i);
-	}
-
 	public boolean isBlocking() {
 		return blocking;
 	}

@@ -5,6 +5,7 @@ import java.net.URI;
 import java.util.UUID;
 
 import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
@@ -103,5 +104,10 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 	public void setLoggingStream(PrintStream stream) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	@Override
+	public IEventConnectorService getConnectorService() {
+		return null;
 	}
 }

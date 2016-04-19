@@ -1,15 +1,15 @@
 package org.dawnsci.commandserver.processing;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.dawnsci.commandserver.processing.process.OperationExecution;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * Used to execute an operation pipeline from an OperationBean
@@ -51,8 +51,8 @@ public class OperationApplication implements IApplication {
 
 	private OperationBean createOperationBean(Map<String, String> conf) throws Exception {
 		final String path   = conf.get("path");
-		ObjectMapper mapper = new ObjectMapper();
-		return mapper.readValue(new File(path), OperationBean.class); 
+		String json = new String(Files.readAllBytes(new File(path).toPath()));
+		return ActiveMQServiceHolder.getEventConnectorService().unmarshal(json, OperationBean.class);
 	}
 
 	@Override

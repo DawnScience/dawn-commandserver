@@ -52,8 +52,6 @@ import uk.ac.diamond.scisoft.analysis.processing.operations.FunctionModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.SectorIntegrationModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.ValueModel;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * Class to test that we can run an operation pipeline remotely.
  * 
@@ -303,7 +301,6 @@ public class OperationsTestRemote {
 		qCon.start();
 		
     	Class<? extends StatusBean> clazz = obean.getClass();
-    	ObjectMapper mapper = new ObjectMapper();
 	   
     	try {
 	    	POLL: while(true) {
@@ -318,7 +315,7 @@ public class OperationsTestRemote {
 		    		if (m==null) continue;
 		    		if (m instanceof TextMessage) {
 		    			TextMessage t = (TextMessage)m;
-		    			final StatusBean bean = mapper.readValue(t.getText(), clazz);
+		    			final StatusBean bean = ActiveMQServiceHolder.getEventConnectorService().unmarshal(t.getText(), clazz);
 
 		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
 		    				if (bean.getStatus().isFinal()) return bean;

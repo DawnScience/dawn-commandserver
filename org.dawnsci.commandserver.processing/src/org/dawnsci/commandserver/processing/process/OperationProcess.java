@@ -21,8 +21,6 @@ import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-
 /**
  * Runs the OperationPipeline by executing a dawn command.
  * This command runs in a separate process which can include
@@ -131,25 +129,4 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	public void setProcessingDir(String processingDir) {
 		this.processingDir = processingDir;
 	}
-	
-	@Override
-	protected void writeProjectBean(final File dir, final String fileName) throws Exception {
-		
-		final File beanFile = new File(dir, fileName);
-		ObjectMapper mapper = new ObjectMapper();
-    	beanFile.getParentFile().mkdirs();
-    	if (!beanFile.exists()) beanFile.createNewFile();
-    	
-    	final FileOutputStream stream = new FileOutputStream(beanFile);
-    	try {
-    		String json = mapper.writeValueAsString(bean);
-    		stream.write(json.getBytes("UTF-8"));
-    	}
-    	catch (Exception e) {
-    		e.printStackTrace();
-    	} finally {
-    		stream.close();
-    	}
-	}
-
 }

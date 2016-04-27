@@ -4,7 +4,9 @@ import java.io.File;
 import java.net.URI;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.dawnsci.commandserver.core.beans.OperationBean;
+import org.eclipse.dawnsci.analysis.api.dataset.Slice;
+import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
@@ -113,8 +115,15 @@ public class OperationSubmission {
 		obean.setRunDirectory(runDirectory);
 		obean.setName(name);
 		
+		SliceND slicing = context.getSlicing();
+		String s = null;
+		
+		if (slicing != null) {
+			s = Slice.createString(slicing.convertToSlice());
+		}
+		
 		// Data stuff
-		obean.setSlicing(context.getSlicing());
+		obean.setSlicing(s);
 		obean.setDataDimensions(context.getDataDimensions());
 		obean.setFilePath(context.getFilePath());
 		obean.setDatasetPath(context.getDatasetPath());
@@ -132,8 +141,6 @@ public class OperationSubmission {
 			file.close();
 		}
 		
-		// Run Stuff
-		obean.setExecutionType(context.getExecutionType());
 		obean.setParallelTimeout(context.getParallelTimeout());
 
 		return obean;

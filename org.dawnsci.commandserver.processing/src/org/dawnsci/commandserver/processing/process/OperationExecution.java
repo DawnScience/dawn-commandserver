@@ -3,7 +3,7 @@ package org.dawnsci.commandserver.processing.process;
 import java.io.File;
 import java.util.Arrays;
 
-import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
@@ -13,6 +13,7 @@ import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
+import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
@@ -62,7 +63,7 @@ public class OperationExecution {
 		    // Create a context and run the pipeline
 		    this.context = oservice.createContext();
 		    context.setSeries(ops);
-		    context.setExecutionType(obean.getExecutionType());
+		    context.setExecutionType(ExecutionType.PARALLEL);
 		    context.setParallelTimeout(obean.getParallelTimeout());
 		    
 		    final IDataHolder holder = lservice.getData(obean.getFilePath(), new IMonitor.Stub());
@@ -76,7 +77,20 @@ public class OperationExecution {
 			lz.setMetadata(axm);
 		    
 		    context.setData(lz);
-		    context.setSlicing(obean.getSlicing());
+		    
+		    if (obean.getDataKey() != null) {
+		    	context.setKey(holder.getLazyDataset(obean.getDataKey()));
+		    }
+		    
+		    String slicing = obean.getSlicing();
+		    if (slicing == null) {
+		    	context.setSlicing(null);
+		    } else {
+		    	Slice[] s = Slice.convertFromString(slicing);
+		    	context.setSlicing(new SliceND(lz.getShape(),s));
+		    }
+		    
+		    
 		    context.setDataDimensions(obean.getDataDimensions());
 		    
 		    //Create visitor to save data
@@ -90,7 +104,9 @@ public class OperationExecution {
 		    int[] shape = lz.getShape();
 		    SliceND s = context.getSlicing();
 		    if (s == null) s = new SliceND(lz.getShape());
-		    int work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
+		    int work = 1;
+		    
+		    if (obean.getDataKey() == null) work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
 		    context.setMonitor(new OperationMonitor(obean, work));
 		    
 		    oservice.execute(context);

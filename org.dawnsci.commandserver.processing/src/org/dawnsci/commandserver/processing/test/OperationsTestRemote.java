@@ -24,8 +24,8 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
+import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.dawnsci.commandserver.processing.OperationSubmission;
-import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;

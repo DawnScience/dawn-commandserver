@@ -1,6 +1,6 @@
 package org.dawnsci.commandserver.processing.process;
 
-import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;

@@ -6,7 +6,7 @@
  * which accompanies this distribution, and is available at
  * http://www.eclipse.org/legal/epl-v10.html
  */
-package org.dawnsci.commandserver.processing.beans;
+package org.dawnsci.commandserver.core.beans;
 
 import java.util.Arrays;
 import java.util.Map;

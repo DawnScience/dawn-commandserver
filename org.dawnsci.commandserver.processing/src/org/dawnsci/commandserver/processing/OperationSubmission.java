@@ -4,7 +4,7 @@ import java.io.File;
 import java.net.URI;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.processing.beans.OperationBean;
+import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;

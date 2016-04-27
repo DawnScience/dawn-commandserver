@@ -104,7 +104,9 @@ public class OperationExecution {
 		    int[] shape = lz.getShape();
 		    SliceND s = context.getSlicing();
 		    if (s == null) s = new SliceND(lz.getShape());
-		    int work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
+		    int work = 1;
+		    
+		    if (obean.getDataKey() != null) work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
 		    context.setMonitor(new OperationMonitor(obean, work));
 		    
 		    oservice.execute(context);

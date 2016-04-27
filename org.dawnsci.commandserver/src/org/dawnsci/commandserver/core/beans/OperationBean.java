@@ -42,7 +42,16 @@ public class OperationBean extends StatusBean {
 	private long                 parallelTimeout=5000;
 	private String 				 xmx;
 	private boolean				 readable = false;
+	private String				 dataKey;
 	
+	public String getDataKey() {
+		return dataKey;
+	}
+
+	public void setDataKey(String dataKey) {
+		this.dataKey = dataKey;
+	}
+
 	// Tidying stuff
 	private boolean deletePersistenceFile = true;
 	

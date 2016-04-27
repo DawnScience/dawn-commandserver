@@ -78,6 +78,10 @@ public class OperationExecution {
 		    
 		    context.setData(lz);
 		    
+		    if (obean.getDataKey() != null) {
+		    	context.setKey(holder.getLazyDataset(obean.getDataKey()));
+		    }
+		    
 		    String slicing = obean.getSlicing();
 		    if (slicing == null) {
 		    	context.setSlicing(null);

@@ -36,6 +36,7 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
+import org.eclipse.dawnsci.analysis.api.processing.model.ValueModel;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -50,7 +51,6 @@ import org.junit.Test;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.FunctionFactory;
 import uk.ac.diamond.scisoft.analysis.processing.operations.FunctionModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.SectorIntegrationModel;
-import uk.ac.diamond.scisoft.analysis.processing.operations.ValueModel;
 
 /**
  * Class to test that we can run an operation pipeline remotely.

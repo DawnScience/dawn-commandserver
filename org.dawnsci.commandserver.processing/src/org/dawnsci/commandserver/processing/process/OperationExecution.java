@@ -79,7 +79,9 @@ public class OperationExecution {
 		    context.setData(lz);
 		    
 		    if (obean.getDataKey() != null) {
-		    	context.setKey(holder.getLazyDataset(obean.getDataKey()));
+		    	ILazyDataset lazyDataset = holder.getLazyDataset(obean.getDataKey());
+		    	lazyDataset.setMetadata(null);
+		    	context.setKey(lazyDataset);
 		    }
 		    
 		    String slicing = obean.getSlicing();

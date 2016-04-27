@@ -2,6 +2,8 @@ package org.dawnsci.commandserver.processing.process;
 
 import org.dawnsci.commandserver.processing.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.Slice;
+import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
@@ -28,7 +30,15 @@ public class OperationVisitor implements IExecutionVisitor {
 	public OperationVisitor(ILazyDataset lz, OperationBean obean, IPublisher<OperationBean> broadcaster) throws Exception {
 		this.obean       = obean;
 		this.broadcaster = broadcaster;
-		SliceViewIterator generator = new SliceViewIterator(lz, obean.getSlicing(), obean.getDataDimensions());
+		SliceND s = null;
+		
+		if (obean.getSlicing() != null && !obean.getSlicing().isEmpty()){
+			Slice[] sa = Slice.convertFromString(obean.getSlicing());
+	    	s = new SliceND(lz.getShape(),sa);
+		}
+		
+		
+		SliceViewIterator generator = new SliceViewIterator(lz, s, obean.getDataDimensions());
 		this.total       = generator.getTotal();
 	}
 

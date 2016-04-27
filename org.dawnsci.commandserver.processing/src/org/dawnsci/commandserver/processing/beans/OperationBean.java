@@ -8,10 +8,9 @@
  */
 package org.dawnsci.commandserver.processing.beans;
 
+import java.util.Arrays;
 import java.util.Map;
 
-import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
-import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -28,7 +27,7 @@ public class OperationBean extends StatusBean {
 	// The data
 	private String               filePath;              
 	private String               datasetPath;
-	private SliceND slicing;
+	private String				 slicing;
 	private Map<Integer, String> axesNames;
 	private String 				 outputFilePath;
 	private int[] 				 dataDimensions;
@@ -40,7 +39,6 @@ public class OperationBean extends StatusBean {
 	// and client do not share disk, it will not work.
 	private String               persistencePath;
 
-	private ExecutionType        executionType=ExecutionType.SERIES;
 	private long                 parallelTimeout=5000;
 	private String 				 xmx;
 	private boolean				 readable = false;
@@ -60,7 +58,6 @@ public class OperationBean extends StatusBean {
         this.datasetPath     = db.datasetPath;
         this.slicing         = db.slicing;
         this.persistencePath = db.persistencePath;
-        this.executionType   = db.executionType;
         this.parallelTimeout = db.parallelTimeout;
         this.deletePersistenceFile = db.deletePersistenceFile;
         this.xmx = db.xmx;
@@ -91,11 +88,11 @@ public class OperationBean extends StatusBean {
 		this.datasetPath = datasetPath;
 	}
 
-	public SliceND getSlicing() {
+	public String getSlicing() {
 		return slicing;
 	}
 
-	public void setSlicing(SliceND slicing) {
+	public void setSlicing(String slicing) {
 		this.slicing = slicing;
 	}
 
@@ -119,18 +116,17 @@ public class OperationBean extends StatusBean {
 	public int hashCode() {
 		final int prime = 31;
 		int result = super.hashCode();
-		result = prime * result
-				+ ((datasetPath == null) ? 0 : datasetPath.hashCode());
+		result = prime * result + ((axesNames == null) ? 0 : axesNames.hashCode());
+		result = prime * result + Arrays.hashCode(dataDimensions);
+		result = prime * result + ((datasetPath == null) ? 0 : datasetPath.hashCode());
 		result = prime * result + (deletePersistenceFile ? 1231 : 1237);
-		result = prime * result
-				+ ((executionType == null) ? 0 : executionType.hashCode());
-		result = prime * result
-				+ ((filePath == null) ? 0 : filePath.hashCode());
-		result = prime * result
-				+ (int) (parallelTimeout ^ (parallelTimeout >>> 32));
-		result = prime * result
-				+ ((persistencePath == null) ? 0 : persistencePath.hashCode());
+		result = prime * result + ((filePath == null) ? 0 : filePath.hashCode());
+		result = prime * result + ((outputFilePath == null) ? 0 : outputFilePath.hashCode());
+		result = prime * result + (int) (parallelTimeout ^ (parallelTimeout >>> 32));
+		result = prime * result + ((persistencePath == null) ? 0 : persistencePath.hashCode());
+		result = prime * result + (readable ? 1231 : 1237);
 		result = prime * result + ((slicing == null) ? 0 : slicing.hashCode());
+		result = prime * result + ((xmx == null) ? 0 : xmx.hashCode());
 		return result;
 	}
 
@@ -143,6 +139,13 @@ public class OperationBean extends StatusBean {
 		if (getClass() != obj.getClass())
 			return false;
 		OperationBean other = (OperationBean) obj;
+		if (axesNames == null) {
+			if (other.axesNames != null)
+				return false;
+		} else if (!axesNames.equals(other.axesNames))
+			return false;
+		if (!Arrays.equals(dataDimensions, other.dataDimensions))
+			return false;
 		if (datasetPath == null) {
 			if (other.datasetPath != null)
 				return false;
@@ -150,12 +153,15 @@ public class OperationBean extends StatusBean {
 			return false;
 		if (deletePersistenceFile != other.deletePersistenceFile)
 			return false;
-		if (executionType != other.executionType)
-			return false;
 		if (filePath == null) {
 			if (other.filePath != null)
 				return false;
 		} else if (!filePath.equals(other.filePath))
+			return false;
+		if (outputFilePath == null) {
+			if (other.outputFilePath != null)
+				return false;
+		} else if (!outputFilePath.equals(other.outputFilePath))
 			return false;
 		if (parallelTimeout != other.parallelTimeout)
 			return false;
@@ -164,20 +170,19 @@ public class OperationBean extends StatusBean {
 				return false;
 		} else if (!persistencePath.equals(other.persistencePath))
 			return false;
+		if (readable != other.readable)
+			return false;
 		if (slicing == null) {
 			if (other.slicing != null)
 				return false;
 		} else if (!slicing.equals(other.slicing))
 			return false;
+		if (xmx == null) {
+			if (other.xmx != null)
+				return false;
+		} else if (!xmx.equals(other.xmx))
+			return false;
 		return true;
-	}
-
-	public ExecutionType getExecutionType() {
-		return executionType;
-	}
-
-	public void setExecutionType(ExecutionType executionType) {
-		this.executionType = executionType;
 	}
 
 	public long getParallelTimeout() {

@@ -13,6 +13,7 @@ import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
+import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
@@ -62,7 +63,7 @@ public class OperationExecution {
 		    // Create a context and run the pipeline
 		    this.context = oservice.createContext();
 		    context.setSeries(ops);
-		    context.setExecutionType(obean.getExecutionType());
+		    context.setExecutionType(ExecutionType.PARALLEL);
 		    context.setParallelTimeout(obean.getParallelTimeout());
 		    
 		    final IDataHolder holder = lservice.getData(obean.getFilePath(), new IMonitor.Stub());
@@ -76,7 +77,16 @@ public class OperationExecution {
 			lz.setMetadata(axm);
 		    
 		    context.setData(lz);
-		    context.setSlicing(obean.getSlicing());
+		    
+		    String slicing = obean.getSlicing();
+		    if (slicing == null) {
+		    	context.setSlicing(null);
+		    } else {
+		    	Slice[] s = Slice.convertFromString(slicing);
+		    	context.setSlicing(new SliceND(lz.getShape(),s));
+		    }
+		    
+		    
 		    context.setDataDimensions(obean.getDataDimensions());
 		    
 		    //Create visitor to save data

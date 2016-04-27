@@ -252,7 +252,6 @@ public class OperationsTestRemote {
 //		b.setSlicing(s);
 		context.setDataDimensions(new int[]{1,2});
 		b.setXmx("4096m");
-		b.setExecutionType(ExecutionType.PARALLEL);
 		Map<Integer, String> axesNames = new HashMap<Integer, String>();
 		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
 		b.setAxesNames(axesNames);

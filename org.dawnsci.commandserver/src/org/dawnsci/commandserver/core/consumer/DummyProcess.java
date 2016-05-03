@@ -41,7 +41,7 @@ public class DummyProcess extends ProgressableProcess {
 
 
 	@Override
-	public void execute() throws EventException {
+	public void execute() throws EventException, InterruptedException {
 		
         bean.setStatus(Status.RUNNING);
         bean.setPercentComplete(1);

@@ -12,7 +12,7 @@ public class BubblesProcess extends ProgressableProcess<BubblesBean> {
 	}
 
 	@Override
-	public void execute() throws EventException {
+	public void execute() throws EventException, InterruptedException {
         bean.setStatus(Status.RUNNING);
         bean.setPercentComplete(1);
         broadcast(bean);

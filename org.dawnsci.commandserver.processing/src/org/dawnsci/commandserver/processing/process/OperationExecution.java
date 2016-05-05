@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.Arrays;
 
 import org.dawnsci.commandserver.core.beans.OperationBean;
+import org.eclipse.dawnsci.analysis.api.dataset.IDynamicDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
@@ -15,9 +16,11 @@ import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
+import org.eclipse.dawnsci.analysis.api.processing.ILiveOperationInfo;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
+import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.slf4j.Logger;
@@ -73,15 +76,34 @@ public class OperationExecution {
 		   
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), obean.getDatasetPath(), lz);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
-		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), false);
+		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
 			lz.setMetadata(axm);
 		    
 		    context.setData(lz);
 		    
 		    if (obean.getDataKey() != null) {
+
+		    	final IDynamicDataset complete = (IDynamicDataset)holder.getDataset(obean.getDataKey() + Node.SEPARATOR + "scan_finished");
+		    	final IDynamicDataset key = (IDynamicDataset)holder.getDataset(obean.getDataKey() + Node.SEPARATOR + "uniqueKeys");
+		    	complete.setMetadata(null);
+		    	key.setMetadata(null);
+		    	
 		    	ILazyDataset lazyDataset = holder.getLazyDataset(obean.getDataKey());
 		    	lazyDataset.setMetadata(null);
-		    	context.setKey(lazyDataset);
+		    	context.setLiveInfo(new ILiveOperationInfo(){
+
+					@Override
+					public IDynamicDataset[] getKeys() {
+						return new IDynamicDataset[]{key};
+					}
+
+					@Override
+					public IDynamicDataset getComplete() {
+						return complete;
+					}
+		    		
+		    	});
+		    	
 		    }
 		    
 		    String slicing = obean.getSlicing();

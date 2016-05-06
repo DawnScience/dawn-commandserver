@@ -83,13 +83,11 @@ public class OperationExecution {
 		    
 		    if (obean.getDataKey() != null) {
 
-		    	final IDynamicDataset complete = (IDynamicDataset)holder.getDataset(obean.getDataKey() + Node.SEPARATOR + "scan_finished");
-		    	final IDynamicDataset key = (IDynamicDataset)holder.getDataset(obean.getDataKey() + Node.SEPARATOR + "uniqueKeys");
-		    	complete.setMetadata(null);
+		    	final IDynamicDataset key = (IDynamicDataset)holder.getLazyDataset(obean.getDataKey() + Node.SEPARATOR + "uniqueKeys");
+		    	final IDynamicDataset complete = (IDynamicDataset)holder.getLazyDataset(obean.getDataKey() + Node.SEPARATOR + "scan_finished");
+		    	
 		    	key.setMetadata(null);
 		    	
-		    	ILazyDataset lazyDataset = holder.getLazyDataset(obean.getDataKey());
-		    	lazyDataset.setMetadata(null);
 		    	context.setLiveInfo(new ILiveOperationInfo(){
 
 					@Override

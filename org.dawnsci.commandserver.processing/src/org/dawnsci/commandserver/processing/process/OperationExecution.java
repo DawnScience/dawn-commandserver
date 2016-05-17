@@ -3,7 +3,6 @@ package org.dawnsci.commandserver.processing.process;
 import java.io.File;
 import java.util.Arrays;
 
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.IDynamicDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
@@ -26,6 +25,7 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 import uk.ac.diamond.scisoft.analysis.processing.visitor.NexusFileExecutionVisitor;
 
 public class OperationExecution {

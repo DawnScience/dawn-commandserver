@@ -10,12 +10,13 @@ package org.dawnsci.commandserver.processing.consumer;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.dawnsci.commandserver.core.process.ProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.process.OperationProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * This consumer monitors a queue and starts runs based

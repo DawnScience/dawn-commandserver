@@ -24,7 +24,6 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
@@ -49,6 +48,7 @@ import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.fitting.functions.FunctionFactory;
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 import uk.ac.diamond.scisoft.analysis.processing.operations.FunctionModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.SectorIntegrationModel;
 

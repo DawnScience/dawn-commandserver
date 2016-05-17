@@ -4,7 +4,6 @@ import java.io.File;
 import java.net.URI;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
@@ -13,6 +12,8 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.core.ISubmitter;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * This class submits an IOperationContext for remote execution.

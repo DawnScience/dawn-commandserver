@@ -1,9 +1,10 @@
 package org.dawnsci.commandserver.processing.process;
 
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * Simply logs the message returned from the operations.

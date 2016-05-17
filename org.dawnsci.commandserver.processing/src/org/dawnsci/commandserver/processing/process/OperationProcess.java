@@ -15,11 +15,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.application.ApplicationProcess;
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * Runs the OperationPipeline by executing a dawn command.

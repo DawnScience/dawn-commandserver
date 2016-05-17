@@ -6,10 +6,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.dawnsci.commandserver.processing.process.OperationExecution;
 import org.eclipse.equinox.app.IApplication;
 import org.eclipse.equinox.app.IApplicationContext;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * Used to execute an operation pipeline from an OperationBean

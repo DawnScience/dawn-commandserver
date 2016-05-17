@@ -1,6 +1,5 @@
 package org.dawnsci.commandserver.processing.process;
 
-import org.dawnsci.commandserver.core.beans.OperationBean;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
@@ -12,6 +11,8 @@ import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceViewIterator;
 import org.eclipse.dawnsci.analysis.dataset.slicer.Slicer;
 import org.eclipse.scanning.api.event.core.IPublisher;
+
+import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
  * Deals with sending percent complete from the pipeline

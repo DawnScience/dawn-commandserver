@@ -58,7 +58,7 @@ public class OperationExecution {
 	 */
 	public void run(final OperationBean obean) throws Exception {
 		
-		IPersistentFile file = pservice.createPersistentFile(obean.getPersistencePath());
+		IPersistentFile file = pservice.getPersistentFile(obean.getPersistencePath());
 		try {
 			// We should get these back exactly as they were defined.
 		    final IOperation[] ops = file.getOperations();

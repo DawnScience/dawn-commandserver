@@ -10,8 +10,10 @@ package org.dawnsci.commandserver.processing.test;
 
 import java.io.File;
 import java.net.URI;
+import java.util.Arrays;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import javax.jms.Message;
@@ -231,9 +233,8 @@ public class OperationsTestRemote {
 		s.put(0, "all");
 //		b.setSlicing(s);
 		context.setDataDimensions(new int[]{1,2});
-		Map<Integer, String> axesNames = new HashMap<Integer, String>();
-		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
-		b.setAxesNames(axesNames);
+		List<String>[] axesNames = new List[3];
+		axesNames[0] = Arrays.asList("/entry1/pixium10_tif/linkamTemp");
 		b.setOutputFilePath("/dls/science/groups/das/ExampleData/powder/remotetest/output3.nxs");
 		testRemoteRunBean(b);
 	}
@@ -252,8 +253,8 @@ public class OperationsTestRemote {
 //		b.setSlicing(s);
 		context.setDataDimensions(new int[]{1,2});
 		b.setXmx("4096m");
-		Map<Integer, String> axesNames = new HashMap<Integer, String>();
-		axesNames.put(1, "/entry1/pixium10_tif/linkamTemp");
+		List<String>[] axesNames = new List[3];
+		axesNames[0] = Arrays.asList("/entry1/pixium10_tif/linkamTemp");
 		b.setAxesNames(axesNames);
 		b.setOutputFilePath("/dls/science/groups/das/ExampleData/tmp/output_cluster_0.nxs");
 		

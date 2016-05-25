@@ -91,9 +91,7 @@ public class Monitor implements IConsumerExtension{
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
 		this.broadcaster   = service.createPublisher(getUri(), topic);
-		broadcaster.setQueueName(queue);
 		System.out.println("Folder monitor topic is '"+broadcaster.getTopicName()+"'");
-		System.out.println("Folder monitor queue is '"+broadcaster.getQueueName()+"'");
 
 
 		this.location = configuration.get("location");
@@ -105,7 +103,6 @@ public class Monitor implements IConsumerExtension{
 	}
 
 	private ISubscriber<IBeanListener<KillBean>> killer;
-	private IPublisher<HeartbeatBean>            alive;
 	
 	@Override
 	public void start() throws Exception {
@@ -115,10 +112,6 @@ public class Monitor implements IConsumerExtension{
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
 		
-		this.alive  = service.createPublisher(uri, IEventService.HEARTBEAT_TOPIC);
-		alive.setConsumerId(consumerId);
-		alive.setConsumerName(getName());
-
 		this.killer = service.createSubscriber(uri, IEventService.CMD_TOPIC);
 		killer.addListener(new IBeanListener<KillBean>() {
 
@@ -392,7 +385,6 @@ public class Monitor implements IConsumerExtension{
  
     private void disconnect() throws EventException {
     	broadcaster.disconnect();
-    	alive.disconnect();
     	killer.disconnect();
     }
 

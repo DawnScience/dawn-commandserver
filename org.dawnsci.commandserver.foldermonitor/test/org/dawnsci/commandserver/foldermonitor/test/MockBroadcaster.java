@@ -6,6 +6,7 @@ import java.util.UUID;
 
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.eclipse.scanning.api.event.core.IConsumer;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
@@ -65,42 +66,6 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 	}
 
 	@Override
-	public void setQueueName(String queueName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public String getQueueName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public String getConsumerName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setConsumerName(String cname) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public UUID getConsumerId() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setConsumerId(UUID id) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public void setLoggingStream(PrintStream stream) {
 		// TODO Auto-generated method stub
 		
@@ -109,5 +74,29 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 	@Override
 	public IEventConnectorService getConnectorService() {
 		return null;
+	}
+
+	@Override
+	public String getStatusSetName() {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public void setStatusSetName(String queueName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setStatusSetAddRequired(boolean isRequired) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void setConsumer(IConsumer<?> consumer) {
+		// TODO Auto-generated method stub
+		
 	}
 }

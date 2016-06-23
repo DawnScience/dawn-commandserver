@@ -24,6 +24,7 @@
    <includes
          id="org.eclipse.scanning.feature"
          version="0.0.0"/>
+
    <includes
          id="org.eclipse.scanning.ui.feature"
          version="0.0.0"/>
@@ -138,12 +139,6 @@
 
    <plugin
          id="org.dawnsci.commandserver.processing"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.dawnsci.commandserver.workflow"
          download-size="0"
          install-size="0"
          version="0.0.0"/>

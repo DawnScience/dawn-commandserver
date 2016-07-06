@@ -1,6 +1,6 @@
 package org.dawnsci.commandserver.processing.process;
 
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
+import org.eclipse.january.IMonitor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -141,8 +141,6 @@ public class OperationSubmission {
 		} finally {
 			file.close();
 		}
-		
-		obean.setParallelTimeout(context.getParallelTimeout());
 
 		return obean;
 	}

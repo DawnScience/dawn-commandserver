@@ -13,7 +13,10 @@ import org.eclipse.dawnsci.analysis.api.processing.ILiveOperationInfo;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Node;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.eclipse.january.IMonitor;
@@ -25,6 +28,7 @@ import org.eclipse.january.metadata.AxesMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.io.NexusTreeUtils;
 import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 import uk.ac.diamond.scisoft.analysis.processing.visitor.NexusFileExecutionVisitor;
 
@@ -58,6 +62,10 @@ public class OperationExecution {
 	 */
 	public void run(final OperationBean obean) throws Exception {
 		
+		String filePath = obean.getFilePath();
+		String datasetPath = obean.getDatasetPath();
+		
+		
 		IPersistentFile file = pservice.getPersistentFile(obean.getPersistencePath());
 		try {
 			// We should get these back exactly as they were defined.
@@ -66,19 +74,35 @@ public class OperationExecution {
 		    // Create a context and run the pipeline
 		    this.context = oservice.createContext();
 		    context.setSeries(ops);
-		    context.setExecutionType(ExecutionType.PARALLEL);
-		    context.setParallelTimeout(obean.getParallelTimeout());
+		    context.setExecutionType(obean.isParallelizable() ? ExecutionType.PARALLEL : ExecutionType.SERIES);
 		    
-		    final IDataHolder holder = lservice.getData(obean.getFilePath(), new IMonitor.Stub());
-		    //take a local view
-		    final ILazyDataset lz    = holder.getLazyDataset(obean.getDatasetPath()).getSliceView();
+		    final IDataHolder holder = lservice.getData(filePath, new IMonitor.Stub());
+		   //TODO check might point to a group node 
+		    
+		    ILazyDataset lz = null;
+		    
+		    if (!holder.contains(datasetPath)) {
+		    	Tree tree = holder.getTree();
+		    	if (tree == null) return;
+		    	NodeLink nl = tree.findNodeLink(datasetPath);
+		    	if (nl == null) return;
+		    	Node d = nl.getDestination();
+		    	if (!(d instanceof GroupNode)) return;
+		    	lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
+		    	if (lz == null) return;
+		    	lz = lz.getSliceView();
+		    } else {
+		    	lz = holder.getLazyDataset(obean.getDatasetPath());
+		    	if (lz == null) return;
+		    	AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
+				lz.setMetadata(axm);
+		    }
+		    
+		    if (lz == null) return;	
+		    
 		    //TODO need to set up Axes and SliceSeries metadata here
-		   
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), obean.getDatasetPath(), lz);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
-		    AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
-			lz.setMetadata(axm);
-		    
 		    context.setData(lz);
 		    
 		    if (obean.getDataKey() != null) {
@@ -113,11 +137,10 @@ public class OperationExecution {
 		    }
 		    
 		    
-		    context.setDataDimensions(obean.getDataDimensions());
+		    context.setDataDimensions(obean.getDataDimensions(lz.getRank()));
 		    
 		    //Create visitor to save data
 		    
-
 		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable());
 		    context.setVisitor(visitor);
 		    

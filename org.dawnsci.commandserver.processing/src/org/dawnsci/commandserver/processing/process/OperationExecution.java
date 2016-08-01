@@ -66,7 +66,7 @@ public class OperationExecution {
 		String datasetPath = obean.getDatasetPath();
 		
 		
-		IPersistentFile file = pservice.getPersistentFile(obean.getPersistencePath());
+		IPersistentFile file = pservice.getPersistentFile(obean.getProcessingPath());
 		try {
 			// We should get these back exactly as they were defined.
 		    final IOperation[] ops = file.getOperations();
@@ -161,7 +161,7 @@ public class OperationExecution {
 			file.close();
 			
 			if (obean.isDeletePersistenceFile()) {
-			    final File persFile = new File(obean.getPersistencePath());
+			    final File persFile = new File(obean.getProcessingPath());
 			    persFile.delete();
 			}
 		}

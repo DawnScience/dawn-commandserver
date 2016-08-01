@@ -225,8 +225,8 @@ public class OperationsTestRemote {
 	public void testRemoteRealBean() throws Exception {
 		OperationBean b = new OperationBean();
 		
-		b.setDeletePersistenceFile(false);
-		b.setPersistencePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150507_134350.nxs");
+		b.setDeleteProcessingFile(false);
+		b.setProcessingPath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150507_134350.nxs");
 		b.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
 		Map<Integer,String> s = new HashMap<Integer,String>();
@@ -244,8 +244,8 @@ public class OperationsTestRemote {
 	public void testRemoteRealBeanCluster() throws Exception {
 		OperationBean b = new OperationBean();
 		b.setRunDirectory("/dls/tmp/operations/");
-		b.setDeletePersistenceFile(false);
-		b.setPersistencePath("/dls/i12/data/2015/cm12163-2/processing/Jacob/46923_processed_150623_135514.nxs");
+		b.setDeleteProcessingFile(false);
+		b.setProcessingPath("/dls/i12/data/2015/cm12163-2/processing/Jacob/46923_processed_150623_135514.nxs");
 		b.setFilePath("/dls/i12/data/2015/cm12163-2/rawdata/46923.nxs");
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
 		Map<Integer,String> s = new HashMap<Integer,String>();

@@ -137,7 +137,7 @@ public class OperationSubmission {
 		IPersistentFile file = pservice.createPersistentFile(persFile.getAbsolutePath());
 		try {
 		    file.setOperations(context.getSeries());
-		    obean.setPersistencePath(persFile.getAbsolutePath());
+		    obean.setProcessingPath(persFile.getAbsolutePath());
 		} finally {
 			file.close();
 		}

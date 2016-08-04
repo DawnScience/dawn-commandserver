@@ -74,7 +74,7 @@ public class OperationExecution {
 		    // Create a context and run the pipeline
 		    this.context = oservice.createContext();
 		    context.setSeries(ops);
-		    context.setExecutionType(obean.isParallelizable() ? ExecutionType.PARALLEL : ExecutionType.SERIES);
+		    context.setExecutionType(obean.getNumberOfCores() > 1 ? ExecutionType.PARALLEL : ExecutionType.SERIES);
 		    
 		    final IDataHolder holder = lservice.getData(filePath, new IMonitor.Stub());
 		   //TODO check might point to a group node 

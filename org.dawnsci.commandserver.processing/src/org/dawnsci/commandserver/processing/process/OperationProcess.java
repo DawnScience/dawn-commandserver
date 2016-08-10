@@ -114,6 +114,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	private Map<String, String> createApplicationArgs(File path) {
 		final Map<String,String> args = new HashMap<String, String>(1);
 		args.put("path", path.getAbsolutePath());
+		args.put("ncores", Integer.toString(bean.getNumberOfCores()));
 //		args.put("data","@none");
 		return args;
 	}

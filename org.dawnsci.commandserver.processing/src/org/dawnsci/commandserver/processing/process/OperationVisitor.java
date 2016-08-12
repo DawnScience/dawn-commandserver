@@ -39,7 +39,7 @@ public class OperationVisitor implements IExecutionVisitor {
 		}
 		
 		
-		SliceViewIterator generator = new SliceViewIterator(lz, s, obean.getDataDimensions(lz.getRank()));
+		SliceViewIterator generator = new SliceViewIterator(lz, s, obean.getDataDimensionsForRank(lz.getRank()));
 		this.total       = generator.getTotal();
 	}
 

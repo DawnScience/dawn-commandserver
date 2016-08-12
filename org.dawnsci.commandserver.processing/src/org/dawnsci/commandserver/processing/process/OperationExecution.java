@@ -137,7 +137,7 @@ public class OperationExecution {
 		    }
 		    
 		    
-		    context.setDataDimensions(obean.getDataDimensions(lz.getRank()));
+		    context.setDataDimensions(obean.getDataDimensionsForRank(lz.getRank()));
 		    
 		    //Create visitor to save data
 		    

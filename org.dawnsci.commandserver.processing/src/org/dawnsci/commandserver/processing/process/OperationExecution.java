@@ -64,7 +64,7 @@ public class OperationExecution {
 		
 		String filePath = obean.getFilePath();
 		String datasetPath = obean.getDatasetPath();
-		
+		OperationMonitor monitor = null;
 		
 		IPersistentFile file = pservice.getPersistentFile(obean.getProcessingPath());
 		try {
@@ -152,13 +152,16 @@ public class OperationExecution {
 		    int work = 1;
 		    
 		    if (obean.getDataKey() == null) work = getTotalWork(s.convertToSlice(), shape,context.getDataDimensions());
-		    context.setMonitor(new OperationMonitor(obean, work));
+		    monitor = new OperationMonitor(obean, work);
+		    context.setMonitor(monitor);
 		    
 		    oservice.execute(context);
 		} catch (Exception e){
 			logger.error("Error running processing", e);
 		} finally {
 			file.close();
+			
+			if (monitor != null) monitor.setComplete();
 			
 			if (obean.isDeletePersistenceFile()) {
 			    final File persFile = new File(obean.getProcessingPath());

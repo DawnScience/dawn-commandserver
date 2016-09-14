@@ -1,6 +1,14 @@
 package org.dawnsci.commandserver.processing.process;
 
+import java.net.URI;
+
+import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.eclipse.january.IMonitor;
+import org.eclipse.scanning.api.event.EventException;
+import org.eclipse.scanning.api.event.IEventService;
+import org.eclipse.scanning.api.event.core.IPublisher;
+import org.eclipse.scanning.api.event.status.Status;
+import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -20,10 +28,18 @@ public class OperationMonitor implements IMonitor {
 	private int           total;
 	private int           count;
 	private boolean       cancelled;
+	private IPublisher<OperationBean> publisher; 
 	
-	public OperationMonitor(OperationBean obean, int total) throws Exception {
+	public OperationMonitor(OperationBean obean, int total) {
 		this.obean       = obean;
 		this.total       = total;
+		try {
+			IEventService eventService = ActiveMQServiceHolder.getEventService();
+			 publisher = eventService.createPublisher(new URI(obean.getHostName()), "scisoft.operation.SUBMISSION_QUEUE");
+		} catch (Exception e) {
+			//ignore
+		}
+
 	}
 	
 	@Override
@@ -47,6 +63,17 @@ public class OperationMonitor implements IMonitor {
 
 	public void setCancelled(boolean cancelled) {
 		this.cancelled = cancelled;
+	}
+	
+	public void setComplete() {
+		if (publisher != null) {
+			obean.setStatus(Status.COMPLETE);
+			try {
+				publisher.broadcast(obean);
+			} catch (EventException e) {
+				e.printStackTrace();
+			}
+		}
 	}
 
 }

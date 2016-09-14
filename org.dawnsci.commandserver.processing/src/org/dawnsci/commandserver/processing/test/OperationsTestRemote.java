@@ -226,17 +226,29 @@ public class OperationsTestRemote {
 		OperationBean b = new OperationBean();
 		
 		b.setDeleteProcessingFile(false);
-		b.setProcessingPath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669_processed_150507_134350.nxs");
+		b.setRunDirectory("/dls/tmp/operations/");
+		b.setProcessingPath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/chain.nxs");
 		b.setFilePath("/dls/science/groups/das/ExampleData/powder/NiceExamples/I12/temperature/39669.nxs");
 		b.setDatasetPath("/entry1/pixium10_tif/image_data");
-		Map<Integer,String> s = new HashMap<Integer,String>();
-		s.put(0, "all");
 //		b.setSlicing(s);
-		context.setDataDimensions(new int[]{1,2});
+		b.setDataDimensions(new int[]{1,2});
+		b.setDeleteProcessingFile(false);
 		List<String>[] axesNames = new List[3];
 		axesNames[0] = Arrays.asList("/entry1/pixium10_tif/linkamTemp");
-		b.setOutputFilePath("/dls/science/groups/das/ExampleData/powder/remotetest/output3.nxs");
-		testRemoteRunBean(b);
+		b.setOutputFilePath("/dls/science/groups/das/ExampleData/powder/remotetest/output10.nxs");
+		b.setAxesNames(axesNames);
+		// Run the model
+		OperationSubmission factory = new OperationSubmission(new URI("tcp://sci-serv5.diamond.ac.uk:61616"),b.getRunDirectory());
+		factory.prepare(b);
+		factory.directSubmit(b);
+
+		// Blocks until a final state is reached
+		Thread.sleep(2000); 
+		factory.setQueueName("scisoft.operation.STATUS_QUEUE");
+		final StatusBean bean = monitor(b, factory.getUri(), factory.getQueueName());
+
+		if (bean.getStatus()!=Status.COMPLETE) throw new Exception("Remote run failed! "+bean.getMessage());
+		System.out.println(bean);
 	}
 	
 	@Ignore
@@ -251,7 +263,7 @@ public class OperationsTestRemote {
 		Map<Integer,String> s = new HashMap<Integer,String>();
 		s.put(0, "all");
 //		b.setSlicing(s);
-		context.setDataDimensions(new int[]{1,2});
+		b.setDataDimensions(new int[]{1,2});
 		b.setXmx("4096m");
 		List<String>[] axesNames = new List[3];
 		axesNames[0] = Arrays.asList("/entry1/pixium10_tif/linkamTemp");
@@ -317,8 +329,11 @@ public class OperationsTestRemote {
 		    			TextMessage t = (TextMessage)m;
 		    			final StatusBean bean = ActiveMQServiceHolder.getEventConnectorService().unmarshal(t.getText(), clazz);
 
+
 		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
 		    				if (bean.getStatus().isFinal()) return bean;
+		    				System.out.println("JAKE");
+		    				System.out.println(bean.toString());
 		    				continue POLL;
 		    			}
 		    		}

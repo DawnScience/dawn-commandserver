@@ -163,7 +163,7 @@ public class OperationExecution {
 			
 			if (monitor != null) monitor.setComplete();
 			
-			if (obean.isDeletePersistenceFile()) {
+			if (obean.isDeleteProcessingFile()) {
 			    final File persFile = new File(obean.getProcessingPath());
 			    persFile.delete();
 			}

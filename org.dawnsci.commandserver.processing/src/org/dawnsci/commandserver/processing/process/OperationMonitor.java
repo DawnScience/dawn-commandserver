@@ -35,7 +35,7 @@ public class OperationMonitor implements IMonitor {
 		this.total       = total;
 		try {
 			IEventService eventService = ActiveMQServiceHolder.getEventService();
-			 publisher = eventService.createPublisher(new URI(obean.getHostName()), "scisoft.operation.SUBMISSION_QUEUE");
+			 publisher = eventService.createPublisher(new URI(obean.getPublisherURI()), "scisoft.operation.SUBMISSION_QUEUE");
 		} catch (Exception e) {
 			//ignore
 		}

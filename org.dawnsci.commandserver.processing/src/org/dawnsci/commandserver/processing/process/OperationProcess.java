@@ -78,6 +78,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 		broadcast(bean);
 				
 		try {
+			bean.setPublisherURI(publisher.getUri().getPath());
 			// TODO Run as process out of DAWN similar to how workflows run
 			File path = new File(processingDir, "operationBean.json");
 			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
@@ -97,10 +98,10 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 			if (isBlocking()) p.waitFor();
 			
 			// TODO Actually run something?
-			bean.setStatus(Status.COMPLETE);
-			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
-			bean.setPercentComplete(100);
-			broadcast(bean);
+//			bean.setStatus(Status.COMPLETE);
+//			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
+//			bean.setPercentComplete(100);
+//			broadcast(bean);
 			
 		} catch (Throwable ne) {
 			ne.printStackTrace();

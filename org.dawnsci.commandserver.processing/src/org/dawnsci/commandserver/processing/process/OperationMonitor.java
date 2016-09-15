@@ -37,7 +37,7 @@ public class OperationMonitor implements IMonitor {
 			IEventService eventService = ActiveMQServiceHolder.getEventService();
 			 publisher = eventService.createPublisher(new URI(obean.getPublisherURI()), "scisoft.operation.SUBMISSION_QUEUE");
 		} catch (Exception e) {
-			//ignore
+			logger.error("Could not create publisher:",e);
 		}
 
 	}
@@ -71,7 +71,7 @@ public class OperationMonitor implements IMonitor {
 			try {
 				publisher.broadcast(obean);
 			} catch (EventException e) {
-				e.printStackTrace();
+				logger.error("Could not broadcast bean:",e);
 			}
 		}
 	}

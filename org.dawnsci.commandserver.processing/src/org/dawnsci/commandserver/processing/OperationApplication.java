@@ -52,8 +52,15 @@ public class OperationApplication implements IApplication {
 
 	private OperationBean createOperationBean(Map<String, String> conf) throws Exception {
 		final String path   = conf.get("path");
+		
 		String json = new String(Files.readAllBytes(new File(path).toPath()));
-		return ActiveMQServiceHolder.getEventConnectorService().unmarshal(json, OperationBean.class);
+		
+		OperationBean bean = ActiveMQServiceHolder.getEventConnectorService().unmarshal(json, OperationBean.class);
+		if (conf.containsKey("publisheruri")){
+			bean.setPublisherURI(conf.get("publisheruri"));
+		}
+		
+		return bean;
 	}
 
 	@Override

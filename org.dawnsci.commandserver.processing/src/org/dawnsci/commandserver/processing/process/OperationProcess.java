@@ -116,7 +116,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 		final Map<String,String> args = new HashMap<String, String>(1);
 		args.put("path", path.getAbsolutePath());
 		args.put("ncores", Integer.toString(bean.getNumberOfCores()));
-		args.put("publisheruri",publisher.getUri().getPath());
+		args.put("publisheruri",publisher.getUri().toString());
 		return args;
 	}
     

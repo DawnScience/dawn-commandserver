@@ -17,6 +17,7 @@ import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
+import org.eclipse.dawnsci.analysis.api.tree.TreeUtils;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.eclipse.january.IMonitor;
@@ -91,8 +92,9 @@ public class OperationExecution {
 		    	lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
 		    	if (lz == null) return;
 		    	lz = lz.getSliceView();
+		    	datasetPath = datasetPath + Node.SEPARATOR + lz.getName();
 		    } else {
-		    	lz = holder.getLazyDataset(obean.getDatasetPath());
+		    	lz = holder.getLazyDataset(datasetPath);
 		    	if (lz == null) return;
 		    	AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
 				lz.setMetadata(axm);
@@ -101,7 +103,7 @@ public class OperationExecution {
 		    if (lz == null) return;	
 		    
 		    //TODO need to set up Axes and SliceSeries metadata here
-		    SourceInformation si = new SourceInformation(obean.getFilePath(), obean.getDatasetPath(), lz);
+		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
 		    context.setData(lz);
 		    

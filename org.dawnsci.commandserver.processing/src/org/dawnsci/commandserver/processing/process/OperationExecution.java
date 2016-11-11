@@ -26,6 +26,7 @@ import org.eclipse.january.dataset.ILazyDataset;
 import org.eclipse.january.dataset.Slice;
 import org.eclipse.january.dataset.SliceND;
 import org.eclipse.january.metadata.AxesMetadata;
+import org.eclipse.january.metadata.MetadataFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,7 +82,7 @@ public class OperationExecution {
 		   //TODO check might point to a group node 
 		    
 		    ILazyDataset lz = null;
-		    
+		    MetadataFactory.registerClass(DynamicAxesMetadataImpl.class);
 		    if (!holder.contains(datasetPath)) {
 		    	Tree tree = holder.getTree();
 		    	if (tree == null) return;

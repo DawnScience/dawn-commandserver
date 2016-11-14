@@ -164,6 +164,15 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					} else {
 						l = l.squeezeEnds();
 					}
+					
+					if (dims != null && dims.length != l.getRank()) {
+						int[] tempShape = new int[dims.length];
+						Arrays.fill(tempShape,1);
+						int[] ss = l.getShape();
+						for (int k = 0 ; k < tempShape.length && k < ss.length; k++) tempShape[k] = ss[k];
+						
+						l.setShape(tempShape);
+					}
 
 					((IDynamicDataset) l).refreshShape();
 				}

@@ -1,7 +1,9 @@
 package org.dawnsci.commandserver.processing.process;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
@@ -13,11 +15,11 @@ import org.eclipse.dawnsci.analysis.api.processing.ILiveOperationInfo;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
 import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
-import org.eclipse.dawnsci.analysis.api.tree.TreeUtils;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.eclipse.january.IMonitor;
@@ -101,25 +103,33 @@ public class OperationExecution {
 				lz.setMetadata(axm);
 		    }
 		    
-		    if (lz == null) return;	
-		    
 		    //TODO need to set up Axes and SliceSeries metadata here
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
 		    context.setData(lz);
 		    
 		    if (obean.getDataKey() != null) {
-
-		    	final IDynamicDataset key = (IDynamicDataset)holder.getLazyDataset(obean.getDataKey() + Node.SEPARATOR + "uniqueKeys");
+		    	
 		    	final IDynamicDataset complete = (IDynamicDataset)holder.getLazyDataset(obean.getDataKey() + Node.SEPARATOR + "scan_finished");
 		    	
-		    	key.setMetadata(null);
+		    	Node n = holder.getTree().findNodeLink(obean.getDataKey() + Node.SEPARATOR + "keys").getDestination();
+		    	final List<IDynamicDataset> dynds = new ArrayList<>();
+		    	if (n instanceof GroupNode) {
+		    		GroupNode gn = (GroupNode)n;
+		    		List<DataNode> dns = gn.getDataNodes();
+		    		for (DataNode dn : dns) {
+		    			ILazyDataset clone = dn.getDataset().clone();
+		    			clone.setMetadata(null);
+		    			dynds.add((IDynamicDataset)clone);
+		    		}
+		    		
+		    	}
 		    	
 		    	context.setLiveInfo(new ILiveOperationInfo(){
 
 					@Override
 					public IDynamicDataset[] getKeys() {
-						return new IDynamicDataset[]{key};
+						return dynds.toArray(new IDynamicDataset[dynds.size()]);
 					}
 
 					@Override

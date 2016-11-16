@@ -73,7 +73,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	public void execute() throws EventException {
 		
 		// Right we a starting the reconstruction, tell them.
-		bean.setStatus(Status.RUNNING);
+		bean.setStatus(Status.SUBMITTED);
 		bean.setPercentComplete(0d);
 		broadcast(bean);
 				

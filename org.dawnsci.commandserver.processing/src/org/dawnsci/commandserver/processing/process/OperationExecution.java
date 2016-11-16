@@ -168,6 +168,8 @@ public class OperationExecution {
 		    monitor = new OperationMonitor(obean, work);
 		    context.setMonitor(monitor);
 		    
+		    monitor.setRunning();
+		    
 		    oservice.execute(context);
 		} catch (Exception e){
 			logger.error("Error running processing", e);

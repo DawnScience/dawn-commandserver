@@ -80,4 +80,16 @@ public class OperationMonitor implements IMonitor {
 		}
 	}
 
+	public void setRunning() {
+		if (publisher != null) {
+			obean.setStatus(Status.RUNNING);
+			try {
+				publisher.broadcast(obean);
+				logger.error(obean.toString());
+			} catch (EventException e) {
+				logger.error("Could not broadcast bean:",e);
+				logger.error(obean.toString());
+			}
+		}
+	}
 }

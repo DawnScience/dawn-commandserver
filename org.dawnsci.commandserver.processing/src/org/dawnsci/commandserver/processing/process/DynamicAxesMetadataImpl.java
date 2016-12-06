@@ -181,7 +181,9 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					try {
 						((IDynamicDataset) l).refreshShape();
 					} catch (Exception e) {
-						logger.error("Could not propagate " + l.getName(), e);
+						String name = l.getName();
+						if (name == null) name = "unknown_dataset";
+						logger.error("Could not propagate " + name, e);
 						dimensionMap.remove(iHashCode);
 						axis.remove(j);
 						continue;

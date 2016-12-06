@@ -14,6 +14,8 @@ import org.eclipse.january.metadata.Reshapeable;
 import org.eclipse.january.metadata.Sliceable;
 import org.eclipse.january.metadata.Transposable;
 import org.eclipse.january.metadata.internal.AxesMetadataImpl;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DynamicAxesMetadataImpl implements AxesMetadata {
 
@@ -22,6 +24,8 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 	@Sliceable List<ILazyDataset>[] allAxes;
 	
 	Map<Integer,int[]> dimensionMap;
+	
+	private final static Logger logger = LoggerFactory.getLogger(DynamicAxesMetadataImpl.class);
 
 	public DynamicAxesMetadataImpl() {
 	}
@@ -173,8 +177,16 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 						
 						l.setShape(tempShape);
 					}
-
-					((IDynamicDataset) l).refreshShape();
+					
+					try {
+						((IDynamicDataset) l).refreshShape();
+					} catch (Exception e) {
+						logger.error("Could not propagate " + l.getName(), e);
+						dimensionMap.remove(iHashCode);
+						axis.remove(j);
+						continue;
+					}
+					
 				}
 				// need to look at rank of l;
 				if (dims == null || dims.length == 1) {

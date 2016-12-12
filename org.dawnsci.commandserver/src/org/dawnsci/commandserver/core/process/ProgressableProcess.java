@@ -9,19 +9,14 @@
 package org.dawnsci.commandserver.core.process;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.IOException;
 import java.lang.ProcessBuilder.Redirect;
 import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.Map;
 
-import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.eclipse.scanning.api.event.EventException;
-import org.eclipse.scanning.api.event.IEventConnectorService;
-import org.eclipse.scanning.api.event.core.AbstractPausableProcess;
+import org.eclipse.scanning.api.event.core.AbstractLockingPausableProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
 import org.eclipse.scanning.api.event.status.StatusBean;
@@ -38,10 +33,11 @@ import com.sun.jna.Platform;
  * and a logger. A given message might be applicable for both places, depending
  * on what message the user might need to see.
  * 
- * @author Matthew Gerring
+ * @param <T> the bean type, a subclass of {@link StatusBean}
  *
+ * @author Matthew Gerring
  */
-public abstract class ProgressableProcess<T extends StatusBean> extends AbstractPausableProcess<T> {
+public abstract class ProgressableProcess<T extends StatusBean> extends AbstractLockingPausableProcess<T> {
 
 	private static final Logger logger = LoggerFactory.getLogger(ProgressableProcess.class);
 

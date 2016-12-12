@@ -204,7 +204,7 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					Arrays.fill(newShape, 1);
 					for (int k = 0 ; k < dims.length; k++) {
 						int[] s = l.getShape();
-						if (s[dims[k]] < maxShape[k]) maxShape[k] = dims[k];
+						if (s[dims[k]] < maxShape[k]) maxShape[k] = s[dims[k]];
 						newShape[k] = s[dims[k]];
 					}
 					l.setShape(newShape);

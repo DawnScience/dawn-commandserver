@@ -154,7 +154,9 @@ public class OperationExecution {
 		    
 		    //Create visitor to save data
 		    
-		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable());
+		    String originalPath = obean.isReadable() ? obean.getFilePath() : null;
+		    
+		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable(),obean.getFilePath());
 		    context.setVisitor(visitor);
 		    
 		    // We create a monitor which publishes information about what

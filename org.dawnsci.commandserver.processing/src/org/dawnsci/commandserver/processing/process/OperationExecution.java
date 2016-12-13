@@ -158,6 +158,10 @@ public class OperationExecution {
 		    
 		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable(),obean.getFilePath());
 		    context.setVisitor(visitor);
+		    File fh = new File(obean.getOutputFilePath());
+			File parent = fh.getParentFile();
+			if (!parent.exists())parent.mkdirs();
+		    
 		    
 		    // We create a monitor which publishes information about what
 		    // operation was completed.

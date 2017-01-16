@@ -104,7 +104,7 @@ public class OperationExecution {
 		    }
 		    
 		    //TODO need to set up Axes and SliceSeries metadata here
-		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz);
+		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz, obean.getDataKey() != null);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
 		    context.setData(lz);
 		    

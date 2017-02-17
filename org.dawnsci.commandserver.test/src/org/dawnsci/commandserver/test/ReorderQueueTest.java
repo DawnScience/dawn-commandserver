@@ -22,7 +22,7 @@ import javax.jms.TextMessage;
 import org.eclipse.scanning.api.event.IEventConnectorService;
 import org.junit.Test;
 
-import uk.ac.diamond.daq.activemq.connector.ActivemqConnectorService;
+import org.eclipse.scanning.connector.activemq.ActivemqConnectorService;
 
 /**
  * Sorry for all the repeated code in this test!

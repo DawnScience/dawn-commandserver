@@ -9,7 +9,7 @@ import org.eclipse.scanning.event.EventServiceImpl;
 import org.junit.Ignore;
 import org.junit.Test;
 
-import uk.ac.diamond.daq.activemq.connector.ActivemqConnectorService;
+import org.eclipse.scanning.connector.activemq.ActivemqConnectorService;
 
 /**
  * This test checks a required consumer is available and 

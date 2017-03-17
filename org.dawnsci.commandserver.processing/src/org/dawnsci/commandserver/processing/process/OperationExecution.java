@@ -80,8 +80,15 @@ public class OperationExecution {
 		    context.setSeries(ops);
 		    context.setExecutionType(obean.getNumberOfCores() > 1 ? ExecutionType.PARALLEL : ExecutionType.SERIES);
 		    
-		    final IDataHolder holder = lservice.getData(filePath, new IMonitor.Stub());
-		   //TODO check might point to a group node 
+		    IDataHolder holder = null;
+		    
+		    try {
+		    	holder = lservice.getData(filePath, new IMonitor.Stub());
+		    } catch (Exception e) {
+		    	logger.error("First read attempt failed", e);
+		    	Thread.sleep(obean.getTimeOut());
+		    	holder = lservice.getData(filePath, new IMonitor.Stub());
+		    }
 		    
 		    ILazyDataset lz = null;
 		    MetadataFactory.registerClass(DynamicAxesMetadataImpl.class);
@@ -139,6 +146,8 @@ public class OperationExecution {
 		    		
 		    	});
 		    	
+		    	context.setParallelTimeout(obean.getTimeOut());
+		    	
 		    }
 		    
 		    String slicing = obean.getSlicing();
@@ -154,9 +163,7 @@ public class OperationExecution {
 		    
 		    //Create visitor to save data
 		    
-		    String originalPath = obean.isReadable() ? obean.getFilePath() : null;
-		    
-		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable(),obean.getFilePath());
+		    final IExecutionVisitor visitor = new NexusFileExecutionVisitor(obean.getOutputFilePath(),obean.isReadable(),obean.getLinkParentEntry() ? obean.getFilePath() : null);
 		    context.setVisitor(visitor);
 		    File fh = new File(obean.getOutputFilePath());
 			File parent = fh.getParentFile();

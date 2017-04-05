@@ -94,18 +94,33 @@ public class OperationExecution {
 		    MetadataFactory.registerClass(DynamicAxesMetadataImpl.class);
 		    if (!holder.contains(datasetPath)) {
 		    	Tree tree = holder.getTree();
-		    	if (tree == null) return;
+		    	if (tree == null) {
+		    		logger.error("Dataholder has no Tree!");
+		    		return;
+		    	}
 		    	NodeLink nl = tree.findNodeLink(datasetPath);
-		    	if (nl == null) return;
+		    	if (nl == null) {
+		    		logger.error("Could not get node link for " + datasetPath);
+		    		return;
+		    	}
 		    	Node d = nl.getDestination();
-		    	if (!(d instanceof GroupNode)) return;
+		    	if (!(d instanceof GroupNode)){
+		    		logger.error("Not a group node: " + datasetPath);
+		    		return;
+		    	}
 		    	lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
-		    	if (lz == null) return;
+		    	if (lz == null) {
+		    		logger.error("Could not build augmented dataset from " + datasetPath);
+		    		return;
+		    	}
 		    	lz = lz.getSliceView();
 		    	datasetPath = datasetPath + Node.SEPARATOR + lz.getName();
 		    } else {
 		    	lz = holder.getLazyDataset(datasetPath);
-		    	if (lz == null) return;
+		    	if (lz == null) {
+		    		logger.error("No dataset called " + datasetPath);
+		    		return;
+		    	}
 		    	AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
 				lz.setMetadata(axm);
 		    }

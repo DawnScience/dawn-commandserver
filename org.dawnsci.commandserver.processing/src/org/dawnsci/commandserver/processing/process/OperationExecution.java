@@ -70,6 +70,7 @@ public class OperationExecution {
 		String datasetPath = obean.getDatasetPath();
 		OperationMonitor monitor = null;
 		
+		logger.debug("Loading processing chain");
 		IPersistentFile file = pservice.getPersistentFile(obean.getProcessingPath());
 		try {
 			// We should get these back exactly as they were defined.
@@ -83,6 +84,7 @@ public class OperationExecution {
 		    IDataHolder holder = null;
 		    
 		    try {
+		    	logger.debug("Trying dataholder");
 		    	holder = lservice.getData(filePath, new IMonitor.Stub());
 		    } catch (Exception e) {
 		    	logger.error("First read attempt failed", e);
@@ -98,40 +100,46 @@ public class OperationExecution {
 		    		logger.error("Dataholder has no Tree!");
 		    		return;
 		    	}
+		    	logger.debug("Tree read");
 		    	NodeLink nl = tree.findNodeLink(datasetPath);
 		    	if (nl == null) {
 		    		logger.error("Could not get node link for " + datasetPath);
 		    		return;
 		    	}
+		    	logger.debug("Node link found for {}",datasetPath);
 		    	Node d = nl.getDestination();
 		    	if (!(d instanceof GroupNode)){
 		    		logger.error("Not a group node: " + datasetPath);
 		    		return;
 		    	}
+		    	logger.debug("Augmenting");
 		    	lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
 		    	if (lz == null) {
 		    		logger.error("Could not build augmented dataset from " + datasetPath);
 		    		return;
 		    	}
+		    	logger.debug("Taking view");
 		    	lz = lz.getSliceView();
 		    	datasetPath = datasetPath + Node.SEPARATOR + lz.getName();
 		    } else {
+		    	logger.debug("Loading Lazydataset");
 		    	lz = holder.getLazyDataset(datasetPath);
 		    	if (lz == null) {
 		    		logger.error("No dataset called " + datasetPath);
 		    		return;
 		    	}
+		    	logger.debug("Building AxesMetadata");
 		    	AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
 				lz.setMetadata(axm);
 		    }
 		    
-		    //TODO need to set up Axes and SliceSeries metadata here
+		    logger.debug("Building Slice Metadata");
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz, obean.getDataKey() != null);
 		    lz.setMetadata(new SliceFromSeriesMetadata(si));
 		    context.setData(lz);
 		    
 		    if (obean.getDataKey() != null) {
-		    	
+		    	logger.debug("Live Processing key found!");
 		    	final IDynamicDataset complete = (IDynamicDataset)holder.getLazyDataset(obean.getDataKey() + Node.SEPARATOR + "scan_finished");
 		    	
 		    	Node n = holder.getTree().findNodeLink(obean.getDataKey() + Node.SEPARATOR + "keys").getDestination();
@@ -163,6 +171,7 @@ public class OperationExecution {
 		    	
 		    	context.setParallelTimeout(obean.getTimeOut());
 		    	
+		    	logger.debug("Live info populated");
 		    }
 		    
 		    String slicing = obean.getSlicing();
@@ -197,7 +206,7 @@ public class OperationExecution {
 		    context.setMonitor(monitor);
 		    
 		    monitor.setRunning();
-		    
+		    logger.debug("Executing");
 		    oservice.execute(context);
 		} catch (Exception e){
 			logger.error("Error running processing", e);

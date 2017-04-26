@@ -13,6 +13,7 @@ import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
 import org.eclipse.dawnsci.analysis.api.processing.ILiveOperationInfo;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
+import org.eclipse.dawnsci.analysis.api.processing.IOperationBean;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.api.tree.DataNode;
@@ -81,57 +82,26 @@ public class OperationExecution {
 		    context.setSeries(ops);
 		    context.setExecutionType(obean.getNumberOfCores() > 1 ? ExecutionType.PARALLEL : ExecutionType.SERIES);
 		    
-		    IDataHolder holder = null;
+		    AugmentedPackage augmentedDataset = getAugmentedDataset(filePath, datasetPath, obean);
 		    
-		    try {
-		    	logger.debug("Trying dataholder");
-		    	holder = lservice.getData(filePath, new IMonitor.Stub());
-		    } catch (Exception e) {
-		    	logger.error("First read attempt failed", e);
-		    	Thread.sleep(obean.getTimeOut());
-		    	holder = lservice.getData(filePath, new IMonitor.Stub());
+		    long time = 0;
+		    long timeOutShort = obean.getTimeOut()/10;
+		    
+		    while (augmentedDataset == null && time < obean.getTimeOut()) {
+		    	logger.warn("Could not read {} after {} ms",datasetPath,time);
+		    	Thread.sleep(timeOutShort/10);
+		    	time += timeOutShort/10;
+		    	augmentedDataset = getAugmentedDataset(filePath, datasetPath, obean);
 		    }
 		    
-		    ILazyDataset lz = null;
-		    MetadataFactory.registerClass(DynamicAxesMetadataImpl.class);
-		    if (!holder.contains(datasetPath)) {
-		    	Tree tree = holder.getTree();
-		    	if (tree == null) {
-		    		logger.error("Dataholder has no Tree!");
-		    		return;
-		    	}
-		    	logger.debug("Tree read");
-		    	NodeLink nl = tree.findNodeLink(datasetPath);
-		    	if (nl == null) {
-		    		logger.error("Could not get node link for " + datasetPath);
-		    		return;
-		    	}
-		    	logger.debug("Node link found for {}",datasetPath);
-		    	Node d = nl.getDestination();
-		    	if (!(d instanceof GroupNode)){
-		    		logger.error("Not a group node: " + datasetPath);
-		    		return;
-		    	}
-		    	logger.debug("Augmenting");
-		    	lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
-		    	if (lz == null) {
-		    		logger.error("Could not build augmented dataset from " + datasetPath);
-		    		return;
-		    	}
-		    	logger.debug("Taking view");
-		    	lz = lz.getSliceView();
-		    	datasetPath = datasetPath + Node.SEPARATOR + lz.getName();
-		    } else {
-		    	logger.debug("Loading Lazydataset");
-		    	lz = holder.getLazyDataset(datasetPath);
-		    	if (lz == null) {
-		    		logger.error("No dataset called " + datasetPath);
-		    		return;
-		    	}
-		    	logger.debug("Building AxesMetadata");
-		    	AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
-				lz.setMetadata(axm);
+		    if (augmentedDataset == null) {
+		    	logger.error("Building lazydataset {} from {} timed out in {} ms", datasetPath, filePath, obean.getTimeOut());
+		    	return;
 		    }
+		    
+		    IDataHolder holder = augmentedDataset.holder;
+		    ILazyDataset lz = augmentedDataset.lazy;
+		    datasetPath = augmentedDataset.name;
 		    
 		    logger.debug("Building Slice Metadata");
 		    SourceInformation si = new SourceInformation(obean.getFilePath(), datasetPath, lz, obean.getDataKey() != null);
@@ -148,9 +118,14 @@ public class OperationExecution {
 		    		GroupNode gn = (GroupNode)n;
 		    		List<DataNode> dns = gn.getDataNodes();
 		    		for (DataNode dn : dns) {
-		    			ILazyDataset clone = dn.getDataset().clone();
-		    			clone.setMetadata(null);
-		    			dynds.add((IDynamicDataset)clone);
+		    			try {
+		    				ILazyDataset clone = dn.getDataset().clone();
+			    			clone.setMetadata(null);
+			    			dynds.add((IDynamicDataset)clone);
+		    			} catch (Exception e) {
+							logger.error("Could not read unique key");
+						}
+		    			
 		    		}
 		    		
 		    	}
@@ -223,6 +198,63 @@ public class OperationExecution {
 
 	}
 
+	private AugmentedPackage getAugmentedDataset(String filePath, String datasetPath, OperationBean obean) {
+
+		IDataHolder holder = null;
+
+		try {
+			logger.debug("Trying dataholder");
+			holder = lservice.getData(filePath, new IMonitor.Stub());
+
+			ILazyDataset lz = null;
+			MetadataFactory.registerClass(DynamicAxesMetadataImpl.class);
+			if (!holder.contains(datasetPath)) {
+				Tree tree = holder.getTree();
+				if (tree == null) {
+					logger.error("Dataholder has no Tree!");
+					return null;
+				}
+				logger.debug("Tree read");
+				NodeLink nl = tree.findNodeLink(datasetPath);
+				if (nl == null) {
+					logger.error("Could not get node link for " + datasetPath);
+					return null;
+				}
+				logger.debug("Node link found for {}",datasetPath);
+				Node d = nl.getDestination();
+				if (!(d instanceof GroupNode)){
+					logger.error("Not a group node: " + datasetPath);
+					return null;
+				}
+				logger.debug("Augmenting");
+				lz = NexusTreeUtils.getAugmentedSignalDataset((GroupNode)d);
+				if (lz == null) {
+					logger.error("Could not build augmented dataset from " + datasetPath);
+					return null;
+				}
+				logger.debug("Taking view");
+				lz = lz.getSliceView();
+				datasetPath = datasetPath + Node.SEPARATOR + lz.getName();
+			} else {
+				logger.debug("Loading Lazydataset");
+				lz = holder.getLazyDataset(datasetPath);
+				if (lz == null) {
+					logger.error("No dataset called " + datasetPath);
+					return null;
+				}
+				logger.debug("Building AxesMetadata");
+				AxesMetadata axm = lservice.getAxesMetadata(lz, obean.getFilePath(), obean.getAxesNames(), obean.getDataKey()!=null);
+				lz.setMetadata(axm);
+
+			}
+
+			return new AugmentedPackage(holder, lz, datasetPath);
+
+		} catch (Exception e) {
+			logger.error("Read attempt failed", e);
+			return null;
+		}
+	}
 	
 	public void stop()  {
 		
@@ -245,6 +277,20 @@ public class OperationExecution {
 			 if (Arrays.binarySearch(dd, i) < 0) n *= nShape[i];
 		 }
 		return n;
+	}
+	
+	private class AugmentedPackage {
+		
+		public IDataHolder holder;
+		public ILazyDataset lazy;
+		public String name;
+		
+		public AugmentedPackage(IDataHolder holder, ILazyDataset lazy, String name) {
+			this.holder = holder;
+			this.lazy = lazy;
+			this.name = name;
+		}
+		
 	}
 
 }

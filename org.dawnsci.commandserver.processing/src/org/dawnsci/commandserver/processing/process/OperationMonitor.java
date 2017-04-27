@@ -97,6 +97,7 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 	@Override
 	public void fileFlushed() {
 		if (publisher != null) {
+			obean.setPreviousStatus(Status.RUNNING);
 			obean.setStatus(Status.RUNNING);
 			obean.setMessage("Flushed " + count + " frames");
 			try {

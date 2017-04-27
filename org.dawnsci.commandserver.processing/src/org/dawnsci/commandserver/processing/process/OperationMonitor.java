@@ -12,6 +12,7 @@ import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.processing.IFlushMonitor;
 import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
 /**
@@ -20,7 +21,7 @@ import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
  * @author Matthew Gerring
  *
  */
-public class OperationMonitor implements IMonitor {
+public class OperationMonitor implements IMonitor, IFlushMonitor {
 	
 	private static final Logger logger = LoggerFactory.getLogger(OperationMonitor.class);
 
@@ -91,5 +92,21 @@ public class OperationMonitor implements IMonitor {
 				logger.error(obean.toString());
 			}
 		}
+	}
+
+	@Override
+	public void fileFlushed() {
+		if (publisher != null) {
+			obean.setStatus(Status.RUNNING);
+			obean.setMessage("Flushed " + count + " frames");
+			try {
+				publisher.broadcast(obean);
+				logger.error(obean.toString());
+			} catch (EventException e) {
+				logger.error("Could not broadcast bean:",e);
+				logger.error(obean.toString());
+			}
+		}
+		
 	}
 }

@@ -80,8 +80,7 @@ public class OperationExecution {
 		    // Create a context and run the pipeline
 		    this.context = oservice.createContext();
 		    context.setSeries(ops);
-		    context.setExecutionType(obean.getNumberOfCores() == 1 ? ExecutionType.SERIES : ExecutionType.PARALLEL);
-		    context.setNumberOfCores(obean.getNumberOfCores());
+		    context.setExecutionType(obean.getNumberOfCores() > 1 ? ExecutionType.PARALLEL : ExecutionType.SERIES);
 		    
 		    AugmentedPackage augmentedDataset = getAugmentedDataset(filePath, datasetPath, obean);
 		    

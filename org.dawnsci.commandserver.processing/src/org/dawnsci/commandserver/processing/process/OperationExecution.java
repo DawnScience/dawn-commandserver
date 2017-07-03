@@ -131,6 +131,8 @@ public class OperationExecution {
 		    		
 		    	}
 		    	
+		    	final boolean monitorForOverwrite = obean.isMonitorForOverwrite();
+		    	
 		    	context.setLiveInfo(new ILiveOperationInfo(){
 
 					@Override
@@ -142,6 +144,13 @@ public class OperationExecution {
 					public IDynamicDataset getComplete() {
 						return complete;
 					}
+
+					@Override
+					public boolean isMonitorForOverwrite() {
+						return monitorForOverwrite;
+					}
+					
+					
 		    		
 		    	});
 		    	

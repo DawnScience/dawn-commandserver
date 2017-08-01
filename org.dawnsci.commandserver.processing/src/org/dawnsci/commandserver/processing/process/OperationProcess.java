@@ -9,7 +9,6 @@
 package org.dawnsci.commandserver.processing.process;
 
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -19,6 +18,8 @@ import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
@@ -35,6 +36,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 	private String   processingDir;
     private Process  process;
 	
+    private final static Logger logger = LoggerFactory.getLogger(OperationProcess.class);
 
 	public OperationProcess(OperationBean bean, IPublisher<OperationBean> status) {
 		
@@ -48,8 +50,21 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 		} else {
 			runDir  = bean.getRunDirectory();
 		}
+		
+		String name = bean.getName();
+		
+		try {
+			String dataPath = new File(bean.getFilePath()).getName();
+			String processingPath = new File(bean.getProcessingPath()).getName();
+			name = dataPath + "_"+ processingPath;
+		} catch (Exception e) {
+			logger.error("Could not build full processing name", e);
+		}
+		
+		
+		
 
- 		final File   dir = getUnique(new File(runDir), getLegalFileName(bean.getName())+"_", 1);
+ 		final File   dir = getUnique(new File(runDir), getLegalFileName(name)+"_", 1);
  		dir.mkdirs();
 		
 	    processingDir = dir.getAbsolutePath();
@@ -58,14 +73,14 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
  		try {
 			setLoggingFile(new File(dir, "operationProcessLog.txt"));
 		} catch (IOException e1) {
-			e1.printStackTrace();
+			logger.error("Could not set logging file", e1);
 		}
 		
 		// We record the bean so that reruns of reruns are possible.
 		try {
 			writeProjectBean(processingDir, "operationBean.json");
 		} catch (Exception e) {
-			e.printStackTrace(out);
+			logger.error("Could write project bean", e);
 		}
 	}
 
@@ -79,7 +94,6 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 				
 		try {
 			bean.setPublisherURI(publisher.getUri().getPath());
-			// TODO Run as process out of DAWN similar to how workflows run
 			File path = new File(processingDir, "operationBean.json");
 			if (!path.exists()) throw new Exception("Cannot find path to OperationBean!");
 			
@@ -97,14 +111,9 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 			Process p = process.start();
 			if (isBlocking()) p.waitFor();
 			
-			// TODO Actually run something?
-//			bean.setStatus(Status.COMPLETE);
-//			bean.setMessage(((OperationBean)bean).getName()+" completed normally");
-//			bean.setPercentComplete(100);
-//			broadcast(bean);
 			
 		} catch (Throwable ne) {
-			ne.printStackTrace();
+			logger.error("Could not run processing", ne);
 			bean.setStatus(Status.FAILED);
 			bean.setMessage(ne.getMessage());
 			bean.setPercentComplete(0);

@@ -56,7 +56,7 @@ public class OperationProcess extends ProgressableProcess<OperationBean> {
 		try {
 			String dataPath = new File(bean.getFilePath()).getName();
 			String processingPath = new File(bean.getProcessingPath()).getName();
-			name = dataPath + "_"+ processingPath;
+			name = dataPath + "_"+ processingPath + "_" + bean.getDatasetPath();
 		} catch (Exception e) {
 			logger.error("Could not build full processing name", e);
 		}

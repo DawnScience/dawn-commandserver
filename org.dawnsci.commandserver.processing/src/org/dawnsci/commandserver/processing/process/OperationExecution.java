@@ -87,12 +87,14 @@ public class OperationExecution {
 		    
 		    long time = 0;
 		    long timeOutShort = obean.getTimeOut()/10;
+		    boolean finished = false;
 		    
-		    while (augmentedDataset == null && time < obean.getTimeOut()) {
+		    while (augmentedDataset == null && time < obean.getTimeOut() && !finished) {
 		    	logger.warn("Could not read {} after {} ms",datasetPath,time);
 		    	Thread.sleep(timeOutShort/10);
 		    	time += timeOutShort/10;
 		    	augmentedDataset = getAugmentedDataset(filePath, datasetPath, obean);
+		    	finished = isFinished(obean);
 		    }
 		    
 		    if (augmentedDataset == null) {
@@ -206,6 +208,23 @@ public class OperationExecution {
 			}
 		}
 
+	}
+	
+	private boolean isFinished(OperationBean b) {
+		if (b.getDataKey() != null) {
+			try {
+				logger.debug("Trying dataholder");
+				IDataHolder holder = lservice.getData(b.getFilePath(), new IMonitor.Stub());
+				if (holder == null) return false;
+				final IDynamicDataset complete = (IDynamicDataset)holder.getLazyDataset(b.getDataKey() + Node.SEPARATOR + "scan_finished");
+				complete.refreshShape();
+				return complete.getSlice().getInt(0) == 1;
+			}catch (Exception e) {
+				logger.debug("Could not read finished status");
+			}
+		}
+		
+		return false;
 	}
 
 	private AugmentedPackage getAugmentedDataset(String filePath, String datasetPath, OperationBean obean) {

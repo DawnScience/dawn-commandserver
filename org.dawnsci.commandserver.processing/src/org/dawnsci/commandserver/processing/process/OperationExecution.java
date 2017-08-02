@@ -98,7 +98,12 @@ public class OperationExecution {
 		    }
 		    
 		    if (augmentedDataset == null) {
-		    	logger.error("Building lazydataset {} from {} timed out in {} ms", datasetPath, filePath, obean.getTimeOut());
+		    	if (finished) {
+		    		logger.error("Building lazydataset {} from {} stopped because scan finished", datasetPath, filePath);
+		    	} else {
+		    		logger.error("Building lazydataset {} from {} timed out in {} ms", datasetPath, filePath, obean.getTimeOut());
+		    	}
+		    	
 		    	return;
 		    }
 		    

@@ -8,7 +8,6 @@ import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.Status;
-import org.junit.Ignore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,7 +37,6 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 			IEventService eventService = ActiveMQServiceHolder.getEventService();
 			 publisher = eventService.createPublisher(new URI(obean.getPublisherURI()), "scisoft.operation.STATUS_TOPIC");
 			 publisher.setStatusSetName("scisoft.operation.STATUS_QUEUE");
-			 logger.error(obean.toString());
 		} catch (Exception e) {
 			logger.error("Could not create publisher:",e);
 		}

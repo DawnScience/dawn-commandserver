@@ -71,7 +71,6 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 			obean.setStatus(Status.COMPLETE);
 			try {
 				publisher.broadcast(obean);
-				logger.error(obean.toString());
 			} catch (EventException e) {
 				logger.error("Could not broadcast bean:",e);
 				logger.error(obean.toString());
@@ -84,7 +83,6 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 			obean.setStatus(Status.RUNNING);
 			try {
 				publisher.broadcast(obean);
-				logger.error(obean.toString());
 			} catch (EventException e) {
 				logger.error("Could not broadcast bean:",e);
 				logger.error(obean.toString());
@@ -100,7 +98,6 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 			obean.setMessage("Flushed " + count + " frames");
 			try {
 				publisher.broadcast(obean);
-				logger.error(obean.toString());
 			} catch (EventException e) {
 				logger.error("Could not broadcast bean:",e);
 				logger.error(obean.toString());

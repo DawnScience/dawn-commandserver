@@ -8,8 +8,6 @@
  */
 package org.dawnsci.commandserver.core.consumer;
 
-import java.net.URI;
-
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.core.IPublisher;
@@ -25,7 +23,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class DummyProcess extends ProgressableProcess {
+public class DummyProcess extends ProgressableProcess<StatusBean> {
 
 	/**
 	 * 

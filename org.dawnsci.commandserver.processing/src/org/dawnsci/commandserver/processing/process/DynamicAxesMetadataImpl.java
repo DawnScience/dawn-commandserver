@@ -202,6 +202,7 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					int[] newShape = shape.clone();
 					Arrays.fill(newShape, 1);
 					newShape[i] = k;
+					logger.debug("For null or 1 dim {} has new shape {}",l.getName(),Arrays.toString(newShape));
 					l.setShape(newShape);
 					axis.set(j, l);
 				} else {
@@ -212,6 +213,7 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 						if (s[dims[k]] < maxShape[k]) maxShape[k] = s[dims[k]];
 						newShape[k] = s[dims[k]];
 					}
+					logger.debug("For {} has new shape {}",l.getName(),Arrays.toString(newShape));
 					l.setShape(newShape);
 					axis.set(j, l);
 				}

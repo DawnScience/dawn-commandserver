@@ -180,6 +180,11 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					
 					try {
 						((IDynamicDataset) l).refreshShape();
+						
+						String name = l.getName();
+						if (name == null) name = "unknown_dataset";
+						logger.info(name + " has shape " + Arrays.toString(l.getShape()));
+						
 					} catch (Exception e) {
 						String name = l.getName();
 						if (name == null) name = "unknown_dataset";

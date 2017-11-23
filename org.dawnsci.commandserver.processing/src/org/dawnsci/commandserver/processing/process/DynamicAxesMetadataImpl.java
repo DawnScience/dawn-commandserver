@@ -9,11 +9,9 @@ import java.util.Map;
 import org.eclipse.january.dataset.IDynamicDataset;
 import org.eclipse.january.dataset.ILazyDataset;
 import org.eclipse.january.metadata.AxesMetadata;
-import org.eclipse.january.metadata.MetadataType;
 import org.eclipse.january.metadata.Reshapeable;
 import org.eclipse.january.metadata.Sliceable;
 import org.eclipse.january.metadata.Transposable;
-import org.eclipse.january.metadata.internal.AxesMetadataImpl;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -179,11 +177,7 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 					}
 					
 					try {
-						((IDynamicDataset) l).refreshShape();
-						
-						String name = l.getName();
-						if (name == null) name = "unknown_dataset";
-						logger.info(name + " has shape " + Arrays.toString(l.getShape()));
+						((IDynamicDataset) l).refreshShape();	
 						
 					} catch (Exception e) {
 						String name = l.getName();
@@ -213,7 +207,6 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 						if (s[dims[k]] < maxShape[k]) maxShape[k] = s[dims[k]];
 						newShape[k] = s[dims[k]];
 					}
-					logger.debug("For {} has new shape {}",l.getName(),Arrays.toString(newShape));
 					l.setShape(newShape);
 					axis.set(j, l);
 				}

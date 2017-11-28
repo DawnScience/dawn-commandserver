@@ -122,10 +122,12 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 		if (axisData instanceof IDynamicDataset && axisDim.length == axisData.getRank()) {
 			int[] maxShape = ((IDynamicDataset)axisData).getMaxShape();
 			if (maxShape[maxShape.length-1] == 1) {
+				
+				logger.debug("Rejecting {} as an axis", axisData.getName() == null ? "unknown" : axisData.getName());
+				
 				return null;
 			}
 		}
-		
 		
 		if (axisDim.length == 1) {
 			int ad = axisDim[0];

@@ -118,6 +118,15 @@ public class DynamicAxesMetadataImpl implements AxesMetadata {
 		// and also check rank
 		if (axisData == null) return null;
 		
+		//Temporary fix for upstream lib issues
+		if (axisData instanceof IDynamicDataset && axisDim.length == axisData.getRank()) {
+			int[] maxShape = ((IDynamicDataset)axisData).getMaxShape();
+			if (maxShape[maxShape.length-1] == 1) {
+				return null;
+			}
+		}
+		
+		
 		if (axisDim.length == 1) {
 			int ad = axisDim[0];
 			ILazyDataset view = axisData.getSliceView();

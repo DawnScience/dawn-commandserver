@@ -238,6 +238,7 @@ public class OperationExecution {
 
 		try {
 			logger.debug("Trying dataholder");
+			lservice.clearSoftReferenceCache(filePath);
 			holder = lservice.getData(filePath, new IMonitor.Stub());
 
 			ILazyDataset lz = null;

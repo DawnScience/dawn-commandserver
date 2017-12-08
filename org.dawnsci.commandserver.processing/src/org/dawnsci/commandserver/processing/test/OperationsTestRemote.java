@@ -30,7 +30,6 @@ import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
-import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
@@ -38,9 +37,11 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.api.processing.model.ValueModel;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
-import org.eclipse.dawnsci.hdf.object.HierarchicalDataFactory;
-import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
+import org.eclipse.dawnsci.nexus.NexusFile;
+import org.eclipse.dawnsci.nexus.ServiceHolder;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.Random;
 import org.eclipse.scanning.api.event.status.Status;
@@ -96,14 +97,17 @@ public class OperationsTestRemote {
 		output.getParentFile().mkdirs();
 		if (output.exists()) output.delete();
 		
-		IHierarchicalDataFile file = HierarchicalDataFactory.getWriter(output.getAbsolutePath());
+		NexusFile file = ServiceHolder.getNexusFileFactory().newNexusFile(output.getAbsolutePath());
+
 		try {
 			final IDataset data = Random.rand(0.0, 10.0, 10, 128, 128);
-			String group   = file.group("/entry/signal");
-			String dataset = file.createDataset("data", data, group);
+			GroupNode group   = file.getGroup("/entry/signal", true);
+			data.setName("data");
+			file.createData(group, data);
+			String dataPath = "/entry/signal/data";
 			
-			context.setFilePath(file.getPath());
-			context.setDatasetPath(dataset);
+			context.setFilePath(file.getFilePath());
+			context.setDatasetPath(dataPath);
 //			context.setSlicing("all"); // The 10 in the first dimension.
 			context.setDataDimensions(new int[]{1,2});
 			

@@ -21,10 +21,6 @@
          id="org.eclipse.dawnsci.remotedataset.feature"
          version="0.0.0"/>
 
-   <includes
-         id="org.eclipse.scanning.ui.feature"
-         version="0.0.0"/>
-
    <plugin
          id="org.dawnsci.commandserver.mx"
          download-size="0"
@@ -169,6 +165,13 @@
 
    <plugin
          id="javax.jms"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.scanning.api"
          download-size="0"
          install-size="0"
          version="0.0.0"

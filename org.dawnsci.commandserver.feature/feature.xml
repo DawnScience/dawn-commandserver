@@ -147,12 +147,6 @@
          unpack="false"/>
 
    <plugin
-         id="uk.ac.diamond.org.apache.activemq"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="uk.ac.diamond.jython"
          download-size="0"
          install-size="0"
@@ -168,6 +162,13 @@
 
    <plugin
          id="uk.ac.diamond.scisoft.jython"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="javax.jms"
          download-size="0"
          install-size="0"
          version="0.0.0"

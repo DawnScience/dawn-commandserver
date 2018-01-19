@@ -21,6 +21,10 @@
          id="org.eclipse.dawnsci.remotedataset.feature"
          version="0.0.0"/>
 
+   <includes
+         id="uk.ac.diamond.daq.thirdparty.activemq.feature"
+         version="0.0.0"/>
+
    <plugin
          id="org.dawnsci.commandserver.mx"
          download-size="0"
@@ -172,6 +176,13 @@
 
    <plugin
          id="org.eclipse.scanning.api"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.eclipse.scanning.connector.activemq"
          download-size="0"
          install-size="0"
          version="0.0.0"

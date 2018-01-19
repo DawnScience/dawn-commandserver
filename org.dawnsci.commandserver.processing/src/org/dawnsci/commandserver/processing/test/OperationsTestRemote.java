@@ -11,21 +11,10 @@ package org.dawnsci.commandserver.processing.test;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.jms.Message;
-import javax.jms.Queue;
-import javax.jms.QueueBrowser;
-import javax.jms.QueueConnection;
-import javax.jms.QueueConnectionFactory;
-import javax.jms.QueueSession;
-import javax.jms.Session;
-import javax.jms.TextMessage;
-
-import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.processing.OperationSubmission;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IFunction;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
@@ -37,7 +26,6 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.api.processing.model.ValueModel;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
-import org.eclipse.dawnsci.analysis.api.tree.DataNode;
 import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.nexus.NexusFile;
@@ -307,48 +295,48 @@ public class OperationsTestRemote {
 	 * @throws exception if broker or queue absent
 	 */
 	public StatusBean monitor(StatusBean obean, URI uri, String queueName) throws Exception {
-		
-		if (queueName==null || "".equals(queueName)) throw new Exception("Please specify a queue name!");
-		
-		QueueConnectionFactory connectionFactory = (QueueConnectionFactory)ActiveMQServiceHolder.getEventConnectorService().createConnectionFactory(uri);
-		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
-		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
-		Queue queue   = qSes.createQueue(queueName);
-		qCon.start();
-		
-    	Class<? extends StatusBean> clazz = obean.getClass();
-	   
-    	try {
-	    	POLL: while(true) {
-	    		
-	    		Thread.sleep(500);
-	    		QueueBrowser qb = qSes.createBrowser(queue);
-		    	@SuppressWarnings("rawtypes")
-		    	Enumeration  e  = qb.getEnumeration();
-	
-		    	while(e.hasMoreElements()) { // We must final the bean somewhere.
-		    		Message m = (Message)e.nextElement();
-		    		if (m==null) continue;
-		    		if (m instanceof TextMessage) {
-		    			TextMessage t = (TextMessage)m;
-		    			final StatusBean bean = ActiveMQServiceHolder.getEventConnectorService().unmarshal(t.getText(), clazz);
-
-
-		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
-		    				if (bean.getStatus().isFinal()) return bean;
-		    				System.out.println("JAKE");
-		    				System.out.println(bean.toString());
-		    				continue POLL;
-		    			}
-		    		}
-		    	}
-		    	
-		    	throw new Exception("The bean with id "+obean.getUniqueId()+" does not exist in "+queueName+"!");
-	
-		    }
-    	} finally {
-    		qCon.close();
-    	}
+		return null;
+//		if (queueName==null || "".equals(queueName)) throw new Exception("Please specify a queue name!");
+//		
+//		QueueConnectionFactory connectionFactory = (QueueConnectionFactory)ActiveMQServiceHolder.getEventConnectorService().createConnectionFactory(uri);
+//		QueueConnection qCon  = connectionFactory.createQueueConnection(); // This times out when the server is not there.
+//		QueueSession    qSes  = qCon.createQueueSession(false, Session.AUTO_ACKNOWLEDGE);
+//		Queue queue   = qSes.createQueue(queueName);
+//		qCon.start();
+//		
+//    	Class<? extends StatusBean> clazz = obean.getClass();
+//	   
+//    	try {
+//	    	POLL: while(true) {
+//	    		
+//	    		Thread.sleep(500);
+//	    		QueueBrowser qb = qSes.createBrowser(queue);
+//		    	@SuppressWarnings("rawtypes")
+//		    	Enumeration  e  = qb.getEnumeration();
+//	
+//		    	while(e.hasMoreElements()) { // We must final the bean somewhere.
+//		    		Message m = (Message)e.nextElement();
+//		    		if (m==null) continue;
+//		    		if (m instanceof TextMessage) {
+//		    			TextMessage t = (TextMessage)m;
+//		    			final StatusBean bean = ActiveMQServiceHolder.getEventConnectorService().unmarshal(t.getText(), clazz);
+//
+//
+//		    			if (bean.getUniqueId().equals(obean.getUniqueId())) {
+//		    				if (bean.getStatus().isFinal()) return bean;
+//		    				System.out.println("JAKE");
+//		    				System.out.println(bean.toString());
+//		    				continue POLL;
+//		    			}
+//		    		}
+//		    	}
+//		    	
+//		    	throw new Exception("The bean with id "+obean.getUniqueId()+" does not exist in "+queueName+"!");
+//	
+//		    }
+//    	} finally {
+//    		qCon.close();
+//    	}
 	}
 
 }

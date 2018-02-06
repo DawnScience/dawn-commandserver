@@ -64,11 +64,11 @@ public class OperationsTestRemote {
 	private static IPersistenceService pservice;
 	
 	// OSGI fills this for us
-	public static void setOperationService(IOperationService s) {
+	public void setOperationService(IOperationService s) {
 		oservice = s;
 	}
 	
-	public static void setPersistenceService(IPersistenceService p) {
+	public void setPersistenceService(IPersistenceService p) {
 		pservice = p;
 	}
 

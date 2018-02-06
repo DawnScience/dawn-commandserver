@@ -12,7 +12,7 @@ public class ActiveMQServiceHolder {
 		return eventConnectorService;
 	}
 
-	public static void setEventConnectorService(IEventConnectorService eventService) {
+	public void setEventConnectorService(IEventConnectorService eventService) {
 		ActiveMQServiceHolder.eventConnectorService = eventService;
 	}
 
@@ -20,7 +20,7 @@ public class ActiveMQServiceHolder {
 		return eventService;
 	}
 
-	public static void setEventService(IEventService eventService) {
+	public void setEventService(IEventService eventService) {
 		ActiveMQServiceHolder.eventService = eventService;
 	}
 }

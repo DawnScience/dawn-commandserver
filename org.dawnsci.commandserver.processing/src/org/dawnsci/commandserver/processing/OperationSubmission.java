@@ -40,7 +40,7 @@ public class OperationSubmission {
 	private static IPersistenceService  pservice;
 
 	// Set by OSGI
-	public static void setPersistenceService(IPersistenceService s) {
+	public void setPersistenceService(IPersistenceService s) {
 		pservice = s;
 	}
 	

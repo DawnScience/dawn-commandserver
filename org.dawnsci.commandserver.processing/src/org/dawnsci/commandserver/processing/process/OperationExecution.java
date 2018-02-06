@@ -44,15 +44,15 @@ public class OperationExecution {
 	private static ILoaderService      lservice;
 	
 	// Set by OSGI
-	public static void setOperationService(IOperationService s) {
+	public void setOperationService(IOperationService s) {
 		oservice = s;
 	}
 	// Set by OSGI
-	public static void setPersistenceService(IPersistenceService s) {
+	public void setPersistenceService(IPersistenceService s) {
 		pservice = s;
 	}
 	// Set by OSGI
-	public static void setLoaderService(ILoaderService s) {
+	public void setLoaderService(ILoaderService s) {
 		lservice = s;
 	}
 

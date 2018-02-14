@@ -14,6 +14,7 @@ import java.util.Map;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
+import org.eclipse.scanning.api.event.EventConstants;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.core.IConsumer;
@@ -34,18 +35,20 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public abstract class ProcessConsumer<T extends StatusBean> implements IConsumerExtension {
+public abstract class AbstractProcessConsumer<T extends StatusBean> implements IConsumerExtension {
 
-	private String submitQName, statusTName, statusQName;
+	private String submitQueueName;
+	private String statusTopicName;
+	private String statusQueueName;
 	protected Map<String, String> config;
 
 	protected boolean durable = true;
-	protected URI     uri;
+	protected URI uri;
 	
 	private IConsumer<T> consumer;
-	protected String             consumerVersion;
+	protected String consumerVersion;
 	
-	public ProcessConsumer() {
+	public AbstractProcessConsumer() {
 		this.consumerVersion = "1.0";
 	}
 	
@@ -64,9 +67,9 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 		
 		config = Collections.unmodifiableMap(configuration);
 		setUri(new URI(config.get("uri")));
-		this.submitQName = config.get("submit");
-		this.statusTName = config.get("topic");
-		this.statusQName = config.get("status");
+		this.submitQueueName = config.get("submit");
+		this.statusTopicName = config.get("topic");
+		this.statusQueueName = config.get("status");
 	}
 
 	/**
@@ -76,12 +79,12 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 	public void start() throws Exception {
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		this.consumer = service.createConsumer(uri, submitQName, statusQName, statusTName, IEventService.HEARTBEAT_TOPIC, IEventService.CMD_TOPIC);
+		this.consumer = service.createConsumer(uri, submitQueueName, statusQueueName, statusTopicName, EventConstants.HEARTBEAT_TOPIC, EventConstants.CMD_TOPIC);
 		consumer.setRunner(new IProcessCreator<T>() {
 			@Override
 			public IConsumerProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {
 				try {
-					ProgressableProcess<T> process = ProcessConsumer.this.createProcess(bean, publisher);
+					ProgressableProcess<T> process = AbstractProcessConsumer.this.createProcess(bean, publisher);
 					process.setArguments(config);
 					return process;
 				} catch (Exception ne) {
@@ -90,7 +93,7 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 			}
 		});
 		consumer.setName(getName());
-		consumer.cleanQueue(statusQName);
+		consumer.cleanQueue(statusQueueName);
 		consumer.setBeanClass(getBeanClass());
 		// This is the blocker
 		consumer.run();
@@ -107,12 +110,6 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 	}
 
 	/**
-	 * 
-	 * @return the name which the user will see for this consumer.
-	 */
-	public abstract String getName();
-
-	/**
 	 * Implement to return the actual bean class in the queue
 	 * @return
 	 */
@@ -122,8 +119,8 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 	 * Implement to create the required command server process.
 	 * 
 	 * @param uri
-	 * @param statusTName
-	 * @param statusQName
+	 * @param statusTopicName
+	 * @param statusQueueName
 	 * @param bean
 	 * @return the process or null if the message should be consumed and nothing done.
 	 */
@@ -142,8 +139,8 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 		return true;
 	}
 		
-	protected static final long TWO_DAYS = 48*60*60*1000; // ms
-	protected static final long A_WEEK   = 7*24*60*60*1000; // ms
+	protected static final long TWO_DAYS = 48*60*60*1000l; // ms
+	protected static final long A_WEEK   = 7*24*60*60*1000l; // ms
 
 	/**
 	 * Defines the time in ms that a job may be in the running state
@@ -174,8 +171,6 @@ public abstract class ProcessConsumer<T extends StatusBean> implements IConsumer
 		}
 		return A_WEEK;
 	}
-
-
 
 	public boolean isDurable() {
 		return durable;

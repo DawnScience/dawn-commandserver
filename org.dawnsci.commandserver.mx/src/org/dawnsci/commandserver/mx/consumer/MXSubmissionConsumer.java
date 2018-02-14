@@ -10,7 +10,7 @@ package org.dawnsci.commandserver.mx.consumer;
 
 import java.net.URI;
 
-import org.dawnsci.commandserver.core.process.ProcessConsumer;
+import org.dawnsci.commandserver.core.process.AbstractProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.core.server.FilePermissionServer;
 import org.dawnsci.commandserver.mx.beans.ProjectBean;
@@ -28,7 +28,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  * @author Matthew Gerring
  *
  */
-public class MXSubmissionConsumer extends ProcessConsumer<ProjectBean> {
+public class MXSubmissionConsumer extends AbstractProcessConsumer<ProjectBean> {
 
 	public final static String NAME = "Multi-crystal Reprocessing Consumer";
 	

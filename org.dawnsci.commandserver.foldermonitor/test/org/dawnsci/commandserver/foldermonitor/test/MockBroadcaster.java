@@ -2,7 +2,6 @@ package org.dawnsci.commandserver.foldermonitor.test;
 
 import java.io.PrintStream;
 import java.net.URI;
-import java.util.UUID;
 
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventConnectorService;
@@ -35,7 +34,6 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 		return null;
 	}
 
-	@Override
 	public void setTopicName(String topic) throws EventException {
 		// TODO Auto-generated method stub
 		

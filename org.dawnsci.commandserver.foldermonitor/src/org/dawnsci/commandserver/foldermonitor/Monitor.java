@@ -42,6 +42,7 @@ import java.util.regex.Pattern;
 
 import org.dawnsci.commandserver.core.ActiveMQServiceHolder;
 import org.dawnsci.commandserver.core.application.IConsumerExtension;
+import org.eclipse.scanning.api.event.EventConstants;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
 import org.eclipse.scanning.api.event.alive.HeartbeatBean;
@@ -112,7 +113,7 @@ public class Monitor implements IConsumerExtension{
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
 		
-		this.killer = service.createSubscriber(uri, IEventService.CMD_TOPIC);
+		this.killer = service.createSubscriber(uri, EventConstants.CMD_TOPIC);
 		killer.addListener(new IBeanListener<KillBean>() {
 
 			@Override

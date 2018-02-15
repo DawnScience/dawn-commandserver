@@ -11,14 +11,14 @@ package org.dawnsci.commandserver.jython;
 import java.io.FileNotFoundException;
 import java.net.URL;
 
-import org.dawnsci.commandserver.core.process.ProcessConsumer;
+import org.dawnsci.commandserver.core.process.AbstractProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.python.util.PythonInterpreter;
 
 import uk.ac.diamond.scisoft.python.JythonInterpreterUtils;
 
-public class JythonConsumer extends ProcessConsumer<JythonBean> {
+public class JythonConsumer extends AbstractProcessConsumer<JythonBean> {
 	
 	protected PythonInterpreter interpreter;
 

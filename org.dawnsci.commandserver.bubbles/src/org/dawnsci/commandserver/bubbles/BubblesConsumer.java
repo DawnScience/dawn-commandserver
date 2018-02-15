@@ -1,13 +1,10 @@
 package org.dawnsci.commandserver.bubbles;
 
-import java.net.URI;
-
-import org.dawnsci.commandserver.core.process.ProcessConsumer;
+import org.dawnsci.commandserver.core.process.AbstractProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
-import org.eclipse.scanning.api.event.status.StatusBean;
 
-public class BubblesConsumer extends ProcessConsumer<BubblesBean> {
+public class BubblesConsumer extends AbstractProcessConsumer<BubblesBean> {
 
 	@Override
 	protected Class<BubblesBean> getBeanClass() {

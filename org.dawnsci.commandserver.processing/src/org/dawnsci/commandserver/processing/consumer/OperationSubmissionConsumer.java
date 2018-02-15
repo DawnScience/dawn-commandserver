@@ -8,13 +8,10 @@
  */
 package org.dawnsci.commandserver.processing.consumer;
 
-import java.net.URI;
-
-import org.dawnsci.commandserver.core.process.ProcessConsumer;
+import org.dawnsci.commandserver.core.process.AbstractProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.processing.process.OperationProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
-import org.eclipse.scanning.api.event.status.StatusBean;
 
 import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
 
@@ -25,7 +22,7 @@ import uk.ac.diamond.scisoft.analysis.processing.bean.OperationBean;
  * @author Matthew Gerring
  *
  */
-public class OperationSubmissionConsumer extends ProcessConsumer<OperationBean> {
+public class OperationSubmissionConsumer extends AbstractProcessConsumer<OperationBean> {
 
 
 	@Override

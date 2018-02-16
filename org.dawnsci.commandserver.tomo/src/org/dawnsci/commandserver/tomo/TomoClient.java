@@ -20,8 +20,8 @@ public class TomoClient {
 		tbean.setRunDirectory("C:/tmp/");
 
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		ISubmitter<TomoBean> factory = service.createSubmitter(uri, "scisoft.tomo.SUBMISSION_QUEUE");
+		ISubmitter<TomoBean> submitter = service.createSubmitter(uri, "scisoft.tomo.SUBMISSION_QUEUE");
 
-		factory.submit(tbean, true);
+		submitter.submit(tbean);
 	}
 }

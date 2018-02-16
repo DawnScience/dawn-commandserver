@@ -91,7 +91,7 @@ public class OperationSubmission {
 			IEventService service = ActiveMQServiceHolder.getEventService();
 			this.submitter = service.createSubmitter(uri, queueName);
 		}
-		submitter.submit(obean, true);
+		submitter.submit(obean);
 		
 		return obean;
 	}
@@ -213,7 +213,7 @@ public class OperationSubmission {
 			IEventService service = ActiveMQServiceHolder.getEventService();
 			this.submitter = service.createSubmitter(uri, queueName);
 		}
-		submitter.submit(obean, true);
+		submitter.submit(obean);
 	}
 
 }

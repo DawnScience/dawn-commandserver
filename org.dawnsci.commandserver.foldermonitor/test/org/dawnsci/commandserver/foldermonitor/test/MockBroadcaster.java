@@ -80,7 +80,9 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 		
 	}
 	
-	public boolean isDisconnected() {
-		return false;
+	@Override
+	public boolean isConnected() {
+		// TODO Auto-generated method stub
+		return true;
 	}
 }

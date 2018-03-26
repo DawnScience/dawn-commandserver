@@ -52,18 +52,6 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 	}
 
 	@Override
-	public void setAlive(boolean alive) throws EventException {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isAlive() {
-		// TODO Auto-generated method stub
-		return false;
-	}
-
-	@Override
 	public void setLoggingStream(PrintStream stream) {
 		// TODO Auto-generated method stub
 		
@@ -88,12 +76,6 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 
 	@Override
 	public void setStatusSetAddRequired(boolean isRequired) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setConsumer(IConsumer<?> consumer) {
 		// TODO Auto-generated method stub
 		
 	}

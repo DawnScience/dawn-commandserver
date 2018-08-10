@@ -8,6 +8,7 @@
  */
 package org.dawnsci.commandserver.tomo.beans;
 
+import org.eclipse.scanning.api.event.IdBean;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -21,6 +22,8 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  */
 public class TomoBean extends StatusBean {
 
+	private static final long serialVersionUID = 4958099254036710832L;
+
 	private String      projectName;              
 	private String      fileName;              
 	
@@ -28,7 +31,7 @@ public class TomoBean extends StatusBean {
 	}
 
 	@Override
-	public void merge(StatusBean with) {
+	public <T extends IdBean> void merge(T with) {
         super.merge(with);
         TomoBean db = (TomoBean)with;
         this.projectName  = db.projectName;

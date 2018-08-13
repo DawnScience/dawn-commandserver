@@ -11,6 +11,7 @@ package org.dawnsci.commandserver.mx.beans;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.scanning.api.event.IdBean;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
@@ -23,7 +24,7 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  *
  */
 public class ProjectBean extends StatusBean {
-
+	private static final long serialVersionUID = -1517157970892198992L;
 	private String      projectName;              
 	private String      cystalName;              
 	private List<SweepBean> sweeps;
@@ -55,7 +56,7 @@ public class ProjectBean extends StatusBean {
 	}
 
 	@Override
-	public void merge(StatusBean with) {
+	public <T extends IdBean> void merge(T with) {
         super.merge(with);
         ProjectBean db = (ProjectBean)with;
         this.projectName  = db.projectName;

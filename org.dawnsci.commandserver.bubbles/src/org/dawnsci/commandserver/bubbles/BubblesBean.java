@@ -1,5 +1,6 @@
 package org.dawnsci.commandserver.bubbles;
 
+import org.eclipse.scanning.api.event.IdBean;
 import org.eclipse.scanning.api.event.status.StatusBean;
 
 
@@ -11,13 +12,12 @@ import org.eclipse.scanning.api.event.status.StatusBean;
  *
  */
 public class BubblesBean extends StatusBean {
-
+	private static final long serialVersionUID = 3068825702053739100L;
 	private String intensityPath;
 	private String pofrPath;
 	
 	@Override
-	public void merge(StatusBean with) {
-
+	public <T extends IdBean> void merge(T with) {
 		super.merge(with);
 		
 		BubblesBean bwith = (BubblesBean)with;

@@ -8,14 +8,11 @@
  */
 package org.dawnsci.commandserver.tomo.consumer;
 
-import java.net.URI;
-
 import org.dawnsci.commandserver.core.process.AbstractProcessConsumer;
 import org.dawnsci.commandserver.core.process.ProgressableProcess;
 import org.dawnsci.commandserver.tomo.beans.TomoBean;
 import org.dawnsci.commandserver.tomo.process.TomoProcess;
 import org.eclipse.scanning.api.event.core.IPublisher;
-import org.eclipse.scanning.api.event.status.StatusBean;
 
 /**
  * This consumer monitors a queue and starts runs based

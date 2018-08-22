@@ -93,7 +93,7 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 			}
 		});
 		consumer.setName(getName());
-		consumer.cleanQueue(statusQueueName);
+		consumer.cleanUpCompleted();
 		consumer.setBeanClass(getBeanClass());
 		// This is the blocker
 		consumer.run();

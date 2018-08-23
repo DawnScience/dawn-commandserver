@@ -45,8 +45,8 @@ import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.eclipse.scanning.api.event.EventConstants;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
-import org.eclipse.scanning.api.event.alive.HeartbeatBean;
-import org.eclipse.scanning.api.event.alive.KillBean;
+import org.eclipse.scanning.api.event.alive.QueueCommandBean;
+import org.eclipse.scanning.api.event.alive.QueueCommandBean.Command;
 import org.eclipse.scanning.api.event.bean.BeanEvent;
 import org.eclipse.scanning.api.event.bean.IBeanListener;
 import org.eclipse.scanning.api.event.core.IPublisher;
@@ -82,6 +82,8 @@ public class Monitor implements IConsumerExtension{
 	
 	private IPublisher<StatusBean> broadcaster;
 
+	private ISubscriber<IBeanListener<QueueCommandBean>> commandSubscriber;
+
 	@Override
 	public void init(Map<String, String> configuration) throws Exception {
 		
@@ -103,8 +105,6 @@ public class Monitor implements IConsumerExtension{
 		
 	}
 
-	private ISubscriber<IBeanListener<KillBean>> killer;
-	
 	@Override
 	public void start() throws Exception {
 		
@@ -113,13 +113,13 @@ public class Monitor implements IConsumerExtension{
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
 		
-		this.killer = service.createSubscriber(uri, EventConstants.CMD_TOPIC);
-		killer.addListener(new IBeanListener<KillBean>() {
+		this.commandSubscriber = service.createSubscriber(uri, EventConstants.CMD_TOPIC);
+		this.commandSubscriber.addListener(new IBeanListener<QueueCommandBean>() {
 
 			@Override
-			public void beanChangePerformed(BeanEvent<KillBean> evt) {
-				KillBean kbean = evt.getBean();
-				if (kbean.getConsumerId().equals(consumerId)) {
+			public void beanChangePerformed(BeanEvent<QueueCommandBean> evt) {
+				final QueueCommandBean commandBean = evt.getBean();
+				if (commandBean.getCommand() == Command.STOP && commandBean.getConsumerId().equals(consumerId)) {
 					try {
 						stop();
 						disconnect();
@@ -378,7 +378,7 @@ public class Monitor implements IConsumerExtension{
  
     private void disconnect() throws EventException {
     	broadcaster.disconnect();
-    	killer.disconnect();
+    	commandSubscriber.disconnect();
     }
 
 	/**

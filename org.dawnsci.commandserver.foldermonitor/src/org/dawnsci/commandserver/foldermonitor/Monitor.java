@@ -126,14 +126,6 @@ public class Monitor implements IConsumerExtension{
 					} catch (EventException e) {
 						logger.error("An internal error occurred trying to terminate the consumer "+getName()+" "+consumerId);
 					}
-					if (kbean.isExitProcess()) {
-						try {
-							Thread.sleep(2500);
-						} catch (InterruptedException e) {
-							logger.error("Unable to pause before exit", e);
-						}
-						System.exit(0); // Normal orderly exit
-					}
 				}
 			}
 		});

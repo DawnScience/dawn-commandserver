@@ -122,7 +122,7 @@ public class Monitor implements IConsumerExtension{
 				if (kbean.getConsumerId().equals(consumerId)) {
 					try {
 						stop();
-						if (kbean.isDisconnect()) disconnect();
+						disconnect();
 					} catch (EventException e) {
 						logger.error("An internal error occurred trying to terminate the consumer "+getName()+" "+consumerId);
 					}

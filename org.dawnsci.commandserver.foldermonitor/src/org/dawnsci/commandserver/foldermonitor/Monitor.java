@@ -119,7 +119,7 @@ public class Monitor implements IConsumerExtension{
 			@Override
 			public void beanChangePerformed(BeanEvent<QueueCommandBean> evt) {
 				final QueueCommandBean commandBean = evt.getBean();
-				if (commandBean.getCommand() == Command.STOP && commandBean.getConsumerId().equals(consumerId)) {
+				if (commandBean.getCommand() == Command.STOP_QUEUE && commandBean.getConsumerId().equals(consumerId)) {
 					try {
 						stop();
 						disconnect();

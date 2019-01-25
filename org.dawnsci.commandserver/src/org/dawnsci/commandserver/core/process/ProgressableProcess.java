@@ -53,7 +53,7 @@ public abstract class ProgressableProcess<T extends StatusBean> extends Abstract
 		this.blocking        = blocking;
 		
 		bean.setPreviousStatus(Status.SUBMITTED);
-		bean.setStatus(Status.QUEUED);
+		bean.setStatus(Status.PREPARING);
 		try {
 			bean.setHostName(InetAddress.getLocalHost().getHostName());
 		} catch (UnknownHostException e) {

@@ -110,7 +110,7 @@ public class Xia2Process extends ProgressableProcess<ProjectBean>{
 		try {
 			writeFile();
 
-			bean.setPreviousStatus(Status.QUEUED);
+			bean.setPreviousStatus(Status.PREPARING);
 			bean.setStatus(Status.RUNNING);
 			bean.setPercentComplete(1);
 			broadcast(bean);

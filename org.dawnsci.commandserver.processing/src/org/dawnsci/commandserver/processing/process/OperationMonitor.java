@@ -48,7 +48,6 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 		count+=amount;
 		double done = (double)count / (double)total;
 		obean.setPercentComplete(done);
-	    logger.info("Percent complete: "+(done*100));
 	}
 
 	@Override
@@ -58,8 +57,8 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 
 	@Override
 	public void subTask(String taskName) {
-		obean.setMessage(taskName);
-	    logger.info("Running: "+taskName);
+		//do nothing - this is used for the progress bar in the ui
+		//so not useful here
 	}
 
 	public void setCancelled(boolean cancelled) {

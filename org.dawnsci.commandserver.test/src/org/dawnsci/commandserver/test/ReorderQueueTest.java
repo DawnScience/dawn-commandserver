@@ -20,6 +20,7 @@ import javax.jms.Session;
 import javax.jms.TextMessage;
 
 import org.eclipse.scanning.api.event.IEventConnectorService;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import org.eclipse.scanning.connector.activemq.ActivemqConnectorService;
@@ -33,7 +34,7 @@ import org.eclipse.scanning.connector.activemq.ActivemqConnectorService;
  */
 public class ReorderQueueTest {
 
-	
+	@Ignore("Hmmm, really!")
 	@Test
 	public void reoder() throws Exception {
 		

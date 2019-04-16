@@ -39,7 +39,6 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 
 	private String submitQueueName;
 	private String statusTopicName;
-	private String statusQueueName;
 	protected Map<String, String> config;
 
 	protected boolean durable = true;
@@ -69,7 +68,6 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 		setUri(new URI(config.get("uri")));
 		this.submitQueueName = config.get("submit");
 		this.statusTopicName = config.get("topic");
-		this.statusQueueName = config.get("status");
 	}
 
 	/**
@@ -79,7 +77,7 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 	public void start() throws Exception {
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		this.consumer = service.createConsumer(uri, submitQueueName, statusQueueName, statusTopicName, EventConstants.CONSUMER_STATUS_TOPIC, EventConstants.CMD_TOPIC, EventConstants.ACK_TOPIC);
+		this.consumer = service.createConsumer(uri, submitQueueName, statusTopicName, EventConstants.CONSUMER_STATUS_TOPIC, EventConstants.CMD_TOPIC, EventConstants.ACK_TOPIC);
 		consumer.setRunner(new IProcessCreator<T>() {
 			@Override
 			public IConsumerProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {

@@ -36,11 +36,9 @@ public class OperationMonitor implements IMonitor, IFlushMonitor {
 		try {
 			IEventService eventService = ActiveMQServiceHolder.getEventService();
 			 publisher = eventService.createPublisher(new URI(obean.getPublisherURI()), "scisoft.operation.STATUS_TOPIC");
-			 publisher.setStatusSetName("scisoft.operation.STATUS_QUEUE");
 		} catch (Exception e) {
 			logger.error("Could not create publisher:",e);
 		}
-
 	}
 	
 	@Override

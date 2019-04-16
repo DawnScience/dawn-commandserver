@@ -63,24 +63,6 @@ class MockBroadcaster implements IPublisher<StatusBean> {
 	}
 
 	@Override
-	public String getStatusSetName() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setStatusSetName(String queueName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void setStatusSetAddRequired(boolean isRequired) {
-		// TODO Auto-generated method stub
-		
-	}
-	
-	@Override
 	public boolean isConnected() {
 		// TODO Auto-generated method stub
 		return true;

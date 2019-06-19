@@ -26,12 +26,6 @@
          version="0.0.0"/>
 
    <plugin
-         id="org.dawnsci.commandserver.mx"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="org.eclipse.core.runtime"
          download-size="0"
          install-size="0"
@@ -58,12 +52,6 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
-
-   <plugin
-         id="org.dawnsci.commandserver.tomo"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
 
    <plugin
          id="org.eclipse.core.contenttype"
@@ -115,49 +103,10 @@
          unpack="false"/>
 
    <plugin
-         id="org.dawnsci.commandserver.foldermonitor"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
-         id="org.dawnsci.commandserver.jython"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
          id="org.dawnsci.commandserver.processing"
          download-size="0"
          install-size="0"
          version="0.0.0"/>
-
-   <plugin
-         id="org.dawnsci.commandserver.bubbles"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="uk.ac.diamond.jython"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
-         id="uk.ac.diamond.scisoft.python"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
-         id="uk.ac.diamond.scisoft.jython"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
 
    <plugin
          id="javax.jms"
@@ -207,4 +156,5 @@
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
 </feature>

@@ -57,6 +57,12 @@ public class TempFilePathServiceImpl implements IFilePathService{
 	}
 
 	@Override
+	public String getVisitDir() {
+		//Not needed
+		return null;
+	}
+	
+	@Override
 	public String getProcessedFilesDir() {
 		//Not needed
 		return null;

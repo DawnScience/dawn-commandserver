@@ -17,8 +17,8 @@ import org.dawnsci.commandserver.core.application.IConsumerExtension;
 import org.eclipse.scanning.api.event.EventConstants;
 import org.eclipse.scanning.api.event.EventException;
 import org.eclipse.scanning.api.event.IEventService;
-import org.eclipse.scanning.api.event.core.IConsumer;
-import org.eclipse.scanning.api.event.core.IConsumerProcess;
+import org.eclipse.scanning.api.event.core.IJobQueue;
+import org.eclipse.scanning.api.event.core.IBeanProcess;
 import org.eclipse.scanning.api.event.core.IProcessCreator;
 import org.eclipse.scanning.api.event.core.IPublisher;
 import org.eclipse.scanning.api.event.status.StatusBean;
@@ -44,7 +44,7 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 	protected boolean durable = true;
 	protected URI uri;
 	
-	private IConsumer<T> consumer;
+	private IJobQueue<T> jobQueue;
 	protected String consumerVersion;
 	
 	public AbstractProcessConsumer() {
@@ -77,10 +77,10 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 	public void start() throws Exception {
 		
 		IEventService service = ActiveMQServiceHolder.getEventService();
-		this.consumer = service.createConsumer(uri, submitQueueName, statusTopicName, EventConstants.CONSUMER_STATUS_TOPIC, EventConstants.CMD_TOPIC, EventConstants.ACK_TOPIC);
-		consumer.setRunner(new IProcessCreator<T>() {
+		this.jobQueue = service.createJobQueue(uri, submitQueueName, statusTopicName, EventConstants.QUEUE_STATUS_TOPIC, EventConstants.CMD_TOPIC, EventConstants.ACK_TOPIC);
+		jobQueue.setRunner(new IProcessCreator<T>() {
 			@Override
-			public IConsumerProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {
+			public IBeanProcess<T> createProcess(T bean, IPublisher<T> publisher) throws EventException {
 				try {
 					ProgressableProcess<T> process = AbstractProcessConsumer.this.createProcess(bean, publisher);
 					process.setArguments(config);
@@ -90,11 +90,11 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 				}
 			}
 		});
-		consumer.setName(getName());
-		consumer.cleanUpCompleted();
-		consumer.setBeanClass(getBeanClass());
+		jobQueue.setName(getName());
+		jobQueue.cleanUpCompleted();
+		jobQueue.setBeanClass(getBeanClass());
 		// This is the blocker
-		consumer.run();
+		jobQueue.run();
 	}
 	
 	/**
@@ -103,8 +103,8 @@ public abstract class AbstractProcessConsumer<T extends StatusBean> implements I
 	 * @throws JMSException 
 	 */
 	public void stop() throws Exception {
-		consumer.stop();
-		consumer.disconnect();
+		jobQueue.stop();
+		jobQueue.disconnect();
 	}
 
 	/**
